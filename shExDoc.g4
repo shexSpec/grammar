@@ -1,21 +1,23 @@
 grammar shExDoc;
 
 
-shExDoc 		: directive* ((shape | start | code+) statement*)? ;
+shExDoc 		: directive* ((shape | start | code+) statement*)? ;  // leading CODE
 statement		: directive | start | shape ;
 directive       : baseDecl | prefixDecl ;
 baseDecl 		: 'BASE' IRIREF ;
 prefixDecl		: 'PREFIX' PNAME_NS IRIREF ;
-start           : 'start' '=' ( label | typeSpec CODE* ) ;
-shape           : 'VIRTUAL'? label typeSpec CODE* ;
-typeSpec        : include* '{' choiceExpr? '}' ;
+start           : 'start' PASS* '=' PASS* ( label | typeSpec code* ) ;
+shape           : 'VIRTUAL'? label typeSpec code* ;
+typeSpec        : (include | extra | 'CLOSED')* '{' choiceExpr? '}' ;
 include         : '&' label;
+extra           : ('EXTRA' | '+') predicate ;
 choiceExpr      : sequenceExpr ( '|' sequenceExpr )* ;
-sequenceExpr    : unaryExpr ( ',' unaryExpr )* ;
-unaryExpr       : id? ( arc | include | '(' choiceExpr ')' repeatCount? CODE* ) ;
+sequenceExpr    : unaryExpr ( ',' unaryExpr )* ','? ;
+unaryExpr       : id? ( arc | include | '(' choiceExpr ')' repeatCount? code* ) ;
 id              : '$' label ;
 label           : iri | blankNode ;
-arc             : '!'? '^'? (RDF_TYPE | iri) valueClass annotation* repeatCount? CODE* ;
+arc             : '!'? '^'? predicate valueClass annotation* repeatCount? code* ;
+predicate       : RDF_TYPE | iri ;
 valueClass      : 'LITERAL' xsFacet*
                 | ('IRI' | 'NONLITERAL') ('@' label)? ('PATTERN' string)?
                 | 'BNODE' ('@' label)?
@@ -68,13 +70,14 @@ blankNode       : BLANK_NODE_LABEL
 code			: CODE ;
 
 PASS				  : [ \t\r\n]+ -> skip;
-COMMENT				  :  '#' [^\r\n]* -> skip;
+COMMENT				  : '#' ~[\r\n]* -> skip;
 
 
 CODE                  : '%' ([a-zA-Z+#_][a-zA-Z0-9+#_]*)? '{' (~[%\\] | '\\%')* '%' '}' ;
 
 RDF_TYPE              : 'a' ;
-IRIREF                : '<' ([^#x00-#x20<>\"{}|^`\\] | UCHAR)* '>' ; /* #x00=NULL #01-#x1F=control codes #x20=space */
+iriref : IRIREF ;
+IRIREF                : '<' (~[\u0000-\u0020=<>\"{}|^`\\] | UCHAR)* '>' ; /* #x00=NULL #01-#x1F=control codes #x20=space */
 PNAME_NS              : PN_PREFIX? ':' ;
 PNAME_LN              : PNAME_NS PN_LOCAL ;
 BLANK_NODE_LABEL      : '_:' (PN_CHARS_U | [0-9]) ((PN_CHARS | '.')* PN_CHARS)? ;
@@ -83,10 +86,10 @@ INTEGER               : [+-]? [0-9]+ ;
 DECIMAL               : [+-]? [0-9]* '.' [0-9]+ ;
 DOUBLE                : [+-]? ([0-9]+ '.' [0-9]* EXPONENT | '.'? [0-9]+ EXPONENT) ;
 EXPONENT              : [eE] [+-]? [0-9]+ ;
-STRING_LITERAL1       : '\'' ([^#x27#x5C#xA#xD] | ECHAR | UCHAR)* '\'' ; /* #x27=' #x5C=\ #xA=new line #xD=carriage return */
-STRING_LITERAL2       : '"' ([^#x22#x5C#xA#xD] | ECHAR | UCHAR)* '"' ;   /* #x22=" #x5C=\ #xA=new line #xD=carriage return */
-STRING_LITERAL_LONG1  : '\'\'\'' (('\'' | '\'\'')? ([^\'\\] | ECHAR | UCHAR))* '\'\'\'' ;
-STRING_LITERAL_LONG2  : '"""' (('"' | '""')? ([^\"\\] | ECHAR | UCHAR))* '"""' ;
+STRING_LITERAL1       : '\'' (~[\u0027\u005C\u000A\u000D] | ECHAR | UCHAR)* '\'' ; /* #x27=' #x5C=\ #xA=new line #xD=carriage return */
+STRING_LITERAL2       : '"' (~[\u0022\u005C\u000A\u000D] | ECHAR | UCHAR)* '"' ;   /* #x22=" #x5C=\ #xA=new line #xD=carriage return */
+STRING_LITERAL_LONG1  : '\'\'\'' (('\'' | '\'\'')? (~[\'\\] | ECHAR | UCHAR))* '\'\'\'' ;
+STRING_LITERAL_LONG2  : '"""' (('"' | '""')? (~[\"\\] | ECHAR | UCHAR))* '"""' ;
 UCHAR                 : '\\u' HEX HEX HEX HEX | '\\U' HEX HEX HEX HEX HEX HEX HEX HEX ;
 ECHAR                 : '\\' [tbnrf\\\"\'] ;
 WS                    : [\u0020\u0009\u000D\u000A] ; /* #x20=space #x9=character tabulation #xD=carriage return #xA=new line */
