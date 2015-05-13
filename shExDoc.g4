@@ -1,3 +1,4 @@
+// ANTLR4 Equivalent of http://www.w3.org/2005/01/yacker/uploads/ShEx2
 grammar shExDoc;
 
 
