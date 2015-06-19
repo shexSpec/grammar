@@ -1,4 +1,6 @@
-// ANTLR4 Equivalent of http://www.w3.org/2005/01/yacker/uploads/ShEx2
+// ANTLR4 Equivalent of accompanying bnf, developed in
+// http://www.w3.org/2005/01/yacker/uploads/ShEx2
+
 grammar shExDoc;
 
 
