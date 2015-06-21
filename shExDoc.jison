@@ -7,10 +7,232 @@
     Make """{PNAME_LN} return 'PNAME_LN';""" lexer actions for refereneced terminals.
     Fold X_Opt back in to calling productions to eliminate conflicts.
       (X? didn't seem to accept null input during testing.)
+    Stole as much as possible from sparql.jison
+      https://github.com/RubenVerborgh/SPARQL.js
 
   Todo:
     Eliminate X_Star and X_Plus where possible as indicated by testing.
 */
+
+%{
+  /*
+    SPARQL parser in the Jison parser generator format.
+  */
+
+  // Common namespaces and entities
+  var RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+      RDF_TYPE  = RDF + 'type',
+      RDF_FIRST = RDF + 'first',
+      RDF_REST  = RDF + 'rest',
+      RDF_NIL   = RDF + 'nil',
+      XSD = 'http://www.w3.org/2001/XMLSchema#',
+      XSD_INTEGER  = XSD + 'integer',
+      XSD_DECIMAL  = XSD + 'decimal',
+      XSD_DOUBLE   = XSD + 'double',
+      XSD_BOOLEAN  = XSD + 'boolean',
+      XSD_TRUE =  '"true"^^'  + XSD_BOOLEAN,
+      XSD_FALSE = '"false"^^' + XSD_BOOLEAN;
+
+  var base = '', basePath = '', baseRoot = '';
+
+  // Returns a lowercase version of the given string
+  function lowercase(string) {
+    return string.toLowerCase();
+  }
+
+  // Appends the item to the array and returns the array
+  function appendTo(array, item) {
+    return array.push(item), array;
+  }
+
+  // Appends the items to the array and returns the array
+  function appendAllTo(array, items) {
+    return array.push.apply(array, items), array;
+  }
+
+  // Extends a base object with properties of other objects
+  function extend(base) {
+    if (!base) base = {};
+    for (var i = 1, l = arguments.length, arg; i < l && (arg = arguments[i] || {}); i++)
+      for (var name in arg)
+        base[name] = arg[name];
+    return base;
+  }
+
+  // Creates an array that contains all items of the given arrays
+  function unionAll() { debugger;
+    var union = [];
+    for (var i = 0, l = arguments.length; i < l; i++)
+      union = union.concat.apply(union, arguments[i]);
+    return union;
+  }
+
+  // Resolves an IRI against a base path
+  function resolveIRI(iri) {
+    // Strip off possible angular brackets
+    if (iri[0] === '<')
+      iri = iri.substring(1, iri.length - 1);
+    switch (iri[0]) {
+    // An empty relative IRI indicates the base IRI
+    case undefined:
+      return base;
+    // Resolve relative fragment IRIs against the base IRI
+    case '#':
+      return base + iri;
+    // Resolve relative query string IRIs by replacing the query string
+    case '?':
+      return base.replace(/(?:\?.*)?$/, iri);
+    // Resolve root relative IRIs at the root of the base IRI
+    case '/':
+      return baseRoot + iri;
+    // Resolve all other IRIs at the base IRI's path
+    default:
+      return /^[a-z]+:/.test(iri) ? iri : basePath + iri;
+    }
+  }
+
+  // If the item is a variable, ensures it starts with a question mark
+  function toVar(variable) {
+    if (variable) {
+      var first = variable[0];
+      if (first === '?') return variable;
+      if (first === '$') return '?' + variable.substr(1);
+    }
+    return variable;
+  }
+
+  // Creates an operation with the given name and arguments
+  function operation(operatorName, args) {
+    return { type: 'operation', operator: operatorName, args: args || [] };
+  }
+
+  // Creates an expression with the given type and attributes
+  function expression(expr, attr) {
+    var expression = { expression: expr };
+    if (attr)
+      for (var a in attr)
+        expression[a] = attr[a];
+    return expression;
+  }
+
+  // Creates a path with the given type and items
+  function path(type, items) {
+    return { type: 'path', pathType: type, items: items };
+  }
+
+  // Transforms a list of operations types and arguments into a tree of operations
+  function createOperationTree(initialExpression, operationList) {
+    for (var i = 0, l = operationList.length, item; i < l && (item = operationList[i]); i++)
+      initialExpression = operation(item[0], [initialExpression, item[1]]);
+    return initialExpression;
+  }
+
+  // Group datasets by default and named
+  function groupDatasets(fromClauses) {
+    var defaults = [], named = [], l = fromClauses.length, fromClause;
+    for (var i = 0; i < l && (fromClause = fromClauses[i]); i++)
+      (fromClause.named ? named : defaults).push(fromClause.iri);
+    return l ? { from: { default: defaults, named: named } } : null;
+  }
+
+  // Converts the number to a string
+  function toInt(string) {
+    return parseInt(string, 10);
+  }
+
+  // Transforms a possibly single group into its patterns
+  function degroupSingle(group) {
+    return group.type === 'group' && group.patterns.length === 1 ? group.patterns[0] : group;
+  }
+
+  // Creates a literal with the given value and type
+  function createLiteral(value, type) {
+    return '"' + value + '"^^' + type;
+  }
+
+  // Creates a triple with the given subject, predicate, and object
+  function triple(subject, predicate, object) {
+    var triple = {};
+    if (subject   != null) triple.subject   = subject;
+    if (predicate != null) triple.predicate = predicate;
+    if (object    != null) triple.object    = object;
+    return triple;
+  }
+
+  // Creates a new blank node identifier
+  function blank() {
+    return '_:b' + blankId++;
+  };
+  var blankId = 0;
+  Parser._resetBlanks = function () { blankId = 0; }
+
+  // Regular expression and replacement strings to escape strings
+  var escapeSequence = /\\u([a-fA-F0-9]{4})|\\U([a-fA-F0-9]{8})|\\(.)/g,
+      escapeReplacements = { '\\': '\\', "'": "'", '"': '"',
+                             't': '\t', 'b': '\b', 'n': '\n', 'r': '\r', 'f': '\f' },
+      fromCharCode = String.fromCharCode;
+
+  // Translates escape codes in the string into their textual equivalent
+  function unescapeString(string, trimLength) {
+    string = string.substring(trimLength, string.length - trimLength);
+    try {
+      string = string.replace(escapeSequence, function (sequence, unicode4, unicode8, escapedChar) {
+        var charCode;
+        if (unicode4) {
+          charCode = parseInt(unicode4, 16);
+          if (isNaN(charCode)) throw new Error(); // can never happen (regex), but helps performance
+          return fromCharCode(charCode);
+        }
+        else if (unicode8) {
+          charCode = parseInt(unicode8, 16);
+          if (isNaN(charCode)) throw new Error(); // can never happen (regex), but helps performance
+          if (charCode < 0xFFFF) return fromCharCode(charCode);
+          return fromCharCode(0xD800 + ((charCode -= 0x10000) >> 10), 0xDC00 + (charCode & 0x3FF));
+        }
+        else {
+          var replacement = escapeReplacements[escapedChar];
+          if (!replacement) throw new Error();
+          return replacement;
+        }
+      });
+    }
+    catch (error) { return ''; }
+    return '"' + string + '"';
+  }
+
+  // Creates a list, collecting its (possibly blank) items and triples associated with those items
+  function createList(objects) {
+    var list = blank(), head = list, listItems = [], listTriples, triples = [];
+    objects.forEach(function (o) { listItems.push(o.entity); appendAllTo(triples, o.triples); });
+
+    // Build an RDF list out of the items
+    for (var i = 0, j = 0, l = listItems.length, listTriples = Array(l * 2); i < l;)
+      listTriples[j++] = triple(head, RDF_FIRST, listItems[i]),
+      listTriples[j++] = triple(head, RDF_REST,  head = ++i < l ? blank() : RDF_NIL);
+
+    // Return the list's identifier, its triples, and the triples associated with its items
+    return { entity: list, triples: appendAllTo(listTriples, triples) };
+  }
+
+  // Creates a blank node identifier, collecting triples with that blank node as subject
+  function createAnonymousObject(propertyList) {
+    var entity = blank();
+    return {
+      entity: entity,
+      triples: propertyList.map(function (t) { return extend(triple(entity), t); })
+    };
+  }
+
+  // Collects all (possibly blank) objects, and triples that have them as subject
+  function objectListToTriples(predicate, objectList, otherTriples) {
+    var objects = [], triples = [];
+    objectList.forEach(function (l) {
+      objects.push(triple(null, predicate, l.entity));
+      appendAllTo(triples, l.triples);
+    });
+    return unionAll(objects, otherTriples || [], triples);
+  }
+%}
 
 /* lexical grammar */
 %lex
@@ -180,7 +402,11 @@ COMMENT			('//'|'#') [^\u000a\u000d]*
 %% /* language grammar */
 
 shexDoc:
-    _Qdirective_E_Star _Q_O_Qshape_E_Or_Qstart_E_Or_QCODE_E_Plus_S_Qstatement_E_Star_C_E_Opt EOF	;
+    _Qdirective_E_Star _Q_O_Qshape_E_Or_Qstart_E_Or_QCODE_E_Plus_S_Qstatement_E_Star_C_E_Opt EOF	{
+      Parser.prefixes = null;
+      base = basePath = baseRoot = '';
+      return $2;
+    };
 
 _Qdirective_E_Star:
     
@@ -218,10 +444,19 @@ directive:
     | prefixDecl	;
 
 baseDecl:
-    IT_BASE IRIREF	;
+    IT_BASE IRIREF	{
+      base = resolveIRI($2)
+      basePath = base.replace(/[^\/]*$/, '');
+      baseRoot = base.match(/^(?:[a-z]+:\/*)?[^\/]*/)[0];
+    };
 
 prefixDecl:
-    IT_PREFIX PNAME_NS IRIREF	;
+    IT_PREFIX PNAME_NS IRIREF	{
+      if (!Parser.prefixes) Parser.prefixes = {};
+      $2 = $2.substr(0, $2.length - 1);
+      $3 = resolveIRI($3);
+      Parser.prefixes[$2] = $3;
+    };
 
 start:
     IT_start GT_EQUAL _O_QshapeLabel_E_Or_QshapeDefinition_E_S_QCODE_E_Star_C	;
@@ -488,43 +723,40 @@ _QGT_KINDA_E_Opt:
     | GT_KINDA	;
 
 literal:
-    rdfLiteral	
-    | numericLiteral	
-    | booleanLiteral	;
-
-numericLiteral:
-    INTEGER	
-    | DECIMAL	
-    | DOUBLE	;
-
-rdfLiteral:
-    string _Q_O_QLANGTAG_E_Or_QGT_DTYPE_E_S_Qiri_E_C_E_Opt	;
-
-_O_QLANGTAG_E_Or_QGT_DTYPE_E_S_Qiri_E_C:
-    LANGTAG	
-    | GT_DTYPE iri	;
-
-_Q_O_QLANGTAG_E_Or_QGT_DTYPE_E_S_Qiri_E_C_E_Opt:
-    
-    | _O_QLANGTAG_E_Or_QGT_DTYPE_E_S_Qiri_E_C	;
-
-booleanLiteral:
-    IT_true	
-    | IT_false	;
+      string	
+    | string LANGTAG	-> $1 + lowercase($2)
+    | string GT_DTYPE iri	-> $1 + '^^' + $3
+    | INTEGER	 -> createLiteral($1.substr(1), XSD_INTEGER)
+    | DECIMAL	-> createLiteral($1.substr(1), XSD_DECIMAL)
+    | DOUBLE	createLiteral($1.substr(1).toLowerCase(), XSD_DOUBLE)	
+    | IT_true	-> XSD_TRUE
+    | IT_false	-> XSD_FALSE
+    ;
 
 string:
-    STRING_LITERAL1	
-    | STRING_LITERAL2	
-    | STRING_LITERAL_LONG1	
-    | STRING_LITERAL_LONG2	;
+    STRING_LITERAL1	-> unescapeString($1, 1)
+    | STRING_LITERAL2	-> unescapeString($1, 1)
+    | STRING_LITERAL_LONG1	 -> unescapeString($1, 3)
+    | STRING_LITERAL_LONG2	 -> unescapeString($1, 3)
+;
 
 iri:
     IRIREF	
     | prefixedName	;
 
 prefixedName:
-    PNAME_LN	
-    | PNAME_NS	;
+    PNAME_LN	{
+      var namePos = $1.indexOf(':'),
+          prefix = $1.substr(0, namePos),
+          expansion = Parser.prefixes[prefix];
+      if (!expansion) throw new Error('Unknown prefix: ' + prefix);
+      $$ = resolveIRI(expansion + $1.substr(namePos + 1));
+    }
+    | PNAME_NS	{
+      $1 = $1.substr(0, $1.length - 1);
+      if (!($1 in Parser.prefixes)) throw new Error('Unknown prefix: ' + $1);
+      $$ = resolveIRI(Parser.prefixes[$1]);
+    };
 
 blankNode:
     BLANK_NODE_LABEL	
