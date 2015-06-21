@@ -1,6 +1,15 @@
 /*
   jison Equivalent of accompanying bnf, developed in
   http://www.w3.org/2005/01/yacker/uploads/ShEx2
+
+  Process:
+    Start with yacker perl output.
+    Make """{PNAME_LN} return 'PNAME_LN';""" lexer actions for refereneced terminals.
+    Fold X_Opt back in to calling productions to eliminate conflicts.
+      (X? didn't seem to accept null input during testing.)
+
+  Todo:
+    Eliminate X_Star and X_Plus where possible as indicated by testing.
 */
 
 /* lexical grammar */
