@@ -237,34 +237,18 @@
 /* lexical grammar */
 %lex
 
-IT_BASE		[Bb][Aa][Ss][Ee]
+IT_BASE			[Bb][Aa][Ss][Ee]
 IT_PREFIX		[Pp][Rr][Ee][Ff][Ii][Xx]
-IT_start		"start"
-GT_EQUAL		"="
 IT_VIRTUAL		[Vv][Ii][Rr][Tt][Uu][Aa][Ll]
-GT_LCURLEY		"{"
-GT_RCURLEY		"}"
 IT_CLOSED		[Cc][Ll][Oo][Ss][Ee][Dd]
-GT_AMP		"&"
 IT_EXTRA		[Ee][Xx][Tt][Rr][Aa]
-GT_PIPE		"|"
-GT_OR		"||"
-GT_COMMA		","
-GT_LPAREN		"("
-GT_RPAREN		")"
-GT_DOLLAR		"$"
-GT_NOT		"!"
-GT_CARROT		"^"
 IT_LITERAL		[Ll][Ii][Tt][Ee][Rr][Aa][Ll]
 IT_BNODE		[Bb][Nn][Oo][Dd][Ee]
-GT_DOT		"."
-IT_IRI		[Ii][Rr][Ii]
+IT_IRI			[Ii][Rr][Ii]
 IT_NONLITERAL		[Nn][Oo][Nn][Ll][Ii][Tt][Ee][Rr][Aa][Ll]
 IT_PATTERN		[Pp][Aa][Tt][Tt][Ee][Rr][Nn]
-IT_AND		[Aa][Nn][Dd]
-IT_OR		[Oo][Rr]
-GT_AT		"@"
-GT_KINDA		"~"
+IT_AND			[Aa][Nn][Dd]
+IT_OR			[Oo][Rr]
 IT_MININCLUSIVE		[Mm][Ii][Nn][Ii][Nn][Cc][Ll][Uu][Ss][Ii][Vv][Ee]
 IT_MINEXCLUSIVE		[Mm][Ii][Nn][Ee][Xx][Cc][Ll][Uu][Ss][Ii][Vv][Ee]
 IT_MAXINCLUSIVE		[Mm][Aa][Xx][Ii][Nn][Cc][Ll][Uu][Ss][Ii][Vv][Ee]
@@ -273,32 +257,25 @@ IT_LENGTH		[Ll][Ee][Nn][Gg][Tt][Hh]
 IT_MINLENGTH		[Mm][Ii][Nn][Ll][Ee][Nn][Gg][Tt][Hh]
 IT_MAXLENGTH		[Mm][Aa][Xx][Ll][Ee][Nn][Gg][Tt][Hh]
 IT_TOTALDIGITS		[Tt][Oo][Tt][Aa][Ll][Dd][Ii][Gg][Ii][Tt][Ss]
-IT_FRACTIONDIGITS		[Ff][Rr][Aa][Cc][Tt][Ii][Oo][Nn][Dd][Ii][Gg][Ii][Tt][Ss]
-GT_SEMI		";"
-GT_TIMES		"*"
-GT_PLUS		"+"
-GT_OPT		"?"
-GT_MINUS		"-"
-GT_DTYPE		"^^"
-IT_true		"true"
-IT_false		"false"
-CODE		"%" ([#+A-Z_a-z][#+0-9A-Z_a-z]*)? "{" ([^%] | '\\' '%')* "%" "}"
-RDF_TYPE		"a"
-LANGTAG		"@"([A-Za-z])+(("-"([0-9A-Za-z])+))*
-INTEGER		([+-])?([0-9])+
+IT_FRACTIONDIGITS	[Ff][Rr][Aa][Cc][Tt][Ii][Oo][Nn][Dd][Ii][Gg][Ii][Tt][Ss]
+CODE			"%" ([#+A-Z_a-z][#+0-9A-Z_a-z]*)? "{" ([^%] | '\\' '%')* "%" "}"
+LANGTAG			"@"([A-Za-z])+(("-"([0-9A-Za-z])+))*
+INTEGER			([+-])?([0-9])+
 REPEAT_RANGE		"{"({INTEGER})((","(({INTEGER}))?))?"}"
-DECIMAL		([+-])?([0-9])*"."([0-9])+
+DECIMAL			([+-])?([0-9])*"."([0-9])+
 EXPONENT		[Ee]([+-])?([0-9])+
-DOUBLE		([+-])?((([0-9])+"."([0-9])*({EXPONENT}))|((".")?([0-9])+({EXPONENT})))
-ECHAR		"\\"[\"\\bfnrt]
-WS		(" ")|(("\t")|(("\r")|("\n")))
-ANON		"\["(({WS}))*"\]"
+DOUBLE			([+-])?((([0-9])+"."([0-9])*({EXPONENT}))|((".")?([0-9])+({EXPONENT})))
+ECHAR			"\\"[\"\\bfnrt]
+WS			(" ")|(("\t")|(("\r")|("\n")))
+ANON			"\["(({WS}))*"\]"
 PN_CHARS_BASE           [A-Z] | [a-z] | [\u00c0-\u00d6] | [\u00d8-\u00f6] | [\u00f8-\u02ff] | [\u0370-\u037d] | [\u037f-\u1fff] | [\u200c-\u200d] | [\u2070-\u218f] | [\u2c00-\u2fef] | [\u3001-\ud7ff] | [\uf900-\ufdcf] | [\ufdf0-\ufffd] | [\U00010000-\U000effff]
 PN_CHARS_U              {PN_CHARS_BASE} | '_' | '_' /* !!! raise jison bug */
 PN_CHARS                {PN_CHARS_U} | '-' | [0-9] | [\u00b7] | [\u0300-\u036f] | [\u203f-\u2040]
 BLANK_NODE_LABEL        '_:' ({PN_CHARS_U} | [0-9]) (({PN_CHARS} | '.')* {PN_CHARS})?
+ATBLANK_NODE_LABEL        '@_:' ({PN_CHARS_U} | [0-9]) (({PN_CHARS} | '.')* {PN_CHARS})?
 PN_PREFIX               {PN_CHARS_BASE} (({PN_CHARS} | '.')* {PN_CHARS})?
 PNAME_NS                {PN_PREFIX}? ':'
+ATPNAME_NS              '@' {PN_PREFIX}? ':'
 HEX                     [0-9] | [A-F] | [a-f]
 PERCENT                 '%' {HEX} {HEX}
 UCHAR                   '\\u' {HEX} {HEX} {HEX} {HEX} | '\\U' {HEX} {HEX} {HEX} {HEX} {HEX} {HEX} {HEX} {HEX}
@@ -307,91 +284,97 @@ STRING_LITERAL2         '"' ([^\u0022\u005c\u000a\u000d] | {ECHAR} | {UCHAR})* '
 STRING_LITERAL_LONG1    "'''" (("'" | "''")? ([^\'\\] | {ECHAR} | {UCHAR}))* "'''"
 STRING_LITERAL_LONG2    '"""' (('"' | '""')? ([^\"\\] | {ECHAR} | {UCHAR}))* '"""'
 IRIREF			'<' ([^\u0000-\u0020<>\"{}|^`\\] | {UCHAR})* '>' /* #x00=NULL #01-#x1F=control codes #x20=space */
+ATIRIREF		'@<' ([^\u0000-\u0020<>\"{}|^`\\] | {UCHAR})* '>' /* #x00=NULL #01-#x1F=control codes #x20=space */
 PN_LOCAL_ESC            '\\' ('_' | '~' | '.' | '-' | '!' | '$' | '&' | "'" | '(' | ')' | '*' | '+' | ',' | ';' | '=' | '/' | '?' | '#' | '@' | '%')
 PLX                     {PERCENT} | {PN_LOCAL_ESC}
 PN_LOCAL                ({PN_CHARS_U} | ':' | [0-9] | {PLX}) (({PN_CHARS} | '.' | ':' | {PLX})* ({PN_CHARS} | ':' | {PLX}))?
 PNAME_LN                {PNAME_NS} {PN_LOCAL}
+ATPNAME_LN              '@' {PNAME_NS} {PN_LOCAL}
 COMMENT			('//'|'#') [^\u000a\u000d]*
 
 %%
 
 \s+|{COMMENT} /**/
+{ATPNAME_LN}		return 'ATPNAME_LN';
+{ATIRIREF}		return 'ATIRIREF';
+{ATPNAME_NS}		return 'ATPNAME_NS';
+{ATBLANK_NODE_LABEL}	return 'ATBLANK_NODE_LABEL';
+{LANGTAG}		return 'LANGTAG';
+//"@"			return 'AT';
 {PNAME_LN}		return 'PNAME_LN';
 {IT_BASE}		return 'IT_BASE';
 {IT_PREFIX}		return 'IT_PREFIX';
-{IT_start}		return 'IT_start';
-{GT_EQUAL}		return 'GT_EQUAL';
+"start"			return 'IT_start';
 {IT_VIRTUAL}		return 'IT_VIRTUAL';
-{GT_LCURLEY}		return 'GT_LCURLEY';
-{GT_RCURLEY}		return 'GT_RCURLEY';
+{REPEAT_RANGE}		return 'REPEAT_RANGE';
 {IT_CLOSED}		return 'IT_CLOSED';
-{GT_AMP}		return 'GT_AMP';
 {IT_EXTRA}		return 'IT_EXTRA';
-{GT_PIPE}		return 'GT_PIPE';
-{GT_OR}		return 'GT_OR';
-{GT_COMMA}		return 'GT_COMMA';
-{GT_LPAREN}		return 'GT_LPAREN';
-{GT_RPAREN}		return 'GT_RPAREN';
-{GT_DOLLAR}		return 'GT_DOLLAR';
-{GT_NOT}		return 'GT_NOT';
-{GT_CARROT}		return 'GT_CARROT';
 {IT_LITERAL}		return 'IT_LITERAL';
 {IT_BNODE}		return 'IT_BNODE';
-{GT_DOT}		return 'GT_DOT';
 {IT_IRI}		return 'IT_IRI';
 {IT_NONLITERAL}		return 'IT_NONLITERAL';
 {IT_PATTERN}		return 'IT_PATTERN';
 {IT_AND}		return 'IT_AND';
-{IT_OR}		return 'IT_OR';
-{GT_AT}		return 'GT_AT';
-{GT_KINDA}		return 'GT_KINDA';
-{IT_MININCLUSIVE}		return 'IT_MININCLUSIVE';
-{IT_MINEXCLUSIVE}		return 'IT_MINEXCLUSIVE';
-{IT_MAXINCLUSIVE}		return 'IT_MAXINCLUSIVE';
-{IT_MAXEXCLUSIVE}		return 'IT_MAXEXCLUSIVE';
+{IT_OR}			return 'IT_OR';
+{IT_MININCLUSIVE}	return 'IT_MININCLUSIVE';
+{IT_MINEXCLUSIVE}	return 'IT_MINEXCLUSIVE';
+{IT_MAXINCLUSIVE}	return 'IT_MAXINCLUSIVE';
+{IT_MAXEXCLUSIVE}	return 'IT_MAXEXCLUSIVE';
 {IT_LENGTH}		return 'IT_LENGTH';
 {IT_MINLENGTH}		return 'IT_MINLENGTH';
 {IT_MAXLENGTH}		return 'IT_MAXLENGTH';
-{IT_TOTALDIGITS}		return 'IT_TOTALDIGITS';
-{IT_FRACTIONDIGITS}		return 'IT_FRACTIONDIGITS';
-{GT_SEMI}		return 'GT_SEMI';
-{GT_TIMES}		return 'GT_TIMES';
-{GT_PLUS}		return 'GT_PLUS';
-{GT_OPT}		return 'GT_OPT';
-{GT_MINUS}		return 'GT_MINUS';
-{GT_DTYPE}		return 'GT_DTYPE';
-{IT_true}		return 'IT_true';
-{IT_false}		return 'IT_false';
-{CODE}		return 'CODE';
-{RDF_TYPE}		return 'RDF_TYPE';
-//{LANGTAG}		return 'LANGTAG';
+{IT_TOTALDIGITS}	return 'IT_TOTALDIGITS';
+{IT_FRACTIONDIGITS}	return 'IT_FRACTIONDIGITS';
+"="			return '=';
+"{"			return '{';
+"}"			return '}';
+"&"			return '&';
+"||"			return '||';
+"|"			return '|';
+","			return ',';
+"("			return '(';
+")"			return ')';
+"$"			return '$';
+"!"			return '!';
+"^^"			return '^^';
+"^"			return '^';
+"."			return '.';
+"~"			return '~';
+";"			return ';';
+"*"			return '*';
+"+"			return '+';
+"?"			return '?';
+"-"			return '-';
+"true"			return 'IT_true';
+"false"			return 'IT_false';
+{CODE}			return 'CODE';
+"a"			return 'a';
 {INTEGER}		return 'INTEGER';
-{REPEAT_RANGE}		return 'REPEAT_RANGE';
 {DECIMAL}		return 'DECIMAL';
 {EXPONENT}		return 'EXPONENT';
 {DOUBLE}		return 'DOUBLE';
 //{ECHAR}		return 'ECHAR';
-//{WS}		return 'WS';
-{ANON}		return 'ANON';
+//{WS}			return 'WS';
+{ANON}			return 'ANON';
 {IRIREF}		return 'IRIREF';
 {PNAME_NS}		return 'PNAME_NS';
-//{PN_CHARS_BASE}		return 'PN_CHARS_BASE';
+//{PN_CHARS_BASE}	return 'PN_CHARS_BASE';
 //{PN_CHARS_U}		return 'PN_CHARS_U';
 //{PN_CHARS}		return 'PN_CHARS';
-{BLANK_NODE_LABEL}		return 'BLANK_NODE_LABEL';
+{BLANK_NODE_LABEL}	return 'BLANK_NODE_LABEL';
 //{PN_PREFIX}		return 'PN_PREFIX';
-//{HEX}		return 'HEX';
+//{HEX}			return 'HEX';
 //{PERCENT}		return 'PERCENT';
 //{UCHAR}		return 'UCHAR';
-{STRING_LITERAL1}		return 'STRING_LITERAL1';
-{STRING_LITERAL2}		return 'STRING_LITERAL2';
-{STRING_LITERAL_LONG1}		return 'STRING_LITERAL_LONG1';
-{STRING_LITERAL_LONG2}		return 'STRING_LITERAL_LONG2';
-//{PN_LOCAL_ESC}		return 'PN_LOCAL_ESC';
-//{PLX}		return 'PLX';
+{STRING_LITERAL1}	return 'STRING_LITERAL1';
+{STRING_LITERAL2}	return 'STRING_LITERAL2';
+{STRING_LITERAL_LONG1}	return 'STRING_LITERAL_LONG1';
+{STRING_LITERAL_LONG2}	return 'STRING_LITERAL_LONG2';
+//{PN_LOCAL_ESC}	return 'PN_LOCAL_ESC';
+//{PLX}			return 'PLX';
 //{PN_LOCAL}		return 'PN_LOCAL';
-<<EOF>>               return 'EOF'
-.                     return 'invalid character'
+<<EOF>>			return 'EOF'
+.			return 'invalid character'
 
 /lex
 
@@ -459,7 +442,7 @@ prefixDecl:
     };
 
 start:
-    IT_start GT_EQUAL _O_QshapeLabel_E_Or_QshapeDefinition_E_S_QCODE_E_Star_C	;
+    IT_start '=' _O_QshapeLabel_E_Or_QshapeDefinition_E_S_QCODE_E_Star_C	;
 
 _QCODE_E_Star:
     
@@ -479,7 +462,7 @@ shape:
 //     | IT_VIRTUAL	;
 
 shapeDefinition:
-    _Q_O_Qinclude_E_Or_QinclPropertySet_E_Or_QIT_CLOSED_E_C_E_Star GT_LCURLEY _QoneOfShape_E_Opt GT_RCURLEY	;
+    _Q_O_Qinclude_E_Or_QinclPropertySet_E_Or_QIT_CLOSED_E_C_E_Star '{' _QoneOfShape_E_Opt '}'	;
 
 _O_Qinclude_E_Or_QinclPropertySet_E_Or_QIT_CLOSED_E_C:
     include	
@@ -495,7 +478,7 @@ _QoneOfShape_E_Opt:
     | oneOfShape	;
 
 include:
-    GT_AMP shapeLabel	;
+    '&' shapeLabel	;
 
 inclPropertySet:
     IT_EXTRA _Qpredicate_E_Plus	;
@@ -505,43 +488,43 @@ _Qpredicate_E_Plus:
     | _Qpredicate_E_Plus predicate	;
 
 oneOfShape:
-    someOfShape _Q_O_QGT_PIPE_E_S_QsomeOfShape_E_C_E_Star	;
+    someOfShape _Q_O_Q_PIPE_E_S_QsomeOfShape_E_C_E_Star	;
 
-_O_QGT_PIPE_E_S_QsomeOfShape_E_C:
-    GT_PIPE someOfShape	;
+_O_Q_PIPE_E_S_QsomeOfShape_E_C:
+    '|' someOfShape	;
 
-_Q_O_QGT_PIPE_E_S_QsomeOfShape_E_C_E_Star:
+_Q_O_Q_PIPE_E_S_QsomeOfShape_E_C_E_Star:
     
-    | _Q_O_QGT_PIPE_E_S_QsomeOfShape_E_C_E_Star _O_QGT_PIPE_E_S_QsomeOfShape_E_C	;
+    | _Q_O_Q_PIPE_E_S_QsomeOfShape_E_C_E_Star _O_Q_PIPE_E_S_QsomeOfShape_E_C	;
 
 someOfShape:
-    groupShape _Q_O_QGT_OR_E_S_QgroupShape_E_C_E_Star	;
+    groupShape _Q_O_Q_OR_E_S_QgroupShape_E_C_E_Star	;
 
-_O_QGT_OR_E_S_QgroupShape_E_C:
-    GT_OR groupShape	;
+_O_Q_OR_E_S_QgroupShape_E_C:
+    '||' groupShape	;
 
-_Q_O_QGT_OR_E_S_QgroupShape_E_C_E_Star:
+_Q_O_Q_OR_E_S_QgroupShape_E_C_E_Star:
     
-    | _Q_O_QGT_OR_E_S_QgroupShape_E_C_E_Star _O_QGT_OR_E_S_QgroupShape_E_C	;
+    | _Q_O_Q_OR_E_S_QgroupShape_E_C_E_Star _O_Q_OR_E_S_QgroupShape_E_C	;
 
 groupShape:
-    unaryShape _Q_O_QGT_COMMA_E_S_QunaryShape_E_C_E_Star _QGT_COMMA_E_Opt	;
+    unaryShape _Q_O_Q_COMMA_E_S_QunaryShape_E_C_E_Star _Q_COMMA_E_Opt	;
 
-_O_QGT_COMMA_E_S_QunaryShape_E_C:
-    GT_COMMA unaryShape	;
+_O_Q_COMMA_E_S_QunaryShape_E_C:
+    ',' unaryShape	;
 
-_Q_O_QGT_COMMA_E_S_QunaryShape_E_C_E_Star:
+_Q_O_Q_COMMA_E_S_QunaryShape_E_C_E_Star:
     
-    | _Q_O_QGT_COMMA_E_S_QunaryShape_E_C_E_Star _O_QGT_COMMA_E_S_QunaryShape_E_C	;
+    | _Q_O_Q_COMMA_E_S_QunaryShape_E_C_E_Star _O_Q_COMMA_E_S_QunaryShape_E_C	;
 
-_QGT_COMMA_E_Opt:
+_Q_COMMA_E_Opt:
     
-    | GT_COMMA	;
+    | ','	;
 
 unaryShape:
     // _Qid_E_Opt 
-    _O_QtripleConstraint_E_Or_Qinclude_E_Or_QGT_LPAREN_E_S_QoneOfShape_E_S_QGT_RPAREN_E_S_Qcardinality_E_Opt_S_QCODE_E_Star_C	
-    | id _O_QtripleConstraint_E_Or_Qinclude_E_Or_QGT_LPAREN_E_S_QoneOfShape_E_S_QGT_RPAREN_E_S_Qcardinality_E_Opt_S_QCODE_E_Star_C	;
+    _O_QtripleConstraint_E_Or_Qinclude_E_Or_Q_LPAREN_E_S_QoneOfShape_E_S_Q_RPAREN_E_S_Qcardinality_E_Opt_S_QCODE_E_Star_C	
+    | id _O_QtripleConstraint_E_Or_Qinclude_E_Or_Q_LPAREN_E_S_QoneOfShape_E_S_Q_RPAREN_E_S_Qcardinality_E_Opt_S_QCODE_E_Star_C	;
 
 // _Qid_E_Opt:
 //     
@@ -551,13 +534,13 @@ _Qcardinality_E_Opt:
     
     | cardinality	;
 
-_O_QtripleConstraint_E_Or_Qinclude_E_Or_QGT_LPAREN_E_S_QoneOfShape_E_S_QGT_RPAREN_E_S_Qcardinality_E_Opt_S_QCODE_E_Star_C:
+_O_QtripleConstraint_E_Or_Qinclude_E_Or_Q_LPAREN_E_S_QoneOfShape_E_S_Q_RPAREN_E_S_Qcardinality_E_Opt_S_QCODE_E_Star_C:
     tripleConstraint	
     | include	
-    | GT_LPAREN oneOfShape GT_RPAREN _Qcardinality_E_Opt _QCODE_E_Star	;
+    | '(' oneOfShape ')' _Qcardinality_E_Opt _QCODE_E_Star	;
 
 id:
-    GT_DOLLAR shapeLabel	;
+    '$' shapeLabel	;
 
 shapeLabel:
     iri	
@@ -577,19 +560,19 @@ _Qannotation_E_Star:
     | _Qannotation_E_Star annotation	;
 
 senseFlags:
-    GT_NOT _QGT_CARROT_E_Opt	
-    | GT_CARROT _QGT_NOT_E_Opt	;
+    '!' _Q_CARROT_E_Opt	
+    | '^' _Q_NOT_E_Opt	;
 
-_QGT_CARROT_E_Opt:
+_Q_CARROT_E_Opt:
     
-    | GT_CARROT	;
+    | '^'	;
 
-_QGT_NOT_E_Opt:
+_Q_NOT_E_Opt:
     
-    | GT_NOT	;
+    | '!'	;
 
 predicate:
-    RDF_TYPE	
+    a	
     | iri	;
 
 valueClass:
@@ -605,7 +588,7 @@ valueClass:
     | datatype	
     | groupShapeConstr	
     | valueSet	
-    | GT_DOT	;
+    | '.'	;
 
 _QxsFacet_E_Star:
     
@@ -641,18 +624,33 @@ _Q_O_QIT_AND_E_Or_QIT_OR_E_S_QshapeOrRef_E_C_E_Star:
     | _Q_O_QIT_AND_E_Or_QIT_OR_E_S_QshapeOrRef_E_C_E_Star _O_QIT_AND_E_Or_QIT_OR_E_S_QshapeOrRef_E_C	;
 
 shapeOrRef:
-    GT_AT shapeLabel	
+      ATIRIREF	
+    | ATPNAME_LN	{
+      $1 = $1.substr(1);
+      var namePos = $1.indexOf(':'),
+          prefix = $1.substr(0, namePos),
+          expansion = Parser.prefixes[prefix];
+      if (!expansion) throw new Error('Unknown prefix: ' + prefix);
+      $$ = resolveIRI(expansion + $1.substr(namePos + 1));
+    }
+    | ATPNAME_NS	{
+      $1 = $1.substr(1);
+      $1 = $1.substr(0, $1.length - 1);
+      if (!($1 in Parser.prefixes)) throw new Error('Unknown prefix: ' + $1);
+      $$ = resolveIRI(Parser.prefixes[$1]);
+    }
+    | ATBLANK_NODE_LABEL	
     | shapeDefinition	;
 
 xsFacet:
-    _O_QIT_PATTERN_E_Or_QGT_KINDA_E_C string	
+    _O_QIT_PATTERN_E_Or_Q_KINDA_E_C string	
     | _O_QIT_MININCLUSIVE_E_Or_QIT_MINEXCLUSIVE_E_Or_QIT_MAXINCLUSIVE_E_Or_QIT_MAXEXCLUSIVE_E_C INTEGER	
     | _O_QIT_LENGTH_E_Or_QIT_MINLENGTH_E_Or_QIT_MAXLENGTH_E_C INTEGER	
     | _O_QIT_TOTALDIGITS_E_Or_QIT_FRACTIONDIGITS_E_C INTEGER	;
 
-_O_QIT_PATTERN_E_Or_QGT_KINDA_E_C:
+_O_QIT_PATTERN_E_Or_Q_KINDA_E_C:
     IT_PATTERN	
-    | GT_KINDA	;
+    | '~'	;
 
 _O_QIT_MININCLUSIVE_E_Or_QIT_MINEXCLUSIVE_E_Or_QIT_MAXINCLUSIVE_E_Or_QIT_MAXEXCLUSIVE_E_C:
     IT_MININCLUSIVE	
@@ -673,20 +671,20 @@ datatype:
     iri	;
 
 annotation:
-    GT_SEMI iri _O_Qiri_E_Or_Qliteral_E_C	;
+    ';' iri _O_Qiri_E_Or_Qliteral_E_C	;
 
 _O_Qiri_E_Or_Qliteral_E_C:
     iri	
     | literal	;
 
 cardinality:
-    GT_TIMES	
-    | GT_PLUS	
-    | GT_OPT	
+      '*'	
+    | '+'	
+    | '?'	
     | REPEAT_RANGE	;
 
 valueSet:
-    GT_LPAREN _Qvalue_E_Star GT_RPAREN	;
+    '(' _Qvalue_E_Star ')'	;
 
 _Qvalue_E_Star:
     
@@ -697,35 +695,35 @@ value:
     | literal	;
 
 iriRange:
-    iri _Q_O_QGT_KINDA_E_S_Qexclusion_E_Star_C_E_Opt	
-    | GT_DOT _Qexclusion_E_Plus	;
+    iri _Q_O_Q_KINDA_E_S_Qexclusion_E_Star_C_E_Opt	
+    | '.' _Qexclusion_E_Plus	;
 
 _Qexclusion_E_Star:
     
     | _Qexclusion_E_Star exclusion	;
 
-_O_QGT_KINDA_E_S_Qexclusion_E_Star_C:
-    GT_KINDA _Qexclusion_E_Star	;
+_O_Q_KINDA_E_S_Qexclusion_E_Star_C:
+    '~' _Qexclusion_E_Star	;
 
-_Q_O_QGT_KINDA_E_S_Qexclusion_E_Star_C_E_Opt:
+_Q_O_Q_KINDA_E_S_Qexclusion_E_Star_C_E_Opt:
     
-    | _O_QGT_KINDA_E_S_Qexclusion_E_Star_C	;
+    | _O_Q_KINDA_E_S_Qexclusion_E_Star_C	;
 
 _Qexclusion_E_Plus:
     exclusion	
     | _Qexclusion_E_Plus exclusion	;
 
 exclusion:
-    GT_MINUS iri _QGT_KINDA_E_Opt	;
+    '-' iri _Q_KINDA_E_Opt	;
 
-_QGT_KINDA_E_Opt:
+_Q_KINDA_E_Opt:
     
-    | GT_KINDA	;
+    | '~'	;
 
 literal:
       string	
     | string LANGTAG	-> $1 + lowercase($2)
-    | string GT_DTYPE iri	-> $1 + '^^' + $3
+    | string '^^' iri	-> $1 + '^^' + $3
     | INTEGER	 -> createLiteral($1.substr(1), XSD_INTEGER)
     | DECIMAL	-> createLiteral($1.substr(1), XSD_DECIMAL)
     | DOUBLE	createLiteral($1.substr(1).toLowerCase(), XSD_DOUBLE)	
