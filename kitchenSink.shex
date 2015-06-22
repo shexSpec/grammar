@@ -51,6 +51,4 @@ VIRTUAL _:IDshape {
         !^ex:miscRef .)
 }
 
-ex:FooID CLOSED &_:IDshape EXTRA ex:code ex:system {
-
-}
+ex:FooID CLOSED &_:IDshape EXTRA ex:code ex:system {}
