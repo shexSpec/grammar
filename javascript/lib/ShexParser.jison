@@ -31,7 +31,18 @@
       XSD_DOUBLE   = XSD + 'double',
       XSD_BOOLEAN  = XSD + 'boolean',
       XSD_TRUE =  '"true"^^'  + XSD_BOOLEAN,
-      XSD_FALSE = '"false"^^' + XSD_BOOLEAN;
+      XSD_FALSE = '"false"^^' + XSD_BOOLEAN,
+      XSD_PATTERN        = XSD + 'pattern',
+      XSD_MININCLUSIVE   = XSD + 'minInclusive',
+      XSD_MINEXCLUSIVE   = XSD + 'minExclusive',
+      XSD_MAXINCLUSIVE   = XSD + 'maxInclusive',
+      XSD_MAXEXCLUSIVE   = XSD + 'maxExclusive',
+      XSD_LENGTH         = XSD + 'length',
+      XSD_MINLENGTH      = XSD + 'minLength',
+      XSD_MAXLENGTH      = XSD + 'maxLength',
+      XSD_TOTALDIGITS    = XSD + 'totalDigits',
+      XSD_FRACTIONDIGITS = XSD + 'fractionDigits';
+
 
   var base = '', basePath = '', baseRoot = '';
 
@@ -295,12 +306,12 @@ COMMENT			('//'|'#') [^\u000a\u000d]*
 %%
 
 \s+|{COMMENT} /**/
-{ATPNAME_LN}		return 'ATPNAME_LN';
-{ATIRIREF}		return 'ATIRIREF';
-{ATPNAME_NS}		return 'ATPNAME_NS';
-{ATBLANK_NODE_LABEL}	return 'ATBLANK_NODE_LABEL';
+// {ATPNAME_LN}		return 'ATPNAME_LN';
+// {ATIRIREF}		return 'ATIRIREF';
+// {ATPNAME_NS}		return 'ATPNAME_NS';
+// {ATBLANK_NODE_LABEL}	return 'ATBLANK_NODE_LABEL';
 {LANGTAG}		return 'LANGTAG';
-//"@"			return 'AT';
+"@"			return '@';
 {PNAME_LN}		return 'PNAME_LN';
 {IT_BASE}		return 'IT_BASE';
 {IT_PREFIX}		return 'IT_PREFIX';
@@ -572,7 +583,7 @@ _Q_NOT_E_Opt:
     | '!'	;
 
 predicate:
-    a	
+    a	-> RDF_TYPE
     | iri	;
 
 valueClass:
@@ -624,22 +635,19 @@ _Q_O_QIT_AND_E_Or_QIT_OR_E_S_QshapeOrRef_E_C_E_Star:
     | _Q_O_QIT_AND_E_Or_QIT_OR_E_S_QshapeOrRef_E_C_E_Star _O_QIT_AND_E_Or_QIT_OR_E_S_QshapeOrRef_E_C	;
 
 shapeOrRef:
-      ATIRIREF	
-    | ATPNAME_LN	{
-      $1 = $1.substr(1);
-      var namePos = $1.indexOf(':'),
-          prefix = $1.substr(0, namePos),
+      LANGTAG PNAME_LN	{
+      var namePos = $2.indexOf(':'),
+          prefix = $2.substr(0, namePos),
           expansion = Parser.prefixes[prefix];
       if (!expansion) throw new Error('Unknown prefix: ' + prefix);
-      $$ = resolveIRI(expansion + $1.substr(namePos + 1));
+      $$ = resolveIRI(expansion + $2.substr(namePos + 1));
     }
-    | ATPNAME_NS	{
-      $1 = $1.substr(1);
-      $1 = $1.substr(0, $1.length - 1);
-      if (!($1 in Parser.prefixes)) throw new Error('Unknown prefix: ' + $1);
-      $$ = resolveIRI(Parser.prefixes[$1]);
+    | LANGTAG PNAME_NS	{
+      $2 = $2.substr(0, $2.length - 1);
+      if (!($2 in Parser.prefixes)) throw new Error('Unknown prefix: ' + $2);
+      $$ = resolveIRI(Parser.prefixes[$2]);
     }
-    | ATBLANK_NODE_LABEL	
+    | '@' shapeLabel	{ $$ = $2; }
     | shapeDefinition	;
 
 xsFacet:

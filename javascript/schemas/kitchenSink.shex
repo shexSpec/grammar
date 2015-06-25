@@ -1,6 +1,6 @@
 # Issue-simple-annotated.shex - Issue representation in Turtle
 
-BASE <http://base.example/#>
+BASE <http://ex.example/#>
 PREFIX ex: <http://ex.example/#>
 PREFIX UserShape: <http://ex.example/#UserShape>
 PREFIX : <http://ex.example/#>
@@ -38,7 +38,7 @@ UserShape: {                           # A <UserShape> has:
     foaf:givenName xsd:string+,         # at least one givenName.
     foaf:familyName xsd:string,         # one familyName.
     foaf:phone IRI*,                    # any number of phone numbers.
-    foaf:mbox IRI?                      # mayve one FOAF mbox.
+    foaf:mbox IRI?                      # maybe one FOAF mbox.
 }
 
 BASE <../>
@@ -48,7 +48,12 @@ VIRTUAL _:IDshape {
     ex:literal ("a" "b"^^ex:c "c"@en "d"@en-fr){2,3},
     !ex:misc BNODE %foo{ ignored %} %bar{ also ignored %}
     || (^ex:ref (true false),
-        !^ex:miscRef .)
+        !^ex:miscRef .),
+    ex:issues @ex:IssueShape*,
+    ex:seeAlso @ # interjection!
+                 ex:IssueShape*,
+    ex:says @ # interjection2!
+                 :EmployeeShape*,
 }
 
 ex:FooID CLOSED &_:IDshape EXTRA ex:code ex:system {}
