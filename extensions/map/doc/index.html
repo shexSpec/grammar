@@ -1,0 +1,240 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta name="generator" content="emacs" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+    <title>ShExMap</title>
+    <link rel="stylesheet" href="local.css" type="text/css" />
+    <style type="text/css">
+      code { background-color: #dfd; }
+      .constant {
+        /* font-lock-constant-face */
+        color: #008b8b;
+      }
+      .keyword {
+        /* font-lock-keyword-face */
+        color: #a020f0;
+      }
+      .preprocessor {
+        /* font-lock-preprocessor-face */
+        color: #483d8b;
+      }
+      .string {
+        /* font-lock-string-face */
+        color: #8b2252;
+      }
+      .type {
+        /* font-lock-type-face */
+        color: #228b22;
+      }
+      .variable-name {
+        /* font-lock-variable-name-face */
+        color: #a0522d;
+      }
+
+      a {
+        color: inherit;
+        background-color: inherit;
+        font: inherit;
+        text-decoration: inherit;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+    	<script src='//www.w3.org/Tools/respec/respec-w3c-common' async class='remove'></script>
+	    <script class='remove'>
+	      var respecConfig = {
+	          specStatus: "ED",
+	          shortName:  "shexmap",
+            edDraftURI: "http://www.w3.org/2015/06/shexmap/",
+	          editors: [
+	                {   name:       "Eric Prud'hommeaux",
+	                    url:        "http://www.w3.org/People/Eric/",
+	                    company:    "W3C/MIT",
+	                    companyURL: "http://www.w3.org/" }
+	          ],
+	          wg:           "HCLS",
+	          wgURI:        "https://www.w3.org/wiki/HCLSIG",
+	          wgPublicList: "public-semweb-lifesci",
+	          wgPatentURI:  "http://www.w3.org/2004/01/pp-impl/38539/status",
+	      };
+	    </script>
+  </head>
+
+  <body>
+    <div id="abstract">
+      <p>
+        This document motivates intuitive bridges between conventional clinical data representations and domain-specific ontologies that will be useful for knowledge/rule capture.
+      </p>
+    </div>
+
+    <div>
+      <h2 id="GenericObservations">Generic Observations</h2>
+    <p>
+      Most clinical data exchange denormalizes structured observations like blood pressure, APGAR, full blood count panel, etc into a constellation of observations.
+      This encodes the semantics of the observation structure in conventions of terminology codes, e.g. <code>75367002| Blood pressure |</code> , <code>271649006| Systolic blood pressure |</code> and <code>271650006 | Diastolic blood pressure |</code>.
+      Linkage between these are captured by some over-general predicates in the information model, e.g. <a href="http://www.hl7.org/FHIR/2015May/observation-definitions.html#Observation.related">fhir:related</a> or <a href="http://www.hl7.org/documentcenter/public_temp_402A2BAD-1C23-BA17-0C8B774BAD528AA6/standards/vocabulary/vocabulary_tables/infrastructure/vocabulary/vs_ActRelationshipType.html#ActRelationshipHasComponent">rim:COMP - has component</a>.
+    </p>
+
+    <p>
+      RIM resuses Act and ActRelationships to capture these structures, providing a richer vocabulary of relationships captured in ActRelationships type codes.
+      The body site or device for a blood pressure measurement are attached to the blood pressure observation by type codes like 
+      Diagnostic processes like evidence and causality are captured in type codes <a href="http://www.hl7.org/documentcenter/public_temp_402A2BAD-1C23-BA17-0C8B774BAD528AA6/standards/vocabulary/vocabulary_tables/infrastructure/vocabulary/vs_ActRelationshipType.html#ActRelationshipProvidesEvidenceFor">EVID - provides evidence for</a> and <a href="http://www.hl7.org/documentcenter/public_temp_402A2BAD-1C23-BA17-0C8B774BAD528AA6/standards/vocabulary/vocabulary_tables/infrastructure/vocabulary/vs_ActRelationshipType.html#ActRelationshipIsEtiologyFor">CAUS - is etiology for</a>.
+      FHIR has specialized relationships to capture some structural relationships like <a href="http://www.hl7.org/FHIR/2015May/observation-definitions.html#Observation.bodySite_x_">body site</a> or <a href="http://www.hl7.org/FHIR/2015May/observation-definitions.html#Observation.device">device</a>.
+    </p>
+    </div>
+
+    <p>
+      Even if we imposed a more complex information model for structured observations or treatment processes, there would always be some stuff for which there was no defined model.
+      The semweb story "just invent some stuff and maybe it will get popular" isn't well suited to either the skills of the information wranglers or conventional paper-oriented clinical and legal processes.
+    </p>
+
+    <div>
+      <h2 id="DomainModels">Domain models</h2>
+      <div>
+        <h3 id="whyDAMs">Why do we need domain models?</h3>
+        <p>
+          Domain models will likely be more principled in their design and will definitely be more intuitive the physical models involving constellations of observations.
+          A class and relationship hierarchy such as that implemented in ActRelationship type codes will be more simply expressed in an RDF ontology and will leverage existing RDF tooling for model and example verification.          
+        </p>
+      </div>
+
+      <div>
+        <h3 id="availableDAMs">Available DAMs</h3>
+        <p>
+          Projects like CIMI engage clinicians in the development of intuitive domain models, e.g. a blood pressure and a structure with a measurement of a systolic and distolic pressure, and maybe some other stuff like posture or device.
+          Here are a few CIMI models:
+        </p>
+
+        <ul>
+          <li><a href="https://openehr.atlassian.net/wiki/display/CIMI/CIMI+CLINICAL_DATA_GROUP+Model?preview=/1802241/1933330/BP_archetype.png">blood pressure</a></li>
+          <li><a href="http://www.w3.org/2015/Talks/0203-11179-egp/#(6)">APGAR</a></li>
+          <li><a href="https://openehr.atlassian.net/wiki/display/CIMI/CIMI+CLINICAL_DATA_GROUP+Model">full blood count panel</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 id="DAMasOntology">DAM as Ontology</h3>
+        <p>
+          Ideally, development of little DAMs would include identifying all of the intersections between them, creating a more comprehensive DAM, and ontology of clinical artifacts.
+          The body mass used in an estimated glomerular filtration rate is the same as the body mass used in a body mass index.
+          A useful clinical ontology in RDF would capture that by reusing the same identifiers wherever the same concept was reused.
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <h2 id="Mappings">Mappings</h2>
+      <div>
+        <h3 id="whyMappings">Why do we need mappings?</h3>
+        <p>
+          
+        </p>
+        <ul>
+          <li>Definitions for physical representations — presuming the DAM has intuitive and useful semantics mapping a physical model to a logical model provides clear guidelines for implementors who need to work with the corresponding physical models. These take the place of implementation guidelines or instance diagrams.</li>
+          <li>Duplication detection — if two domain models map to the same physical model, either the models are incomplete or they duplicate each other. This will be tempered by the fact that any models that share components will necessarily map to the same physical model.</li>
+          <li>Data/query transformation — mapping between a physical model and a logical model provides users of the logical model, for instance, someone writing clinical decisions support rules, access to working clinical data. Mappings between a logical model and two or more physical models enables mappings between those physical models.</li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 id="mappingMechanism">Mapping mechanism?</h3>
+        <p>
+          As the models are described as ShEx schemas, the mappings between them are captured as shared "variables" in a <span class="preprocessor">%Map{ %}</span> extension.
+          These variables are given full URLs which enables trivial disambiguation, as well as leveraging standard prefix conventions for easier lexical categorization.
+        </p>
+      </div>
+
+      <div>
+        <h3 id="bpexample">Blood pressure example</h3>
+        <div>
+          <h4 id="BPDAM">BP DAM</h4>
+          <div>
+            <h5 id="BPunitsDAM">BP units DAM</h5>
+            <pre class="example">
+<span class="variable-name">&lt;BPunitsDAM&gt;</span> {
+    <span class="variable-name">:systolic</span> {
+        <span class="type">:</span><span class="constant">value</span> <span class="type">xsd:</span><span class="constant">float</span> <span class="preprocessor">%Map{ bp:sysVal %}</span>,
+        <span class="type">:</span><span class="constant">units</span> <span class="type">xsd:</span><span class="constant">string</span> <span class="preprocessor">%Map{ bp:sysUnits %}</span>
+    },
+    <span class="variable-name">:diastolic</span> {
+        <span class="type">:</span><span class="constant">value</span> <span class="type">xsd:</span><span class="constant">float</span> <span class="preprocessor">%Map{ bp:diaVal %}</span>,
+        <span class="type">:</span><span class="constant">units</span> <span class="type">xsd:</span><span class="constant">string</span> <span class="preprocessor">%Map{ bp:diaUnits %}</span>
+    }
+}
+            </pre>
+          </div>
+
+          <div>
+            <h5 id="BPnormalizedDAM">BP normalized DAM</h5>
+            <pre class="example">
+<span class="variable-name">&lt;BPnormalizeDAM&gt;</span> {
+    <span class="keyword">a</span> (<span class="type">:</span><span class="constant">CanonicalBloodPressure</span>),
+    <span class="type">:</span><span class="constant">systolicBPmmHg</span> <span class="type">xsd:</span><span class="constant">float</span> <span class="preprocessor">%Map{ cast(bp:sysVal, bp:sysUnits, "mmHg") %}</span>,
+    <span class="type">:</span><span class="constant">diastolicBPmmHg</span> <span class="type">xsd:</span><span class="constant">float</span> <span class="preprocessor">%Map{ cast(bp:diaUnits, bp:diaUnits, "mmHg") %}</span>
+}
+            </pre>
+          </div>
+        </div>
+
+        <div>
+          <h4 id="BPFHIR">BP FHIR</h4>
+            <pre class="example">
+<span class="variable-name">&lt;BPfhir&gt;</span> {
+    <span class="keyword">a</span> (<span class="type">fhir:</span><span class="constant">Observation</span>)<span class="keyword">?</span>,
+    <span class="variable-name">fhir:coding</span> { <span class="type">fhir:</span><span class="constant">code</span> (<span class="type">sct:</span><span class="constant">Blood_Pressure</span>) },
+    <span class="variable-name">fhir:related</span> { <span class="type">fhir:</span><span class="constant">type</span> (<span class="string">"has-component"</span>), <span class="type">fhir:</span><span class="constant">target</span> <span class="variable-name">@&lt;sysBP&gt;</span> },
+    <span class="variable-name">fhir:related</span> { <span class="type">fhir:</span><span class="constant">type</span> (<span class="string">"has-component"</span>), <span class="type">fhir:</span><span class="constant">target</span> <span class="variable-name">@&lt;diaBP&gt;</span> }
+}
+<span class="variable-name">&lt;sysBP&gt;</span> {
+    <span class="keyword">a</span> (<span class="type">fhir:</span><span class="constant">Observation</span>)<span class="keyword">?</span>,
+    <span class="variable-name">fhir:coding</span> { <span class="type">fhir:</span><span class="constant">code</span> (<span class="type">sct:</span><span class="constant">Systolic_Blood_Pressure</span>) },
+    <span class="variable-name">fhir:valueQuantity</span> {
+        <span class="keyword">a</span> (<span class="type">fhir:</span><span class="constant">Quantity</span>)<span class="keyword">?</span>,
+        <span class="type">fhir:</span><span class="constant">value</span> <span class="type">xsd:</span><span class="constant">float</span> <span class="preprocessor">%Map{ bp:sysVal %}</span>,
+        <span class="type">fhir:</span><span class="constant">units</span> <span class="type">xsd:</span><span class="constant">string</span> <span class="preprocessor">%Map{ bp:sysUnits %}</span>
+    },
+}
+<span class="variable-name">&lt;diaBP&gt;</span> {
+    <span class="keyword">a</span> (<span class="type">fhir:</span><span class="constant">Observation</span>)<span class="keyword">?</span>,
+    <span class="variable-name">fhir:coding</span> { <span class="type">fhir:</span><span class="constant">code</span> (<span class="type">sct:</span><span class="constant">Diastolic_Blood_Pressure</span>) },
+    <span class="variable-name">fhir:valueQuantity</span> {
+        <span class="keyword">a</span> (<span class="type">fhir:</span><span class="constant">Quantity</span>)<span class="keyword">?</span>,
+        <span class="type">fhir:</span><span class="constant">value</span> <span class="type">xsd:</span><span class="constant">float</span> <span class="preprocessor">%Map{ bp:diaVal %}</span>,
+        <span class="type">fhir:</span><span class="constant">units</span> <span class="type">xsd:</span><span class="constant">string</span> <span class="preprocessor">%Map{ bp:diaUnits %}</span>
+    },
+}
+</pre>
+</div>
+</div>
+    </div>
+
+    <div>
+      <h2 id="Issues">Issues</h2>
+      <ul>
+        <li>
+          <em>glue between heads and bodies</em>
+          <p>
+            In principle, shared variables are enough to associated rule heads with rule bodies.
+            We need to test this with compositions in which a DAM uses variables bound in multiple physical models (e.g. a body mass in a BMI) and multiple DAMs used the same variables (e.g. BMI and EGFR).
+          </p>
+        </li>
+        <li>
+          <em>n-ary predicates</em>
+          <p>
+            Mapping directed, labeled graphs to familiar n-ary predicates for use in e.g. Quick (CQL).
+          </p>
+        </li>
+        <li></li>
+      </ul>
+    </div>
+
+    <address>
+      ideas from Claude Nanjo and Mohammad Hekmatnejad:<br/>
+      edited by: <a href="http://www.w3.org/People/Eric/">Eric Prud'hommeaux</a>
+      $id$
+    </address>
+  </body>
+</html>
