@@ -180,6 +180,14 @@
     ret[key] = val;
     return ret;
   }
+
+  // Add location elements
+  function location(ret, lex, yylloc) {
+    // return ret;
+    // debugger;
+    return [ ret, { type: location, offset: lex.matched.length-lex.match.length, line: yylloc.first_line, col: yylloc.first_column, orig: lex.match }
+           ];
+  }
 %}
 
 /* lexical grammar */
@@ -296,30 +304,30 @@ COMMENT			('//'|'#') [^\u000a\u000d]*
 "?"			return '?';
 "-"			return '-';
 "%"			return '%';
-"true"			return 'IT_true';
-"false"			return 'IT_false';
-{DOUBLE}		return 'DOUBLE';
-{DECIMAL}		return 'DECIMAL';
+"true"			%{ yytext = location(XSD_TRUE, yy.lexer, yylloc); return 'IT_true'; %}
+"false"			%{ yytext = location(XSD_FALSE, yy.lexer, yylloc); return 'IT_false'; %}
+{DOUBLE}		%{ yytext = location(createLiteral(yytext.toLowerCase(), XSD_DOUBLE), yy.lexer, yylloc); return 'DOUBLE'; %} // t: 1val1DOUBLE
+{DECIMAL}		%{ yytext = location(createLiteral(yytext, XSD_DECIMAL), yy.lexer, yylloc); return 'DECIMAL'; %} // t: 1val1DECIMAL
 //{EXPONENT}		return 'EXPONENT';
-{INTEGER}		return 'INTEGER';
+{INTEGER}		%{ yytext = location(yytext, yy.lexer, yylloc); return 'INTEGER'; %}
 //{ECHAR}		return 'ECHAR';
 //{WS}			return 'WS';
-{ANON}			return 'ANON';
-{IRIREF}		return 'IRIREF';
-{PNAME_NS}		return 'PNAME_NS';
-"a"			return 'a';
+//{ANON}		%{ yytext = location(yytext, yy.lexer, yylloc); return 'ANON'; %}
+{IRIREF}		%{ yytext = location(resolveIRI(yytext), yy.lexer, yylloc); return 'IRIREF'; %}
+{PNAME_NS}		%{ yytext = location(yytext, yy.lexer, yylloc); return 'PNAME_NS'; %}
+"a"			%{ yytext = location(yytext, yy.lexer, yylloc); return 'a'; %}
 //{PN_CHARS_BASE}	return 'PN_CHARS_BASE';
 //{PN_CHARS_U}		return 'PN_CHARS_U';
 //{PN_CHARS}		return 'PN_CHARS';
-{BLANK_NODE_LABEL}	return 'BLANK_NODE_LABEL';
+{BLANK_NODE_LABEL}	%{ yytext = location(yytext, yy.lexer, yylloc); return 'BLANK_NODE_LABEL'; %}
 //{PN_PREFIX}		return 'PN_PREFIX';
 //{HEX}			return 'HEX';
 //{PERCENT}		return 'PERCENT';
 //{UCHAR}		return 'UCHAR';
-{STRING_LITERAL_LONG1}	return 'STRING_LITERAL_LONG1';
-{STRING_LITERAL_LONG2}	return 'STRING_LITERAL_LONG2';
-{STRING_LITERAL1}	return 'STRING_LITERAL1';
-{STRING_LITERAL2}	return 'STRING_LITERAL2';
+{STRING_LITERAL_LONG1}	%{ yytext = location(unescapeString(yytext, 3), yy.lexer, yylloc); return 'STRING_LITERAL_LONG1'; %} // t: 1val1STRING_LITERAL_LONG1
+{STRING_LITERAL_LONG2}	%{ yytext = location(unescapeString(yytext, 3), yy.lexer, yylloc); return 'STRING_LITERAL_LONG2'; %} // t: 1val1STRING_LITERAL_LONG2
+{STRING_LITERAL1}	%{ yytext = location(unescapeString(yytext, 1), yy.lexer, yylloc); return 'STRING_LITERAL1'; %} // t: 1val1STRING_LITERAL1
+{STRING_LITERAL2}	%{ yytext = location(unescapeString(yytext, 1), yy.lexer, yylloc); return 'STRING_LITERAL2'; %} // t: 1val1STRING_LITERAL2
 //{PN_LOCAL_ESC}	return 'PN_LOCAL_ESC';
 //{PLX}			return 'PLX';
 //{PN_LOCAL}		return 'PN_LOCAL';
@@ -802,21 +810,21 @@ literal:
     | string LANGTAG	-> $1 + lowercase($2) // t: 1val1LANGTAG
     | string '^^' iri	-> $1 + '^^' + $3 // t: 1val1Datatype
     | INTEGER	 -> createLiteral($1, XSD_INTEGER) // t: 1val1INTEGER
-    | DECIMAL	-> createLiteral($1, XSD_DECIMAL) // t: 1val1DECIMAL
-    | DOUBLE	-> createLiteral($1.toLowerCase(), XSD_DOUBLE) // t: 1val1DOUBLE
-    | IT_true	-> XSD_TRUE // t: 1val1true
-    | IT_false	-> XSD_FALSE // t: 1val1false
+    | DECIMAL	
+    | DOUBLE	
+    | IT_true	
+    | IT_false	
     ;
 
 string:
-      STRING_LITERAL1	-> unescapeString($1, 1) // t: 1val1STRING_LITERAL1
-    | STRING_LITERAL2	-> unescapeString($1, 1) // t: 1val1STRING_LITERAL2
-    | STRING_LITERAL_LONG1	 -> unescapeString($1, 3) // t: 1val1STRING_LITERAL_LONG1
-    | STRING_LITERAL_LONG2	 -> unescapeString($1, 3) // t: 1val1STRING_LITERAL_LONG2
+      STRING_LITERAL1	
+    | STRING_LITERAL2	
+    | STRING_LITERAL_LONG1	
+    | STRING_LITERAL_LONG2	
     ;
 
 iri:
-      IRIREF	-> resolveIRI($1) // t: 1dot
+      IRIREF	// t: 1dot
     | PNAME_LN	{ // t:1dotPNex, 1dotPNdefault, ShExParser-test.js/with pre-defined prefixes
         var namePos = $1.indexOf(':'),
             prefix = $1.substr(0, namePos),

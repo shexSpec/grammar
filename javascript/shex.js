@@ -11,6 +11,7 @@ module.exports = {
     // Create a new parser with the given prefixes
     // (Workaround for https://github.com/zaach/jison/issues/241)
     var parser = new Parser();
+    // Parser.yy = parser.yy;
     parser.parse = function () {
       Parser.prefixes = Object.create(prefixesCopy);
       return Parser.prototype.parse.apply(parser, arguments);
