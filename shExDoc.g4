@@ -1,74 +1,100 @@
 // ANTLR4 Equivalent of accompanying bnf, developed in
-// http://www.w3.org/2005/01/yacker/uploads/ShEx2
+// http://www.w3.org/2005/01/yacker/uploads/ShEx3
 
 grammar shExDoc;
 
 
-shExDoc 		: directive* ((shape | start | code+) statement*)? ;  // leading CODE
+shExDoc 		: directive* ((shape | start | startActions+) statement*)? ;  // leading CODE
 statement		: directive | start | shape ;
 directive       : baseDecl | prefixDecl ;
 baseDecl 		: KW_BASE IRIREF ;
 prefixDecl		: KW_PREFIX PNAME_NS IRIREF ;
-start           : KW_START '=' ( shapeLabel | shapeDefinition code* ) ;
-shape           : KW_VIRTUAL? shapeLabel shapeDefinition code* ;
-shapeDefinition : (include | extra | KW_CLOSED)* '{' oneOfShape? '}' ;
-include         : '&' shapeLabel ;
-extra           : (KW_EXTRA | '+') predicate ;
+start           : KW_START '=' ( shapeLabel | shapeDefinition semanticActions ) ;
+shape           : KW_VIRTUAL? shapeLabel shapeDefinition semanticActions ;
+shapeDefinition : (includeSet | inclPropertySet | KW_CLOSED)* '{' oneOfShape? '}' ;
+includeSet      : '&' shapeLabel ;
+inclPropertySet : KW_EXTRA predicate+ ;
 oneOfShape      : someOfShape ( '|' someOfShape )* ;
 someOfShape     : groupShape ( '||' groupShape )* ;
 groupShape      : unaryShape ( ',' unaryShape )* ','? ;
-unaryShape      : id? ( tripleConstraint | include | '(' oneOfShape ')' cardinality? code* ) ;
-id              : '$' shapeLabel ;
+unaryShape      : shapeid? ( tripleConstraint | include | '(' oneOfShape ')' cardinality? semanticActions ) ;
+include			: '&' shapeLabel ;
+shapeid         : '$' shapeLabel ;
 shapeLabel      : iri | blankNode ;
-tripleConstraint : senseFlags? predicate valueClass annotation* cardinality? code* ;
-senseFlags      : '~' '^'? | '^' '!'? ;
-predicate       : RDF_TYPE | iri ;
+tripleConstraint : senseFlags? predicate valueClass annotation* cardinality? semanticActions ;
+senseFlags      : '!' '^'? | '^' '!'? ;
+predicate       : iri ;
 valueClass      : KW_LITERAL xsFacet*
-                | (KW_IRI | KW_NONLITERAL) groupShapeConstr? (KW_PATTERN string)?
-                | KW_BNODE groupShapeConstr?
+                | (KW_IRI | KW_BNODE | KW_NONLITERAL) groupShapeConstr? stringFacet*
                 | datatype
                 | groupShapeConstr
                 | valueSet
                 | '.'
                 ;
-groupShapeConstr : shapeOrRef ((KW_AND | KW_OR) shapeOrRef)* ;
-shapeOrRef      : '@' shapeLabel | shapeDefinition ;
-xsFacet         : KW_PATTERN string
-                | (KW_MININCLUSIVE | KW_MINEXCLUSIVE | KW_MAXINCLUSIVE | KW_MAXEXCLUSIVE) INTEGER
-                | (KW_LENGTH | KW_MINLENGTH | KW_MAXLENGTH) INTEGER
-                | (KW_TOTALDIGITS | KW_FRACTIONDIGITS) INTEGER
-                ;
+groupShapeConstr : shapeOrRef (KW_OR shapeOrRef)* ;
+shapeOrRef      : ATPNAME_LN
+				| ATPNAME_NS
+				| '@' shapeLabel
+				| shapeDefinition
+				;
+xsFacet			: stringFacet
+				| numericFacet;
+stringFacet     : KW_PATTERN string
+				| '~' string
+				| stringLength INTEGER
+				;
+stringLength	: KW_LENGTH | KW_MINLENGTH | KW_MAXLENGTH;
+numericFacet	: numericRange INTEGER
+				| numericLength INTEGER
+				;
+numericRange	: KW_MININCLUSIVE
+			    | KW_MINEXCLUSIVE
+			    | KW_MAXINCLUSIVE
+			    | KW_MAXEXCLUSIVE
+			    ;
+numericLength   : KW_TOTALDIGITS
+				| KW_FRACTIONDIGITS
+				;
 datatype        : iri ;
 annotation      : ';' iri (iri | literal) ;
-cardinality     :  '*' | '+' | '?' | REPEAT_RANGE ;
+cardinality     :  '*'
+				| '+'
+				| '?'
+				| REPEAT_RANGE
+				;
 valueSet        : '(' value* ')' ;
 value           : iriRange
 				| literal
 				;
-iriRange        : iri ('~' exclusion*)? | '.' exclusion+ ;
+iriRange        : iri ('~' exclusion*)?
+				| '.' exclusion+
+				;
 exclusion       : '-' iri '~'? ;
 literal         : rdfLiteral
 				| numericLiteral
 				| booleanLiteral
 				;
-
 numericLiteral  : INTEGER
 				| DECIMAL
 				| DOUBLE
 				;
-rdfLiteral      : string (LANGTAG | '^^' iri)? ;
-booleanLiteral  : KW_TRUE | KW_FALSE ;
+rdfLiteral      : string (LANGTAG | '^^' datatype)? ;
+booleanLiteral  : KW_TRUE
+				| KW_FALSE
+				;
 string          : STRING ;
 iri             : IRIREF
 				| prefixedName
+				| RDF_TYPE
 				;
 prefixedName    : PNAME_LN
 				| PNAME_NS
 				;
-blankNode       : BLANK_NODE_LABEL
-				| ANON
-				;
-code	        : CODE ;
+blankNode       : BLANK_NODE_LABEL ;
+codeDecl		: '%' iri? CODE ;
+startActions	: codeDecl+ ;
+semanticActions	: codeDecl* ;
+
 
 // Keywords
 KW_BASE 			: B A S E ;
@@ -100,18 +126,20 @@ KW_FALSE        	: 'false' ;
 PASS				  : [ \t\r\n]+ -> skip;
 COMMENT				  : '#' ~[\r\n]* -> skip;
 
-CODE                  : '%' ([a-zA-Z+#_][a-zA-Z0-9+#_]*)? '{' (~[%\\] | '\\%')* '%' '}' ;
-REPEAT_RANGE          : '{' INTEGER (',' INTEGER?)? '}' ;
+CODE                  : '{' (~[%\\] | '\\%')* '%' '}' ;
+REPEAT_RANGE          : '{' INTEGER (',' (INTEGER | '*')?)? '}' ;
 RDF_TYPE              : WS+ 'a' WS+ ;
 IRIREF                : '<' (~[\u0000-\u0020=<>\"{}|^`\\] | UCHAR)* '>' ; /* #x00=NULL #01-#x1F=control codes #x20=space */
 PNAME_NS              : PN_PREFIX? ':' ;
 PNAME_LN              : PNAME_NS PN_LOCAL ;
+ATPNAME_NS			  : '@' PN_PREFIX? ':' ;
+ATPNAME_LN			  : '@' PNAME_NS PN_LOCAL ;
 BLANK_NODE_LABEL      : '_:' (PN_CHARS_U | [0-9]) ((PN_CHARS | '.')* PN_CHARS)? ;
 LANGTAG               : '@' [a-zA-Z]+ ('-' [a-zA-Z0-9]+)* ;
 INTEGER               : [+-]? [0-9]+ ;
 DECIMAL               : [+-]? [0-9]* '.' [0-9]+ ;
 DOUBLE                : [+-]? ([0-9]+ '.' [0-9]* EXPONENT | '.'? [0-9]+ EXPONENT) ;
-fragment EXPONENT              : [eE] [+-]? [0-9]+ ;
+fragment EXPONENT     : [eE] [+-]? [0-9]+ ;
 STRING                : STRING_LITERAL1
                       | STRING_LITERAL2
                       | STRING_LITERAL_LONG1
