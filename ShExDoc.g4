@@ -3,6 +3,7 @@
 // Updated to Jul 27 AM ShEx3
 // Updated to Aug 23 AM ShEx3 (last change was EGP 20150820)
 // Sept 21 AM disallow single internal unary (e.g. {(:p .{2}){3}}
+//            Change (non-standard) "codeLabel" to "productionName"
 
 grammar ShExDoc;
 
