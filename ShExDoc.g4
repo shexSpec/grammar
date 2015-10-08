@@ -54,7 +54,7 @@ senseFlags      : '!' '^'?
 				| '^' '!'?
 				;
 predicate       : iri
-				| RDF_TYPE
+				| rdfType
 				;
 valueClassOrRef : valueClass
 				| valueClassLabel
@@ -141,6 +141,7 @@ codeDecl		: '%' (productionName | iri? CODE?) ;
 productionName  : UCASE_LABEL ;
 startActions	: codeDecl+ ;
 semanticActions	: codeDecl* ;
+rdfType			: RDF_TYPE ;
 
 
 // Keywords
@@ -175,7 +176,7 @@ PASS				  : [ \t\r\n]+ -> skip;
 COMMENT				  : '#' ~[\r\n]* -> skip;
 
 CODE                  : '{' (~[%\\] | '\\' [%\\] | UCHAR)* '%' '}' ;
-RDF_TYPE              : WS+ 'a' WS+ ;
+RDF_TYPE              : 'a' ;
 IRIREF                : '<' (~[\u0000-\u0020=<>\"{}|^`\\] | UCHAR)* '>' ; /* #x00=NULL #01-#x1F=control codes #x20=space */
 PNAME_NS              : PN_PREFIX? ':' ;
 PNAME_LN              : PNAME_NS PN_LOCAL ;
