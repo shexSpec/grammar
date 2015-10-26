@@ -4,6 +4,7 @@
 // Updated to Aug 23 AM ShEx3 (last change was EGP 20150820)
 // Sept 21 AM disallow single internal unary (e.g. {(:p .{2}){3}}
 //            Change (non-standard) "codeLabel" to "productionName"
+// Oct 26 - change annotation predicate to include rdftype (how did this slip in to the production rules?
 
 grammar ShExDoc;
 
@@ -91,7 +92,7 @@ numericLength   : KW_TOTALDIGITS
 				| KW_FRACTIONDIGITS
 				;
 datatype        : iri ;
-annotation      : ';' iri (iri | literal) ;
+annotation      : ';' predicate (iri | literal) ;
 // BNF: cardinality ::= '*' | '+' | '?' | REPEAT_RANGE
 cardinality     :  '*'
 				| '+'
