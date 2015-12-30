@@ -5,6 +5,7 @@
 // Sept 21 AM disallow single internal unary (e.g. {(:p .{2}){3}}
 //            Change (non-standard) "codeLabel" to "productionName"
 // Oct 26 - change annotation predicate to include rdftype (how did this slip in to the production rules?
+// Dec 30 - update to match http://www.w3.org/2005/01/yacker/uploads/ShEx2/bnf with last change "EGP 20151120"
 
 grammar ShExDoc;
 
@@ -13,14 +14,17 @@ shExDoc 		: directive* ((notStartAction | startActions) statement*)? EOF;  // le
 statement		: directive | notStartAction ;
 notStartAction  : start
 			    | shape
-			    | valueClassDefinition
+			    | valueExprDefinition
 			    ;
 directive       : baseDecl
 				| prefixDecl
 				;
-valueClassDefinition : valueClassLabel ('=' valueClassExpr semanticActions | KW_EXTERNAL) ;
-valueClassExpr  : valueClass ('+' valueClass)* ;
-valueClassLabel : '$' iri ;
+valueExprDefinition : valueExprLabel ('=' valueClassExpr semanticActions | KW_EXTERNAL) ;
+valueClassExpr  : valueClass valueClassJuncts? ;
+valueClassJuncts : (KW_OR valueClass)+
+				|  (KW_AND valueClass)+
+				;
+valueExprLabel  : '$' (iri | blankNode) ;
 baseDecl 		: KW_BASE  IRIREF ;
 prefixDecl		: KW_PREFIX PNAME_NS IRIREF ;
 start           : KW_START '=' ( shapeLabel |
@@ -41,7 +45,7 @@ groupShape      : singleElementGroup
 				;
 singleElementGroup : unaryShape ','? ;
 multiElementGroup : unaryShape (',' unaryShape)+ ','? ;
-unaryShape      :  tripleConstraint
+unaryShape      : tripleConstraint
 				| include
 				| encapsulatedShape
 				;
@@ -50,24 +54,24 @@ include			: '&' shapeLabel ;
 shapeLabel      : iri
 				| blankNode
 				;
-tripleConstraint : senseFlags? predicate valueClassOrRef cardinality? annotation* semanticActions;
+tripleConstraint : senseFlags? predicate valueClassExpr cardinality? annotation* semanticActions;
 senseFlags      : '!' '^'?
-				| '^' '!'?
+				| '^' '!'?		// inverse not
 				;
+// BNF: predicate ::= iri | RDF_TYPE
 predicate       : iri
 				| rdfType
 				;
-valueClassOrRef : valueClass
-				| valueClassLabel
+valueClass		: '!'? negatableValueClass;
+negatableValueClass : KW_LITERAL xsFacet*		# valueClassLiteral
+				| (KW_IRI | KW_BNODE | KW_NONLITERAL) shapeOrRef? stringFacet*	# valueClassNonLiteral
+				| datatype xsFacet*				# valueClassDatatype
+				| shapeOrRef stringFacet*		# valueClassGroup
+				| valueSet						# valueClassValueSet
+				| valueExprLabel				# valueClassZ
+				| '.'							# valueClassAny			// no constraint
+				| '[' valueClassExpr ']'		# valueClassNested
 				;
-valueClass      : KW_LITERAL xsFacet*		# valueClassLiteral
-                | (KW_IRI | KW_BNODE | KW_NONLITERAL) groupShapeConstr? stringFacet*	# valueClassNonLiteral
-                | datatype xsFacet*       	# valueClassDatatype
-                | groupShapeConstr			# valueClassGroup
-                | valueSet					# valueClassValueSet
-                | '.'						# valueClassAny		// no constraint
-                ;
-groupShapeConstr : shapeOrRef (KW_OR shapeOrRef)* ;
 shapeOrRef      : ATPNAME_LN
 				| ATPNAME_NS
 				| '@' shapeLabel
@@ -76,7 +80,7 @@ shapeOrRef      : ATPNAME_LN
 xsFacet			: stringFacet
 				| numericFacet;
 stringFacet     : KW_PATTERN string
-				| '~' string
+				| '~' string			// shortcut for "PATTERN"
 				| stringLength INTEGER
 				;
 stringLength	: KW_LENGTH | KW_MINLENGTH | KW_MAXLENGTH;
@@ -138,8 +142,8 @@ prefixedName    : PNAME_LN
 				;
 blankNode       : BLANK_NODE_LABEL ;
 // BNF: codeDecl ::= '%' iri? CODE
-codeDecl		: '%' (productionName | iri? CODE?) ;
-productionName  : UCASE_LABEL ;
+codeDecl		: '%' (productionName '%' | iri? CODE) ;
+productionName  : PRODUCTION_LABEL ;
 startActions	: codeDecl+ ;
 semanticActions	: codeDecl* ;
 rdfType			: RDF_TYPE ;
@@ -188,7 +192,7 @@ LANGTAG               : '@' [a-zA-Z]+ ('-' [a-zA-Z0-9]+)* ;
 INTEGER               : [+-]? [0-9]+ ;
 DECIMAL               : [+-]? [0-9]* '.' [0-9]+ ;
 DOUBLE                : [+-]? ([0-9]+ '.' [0-9]* EXPONENT | '.'? [0-9]+ EXPONENT) ;
-UCASE_LABEL           : [A-Z_][A-Z0-9_]* ;
+PRODUCTION_LABEL      : [A-Za-z_][A-Za-z0-9_]* ;
 fragment EXPONENT     : [eE] [+-]? [0-9]+ ;
 
 STRING_LITERAL1       : '\'' (~[\u0027\u005C\u000A\u000D] | ECHAR | UCHAR)* '\'' ; /* #x27=' #x5C=\ #xA=new line #xD=carriage return */
