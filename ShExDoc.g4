@@ -6,6 +6,8 @@
 //            Change (non-standard) "codeLabel" to "productionName"
 // Oct 26 - change annotation predicate to include rdftype (how did this slip in to the production rules?
 // Dec 30 - update to match http://www.w3.org/2005/01/yacker/uploads/ShEx2/bnf with last change "EGP 20151120"
+// May 23, 2016 - Update to match http://www.w3.org/2005/01/yacker/uploads/ShEx2/bnf with last change "EGP20160520" AND ';' separator and '//' for annotations
+// May 24, 2016 - EGP20150424
 
 grammar ShExDoc;
 
@@ -20,7 +22,8 @@ directive       : baseDecl
 				| prefixDecl
 				;
 valueExprDefinition : valueExprLabel ('=' valueClassExpr semanticActions | KW_EXTERNAL) ;
-valueClassExpr  : valueClass valueClassJuncts? ;
+valueClassExpr  : valueClass valueClassJuncts?
+				| '(' valueClass valueClassJuncts? ')' ;
 valueClassJuncts : (KW_OR valueClass)+
 				|  (KW_AND valueClass)+
 				;
@@ -29,7 +32,7 @@ baseDecl 		: KW_BASE  IRIREF ;
 prefixDecl		: KW_PREFIX PNAME_NS IRIREF ;
 start           : KW_START '=' ( shapeLabel |
  								 shapeDefinition semanticActions)  ;
-shape           : KW_VIRTUAL? shapeLabel shapeDefinition semanticActions ;
+shape           : shapeLabel nonLiteralKind? stringFacet* shapeDefinition (KW_AND shapeDefinition)* semanticActions ;
 shapeDefinition : (includeSet | inclPropertySet | KW_CLOSED)* '{' someOfShape? '}' ;
 includeSet      : '&' shapeLabel+ ;
 inclPropertySet : KW_EXTRA predicate+ ;
@@ -43,8 +46,8 @@ innerShape      : multiElementGroup
 groupShape      : singleElementGroup
 				| multiElementGroup
 				;
-singleElementGroup : unaryShape ','? ;
-multiElementGroup : unaryShape (',' unaryShape)+ ','? ;
+singleElementGroup : unaryShape (','|';')? ;
+multiElementGroup : unaryShape ((','|';') unaryShape)+ (','|';')? ;
 unaryShape      : tripleConstraint
 				| include
 				| encapsulatedShape
@@ -64,13 +67,16 @@ predicate       : iri
 				;
 valueClass		: '!'? negatableValueClass;
 negatableValueClass : KW_LITERAL xsFacet*		# valueClassLiteral
-				| (KW_IRI | KW_BNODE | KW_NONLITERAL) shapeOrRef? stringFacet*	# valueClassNonLiteral
+				| nonLiteralKind shapeOrRef? stringFacet*	# valueClassNonLiteral
 				| datatype xsFacet*				# valueClassDatatype
 				| shapeOrRef stringFacet*		# valueClassGroup
 				| valueSet						# valueClassValueSet
 				| valueExprLabel				# valueClassZ
 				| '.'							# valueClassAny			// no constraint
-				| '[' valueClassExpr ']'		# valueClassNested
+				;
+nonLiteralKind  : KW_IRI
+				| KW_BNODE
+				| KW_NONLITERAL
 				;
 shapeOrRef      : ATPNAME_LN
 				| ATPNAME_NS
@@ -79,12 +85,12 @@ shapeOrRef      : ATPNAME_LN
 				;
 xsFacet			: stringFacet
 				| numericFacet;
-stringFacet     : KW_PATTERN string
+stringFacet     : stringLength INTEGER
+			    | KW_PATTERN string
 				| '~' string			// shortcut for "PATTERN"
-				| stringLength INTEGER
 				;
 stringLength	: KW_LENGTH | KW_MINLENGTH | KW_MAXLENGTH;
-numericFacet	: numericRange numericLiteral
+numericFacet	: numericRange (numericLiteral | string '^^' datatype)
 				| numericLength INTEGER
 				;
 numericRange	: KW_MININCLUSIVE
@@ -96,8 +102,7 @@ numericLength   : KW_TOTALDIGITS
 				| KW_FRACTIONDIGITS
 				;
 datatype        : iri ;
-annotation      : ';' predicate (iri | literal) ;
-// BNF: cardinality ::= '*' | '+' | '?' | REPEAT_RANGE
+annotation      : '//' predicate (iri | literal) ;
 cardinality     :  '*'
 				| '+'
 				| '?'
@@ -109,7 +114,7 @@ min_range       : INTEGER ;
 max_range       : INTEGER
 				| '*'
 				;
-valueSet        : '(' value* ')' ;
+valueSet		: '[' value* ']' ;
 value           : iriRange
 				| literal
 				;
@@ -141,9 +146,7 @@ prefixedName    : PNAME_LN
 				| PNAME_NS
 				;
 blankNode       : BLANK_NODE_LABEL ;
-// BNF: codeDecl ::= '%' iri? CODE
-codeDecl		: '%' (productionName '%' | iri? CODE) ;
-productionName  : PRODUCTION_LABEL ;
+codeDecl		: '%' iri (CODE | '%') ;
 startActions	: codeDecl+ ;
 semanticActions	: codeDecl* ;
 rdfType			: RDF_TYPE ;
@@ -192,7 +195,7 @@ LANGTAG               : '@' [a-zA-Z]+ ('-' [a-zA-Z0-9]+)* ;
 INTEGER               : [+-]? [0-9]+ ;
 DECIMAL               : [+-]? [0-9]* '.' [0-9]+ ;
 DOUBLE                : [+-]? ([0-9]+ '.' [0-9]* EXPONENT | '.'? [0-9]+ EXPONENT) ;
-PRODUCTION_LABEL      : [A-Za-z_][A-Za-z0-9_]* ;
+
 fragment EXPONENT     : [eE] [+-]? [0-9]+ ;
 
 STRING_LITERAL1       : '\'' (~[\u0027\u005C\u000A\u000D] | ECHAR | UCHAR)* '\'' ; /* #x27=' #x5C=\ #xA=new line #xD=carriage return */
