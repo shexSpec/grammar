@@ -8,6 +8,7 @@
 // Dec 30 - update to match http://www.w3.org/2005/01/yacker/uploads/ShEx2/bnf with last change "EGP 20151120"
 // May 23, 2016 - Update to match http://www.w3.org/2005/01/yacker/uploads/ShEx2/bnf with last change "EGP20160520" AND ';' separator and '//' for annotations
 // May 24, 2016 - EGP20150424
+// Aug 11, 2016 - EGP20160708
 
 grammar ShExDoc;
 
@@ -16,23 +17,18 @@ shExDoc 		: directive* ((notStartAction | startActions) statement*)? EOF;  // le
 statement		: directive | notStartAction ;
 notStartAction  : start
 			    | shape
-			    | valueExprDefinition
 			    ;
 directive       : baseDecl
 				| prefixDecl
 				;
-valueExprDefinition : valueExprLabel ('=' valueClassExpr semanticActions | KW_EXTERNAL) ;
-valueClassExpr  : valueClass valueClassJuncts?
-				| '(' valueClass valueClassJuncts? ')' ;
-valueClassJuncts : (KW_OR valueClass)+
-				|  (KW_AND valueClass)+
-				;
-valueExprLabel  : '$' (iri | blankNode) ;
+shapeExpression : shapeDisjunction ;
+shapeDisjunction : shapeConjunction (KW_OR shapeConjunction)* ;
+shapeConjunction : negShapeAtom (KW_AND negShapeAtom)* ;
+negShapeAtom    : (KW_NOT | '!')? shapeAtom ;
 baseDecl 		: KW_BASE  IRIREF ;
 prefixDecl		: KW_PREFIX PNAME_NS IRIREF ;
-start           : KW_START '=' ( shapeLabel |
- 								 shapeDefinition semanticActions)  ;
-shape           : shapeLabel nonLiteralKind? stringFacet* shapeDefinition (KW_AND shapeDefinition)* semanticActions ;
+start           : KW_START '=' shapeExpression semanticActions ;
+shape           : shapeLabel (stringFacet* shapeExpression | KW_EXTERNAL) semanticActions ;
 shapeDefinition : (includeSet | inclPropertySet | KW_CLOSED)* '{' someOfShape? '}' ;
 includeSet      : '&' shapeLabel+ ;
 inclPropertySet : KW_EXTRA predicate+ ;
@@ -46,18 +42,26 @@ innerShape      : multiElementGroup
 groupShape      : singleElementGroup
 				| multiElementGroup
 				;
-singleElementGroup : unaryShape (','|';')? ;
-multiElementGroup : unaryShape ((','|';') unaryShape)+ (','|';')? ;
+singleElementGroup : unaryShape ';'? ;
+multiElementGroup : unaryShape (';' unaryShape)+ ';'? ;
+valueConstraint : KW_UNIQUE '(' (KW_FOCUS ',')? accessor (',' accessor)* ')' # valueConstraintUnique
+				| accessor ('<' | '=' | '!=' | '>') accessor 				 # valueConstraintAccessor
+				;
+accessor		: productionLabel 							# accessorProductionLabel
+				| KW_LANGTAG '(' productionLabel ')'		# accessorLangTag
+				| KW_DATATYPE '(' productionLabel ')'		# accessorDataType
+				;
 unaryShape      : tripleConstraint
 				| include
 				| encapsulatedShape
+				| valueConstraint
 				;
 encapsulatedShape  : '(' innerShape ')' cardinality? annotation* semanticActions ;
 include			: '&' shapeLabel ;
 shapeLabel      : iri
 				| blankNode
 				;
-tripleConstraint : senseFlags? predicate valueClassExpr cardinality? annotation* semanticActions;
+tripleConstraint : senseFlags? predicate shapeExpression cardinality? annotation* semanticActions;
 senseFlags      : '!' '^'?
 				| '^' '!'?		// inverse not
 				;
@@ -65,14 +69,13 @@ senseFlags      : '!' '^'?
 predicate       : iri
 				| rdfType
 				;
-valueClass		: '!'? negatableValueClass;
-negatableValueClass : KW_LITERAL xsFacet*		# valueClassLiteral
-				| nonLiteralKind shapeOrRef? stringFacet*	# valueClassNonLiteral
-				| datatype xsFacet*				# valueClassDatatype
-				| shapeOrRef stringFacet*		# valueClassGroup
-				| valueSet						# valueClassValueSet
-				| valueExprLabel				# valueClassZ
-				| '.'							# valueClassAny			// no constraint
+shapeAtom       : KW_LITERAL xsFacet*		# shapeAtomLiteral
+				| nonLiteralKind shapeOrRef? stringFacet*	# shapeAtomNonLiteral
+				| datatype xsFacet*				# shapeAtomDataType
+				| shapeOrRef stringFacet*		# shapeAtomGroup
+				| valueSet						# shapeAtomValueSet
+				| '(' shapeExpression ')'		# shapeAtomShapeExpression
+				| '.'							# shapeAtomAny			// no constraint
 				;
 nonLiteralKind  : KW_IRI
 				| KW_BNODE
@@ -148,7 +151,8 @@ prefixedName    : PNAME_LN
 blankNode       : BLANK_NODE_LABEL ;
 codeDecl		: '%' iri (CODE | '%') ;
 startActions	: codeDecl+ ;
-semanticActions	: codeDecl* ;
+semanticActions	: (codeDecl | productionLabel)* ;
+productionLabel : '$' (iri | blankNode) ;
 rdfType			: RDF_TYPE ;
 
 
