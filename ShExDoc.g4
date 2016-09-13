@@ -44,17 +44,9 @@ groupShape      : singleElementGroup
 				;
 singleElementGroup : unaryShape ';'? ;
 multiElementGroup : unaryShape (';' unaryShape)+ ';'? ;
-valueConstraint : KW_UNIQUE '(' (KW_FOCUS ',')? accessor (',' accessor)* ')' # valueConstraintUnique
-				| accessor ('<' | '=' | '!=' | '>') accessor 				 # valueConstraintAccessor
-				;
-accessor		: productionLabel 							# accessorProductionLabel
-				| KW_LANGTAG '(' productionLabel ')'		# accessorLangTag
-				| KW_DATATYPE '(' productionLabel ')'		# accessorDataType
-				;
-unaryShape      : tripleConstraint
+unaryShape      : productionLabel? tripleConstraint
 				| include
-				| encapsulatedShape
-				| valueConstraint
+				| productionLabel? encapsulatedShape
 				;
 encapsulatedShape  : '(' innerShape ')' cardinality? annotation* semanticActions ;
 include			: '&' shapeLabel ;
@@ -69,8 +61,8 @@ senseFlags      : '!' '^'?
 predicate       : iri
 				| rdfType
 				;
-shapeAtom       : KW_LITERAL xsFacet*		# shapeAtomLiteral
-				| nonLiteralKind shapeOrRef? stringFacet*	# shapeAtomNonLiteral
+shapeAtom       : KW_LITERAL xsFacet*			# shapeAtomLiteral
+				| nonLiteralKind stringFacet* shapeOrRef?	# shapeAtomNonLiteral
 				| datatype xsFacet*				# shapeAtomDataType
 				| shapeOrRef stringFacet*		# shapeAtomGroup
 				| valueSet						# shapeAtomValueSet
@@ -151,7 +143,7 @@ prefixedName    : PNAME_LN
 blankNode       : BLANK_NODE_LABEL ;
 codeDecl		: '%' iri (CODE | '%') ;
 startActions	: codeDecl+ ;
-semanticActions	: (codeDecl | productionLabel)* ;
+semanticActions	: codeDecl* ;
 productionLabel : '$' (iri | blankNode) ;
 rdfType			: RDF_TYPE ;
 
@@ -180,6 +172,7 @@ KW_MINLENGTH    	: M I N L E N G T H ;
 KW_MAXLENGTH    	: M A X L E N G T H ;
 KW_TOTALDIGITS  	: T O T A L D I G I T S ;
 KW_FRACTIONDIGITS 	: F R A C T I O N D I G I T S ;
+KW_NOT				: N O T ;
 KW_TRUE         	: 'true' ;
 KW_FALSE        	: 'false' ;
 
