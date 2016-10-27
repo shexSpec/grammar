@@ -13,7 +13,7 @@
 // Sep 24, 2016 - Switched to TT grammar (vs inner and outer shapes)
 // Sep 26, 2016 - Refactored to match https://raw.githubusercontent.com/shexSpec/shex.js/7eb770fe2b5bab9edfe9558dc07bb6f6dcdf5d23/doc/bnf
 // Oct 27, 2016 - Added comments to '*', '*' and '?' to facilitate parsing
-// Oct 27, 2016 - Added qualifier rule tobe reused by shapeDefinition and inlineShapeDefinition
+// Oct 27, 2016 - Added qualifier rule to be reused by shapeDefinition and inlineShapeDefinition
 // Oct 27, 2016 - Added negation rule
 
 grammar ShExDoc;
