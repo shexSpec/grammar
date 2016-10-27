@@ -12,6 +12,9 @@
 // Sep 14, 2016 - Revised to match Eric's latest reshuffle
 // Sep 24, 2016 - Switched to TT grammar (vs inner and outer shapes)
 // Sep 26, 2016 - Refactored to match https://raw.githubusercontent.com/shexSpec/shex.js/7eb770fe2b5bab9edfe9558dc07bb6f6dcdf5d23/doc/bnf
+// Oct 27, 2016 - Added comments to '*', '*' and '?' to facilitate visiting the AST
+// Oct 27, 2016 - Added qualifier rule to facilitate visiting the AST
+// Oct 27, 2016 - Added negation rule to reuse and simplify visiting the AST and reuse negations
 
 grammar ShExDoc;
 
@@ -29,12 +32,14 @@ shapeExprDecl   : shapeLabel (shapeExpression | KW_EXTERNAL) ;
 shapeExpression : shapeOr ;
 shapeOr  		: shapeAnd (KW_OR shapeAnd)* ;
 shapeAnd		: shapeNot (KW_AND shapeNot)* ;
-shapeNot	    : (KW_NOT | '!')? shapeAtom ;
+shapeNot	    : negation? shapeAtom ;
+negation        : KW_NOT | '!' ;
 inlineShapeExpression : inlineShapeOr ;
 inlineShapeOr   : inlineShapeAnd (KW_OR inlineShapeAnd)* ;
 inlineShapeAnd  : inlineShapeNot (KW_AND inlineShapeNot)* ;
-inlineShapeNot  : (KW_NOT | '!')? inlineShapeAtom ;
-shapeDefinition : (includeSet | extraPropertySet | KW_CLOSED)* '{' someOfShape? '}' annotation* semanticActions ;
+inlineShapeNot  : negation? inlineShapeAtom ;
+shapeDefinition : qualifier* '{' someOfShape? '}' annotation* semanticActions ;
+qualifier       : includeSet | extraPropertySet | KW_CLOSED ;
 inlineShapeDefinition : (includeSet | extraPropertySet | KW_CLOSED)* '{' someOfShape? '}' ;
 extraPropertySet : KW_EXTRA predicate+ ;
 someOfShape     : groupShape
@@ -128,10 +133,10 @@ predicate       : iri
 				;
 rdfType			: RDF_TYPE ;
 datatype        : iri ;
-cardinality     :  '*'
-				| '+'
-				| '?'
-				| repeatRange
+cardinality     :  '*'         # starCardinality
+				| '+'          # plusCardinality
+				| '?'          # optionalCardinality
+				| repeatRange  # repeatCardinality
 				;
 // BNF: REPEAT_RANGE ::= '{' INTEGER (',' (INTEGER | '*')?)? '}'
 repeatRange     : '{' min_range (',' max_range?)? '}' ;
