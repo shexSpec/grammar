@@ -6,33 +6,37 @@
 //            Change (non-standard) "codeLabel" to "productionName"
 // Oct 26 - change annotation predicate to include rdftype (how did this slip in to the production rules?
 // Dec 30 - update to match http://www.w3.org/2005/01/yacker/uploads/ShEx2/bnf with last change "EGP 20151120"
+// May 23, 2016 - Update to match http://www.w3.org/2005/01/yacker/uploads/ShEx2/bnf with last change "EGP20160520" AND ';' separator and '//' for annotations
+// May 24, 2016 - EGP20150424
+// Aug 11, 2016 - EGP20160708
+// Sep 14, 2016 - Revised to match Eric's latest reshuffle
+// Sep 24, 2016 - Switched to TT grammar (vs inner and outer shapes)
+// Sep 26, 2016 - Refactored to match https://raw.githubusercontent.com/shexSpec/shex.js/7eb770fe2b5bab9edfe9558dc07bb6f6dcdf5d23/doc/bnf
 
 grammar ShExDoc;
 
-
 shExDoc 		: directive* ((notStartAction | startActions) statement*)? EOF;  // leading CODE
-statement		: directive | notStartAction ;
-notStartAction  : start
-			    | shape
-			    | valueExprDefinition
-			    ;
 directive       : baseDecl
 				| prefixDecl
 				;
-valueExprDefinition : valueExprLabel ('=' valueClassExpr semanticActions | KW_EXTERNAL) ;
-valueClassExpr  : valueClass valueClassJuncts? ;
-valueClassJuncts : (KW_OR valueClass)+
-				|  (KW_AND valueClass)+
-				;
-valueExprLabel  : '$' (iri | blankNode) ;
 baseDecl 		: KW_BASE  IRIREF ;
 prefixDecl		: KW_PREFIX PNAME_NS IRIREF ;
-start           : KW_START '=' ( shapeLabel |
- 								 shapeDefinition semanticActions)  ;
-shape           : KW_VIRTUAL? shapeLabel shapeDefinition semanticActions ;
-shapeDefinition : (includeSet | inclPropertySet | KW_CLOSED)* '{' someOfShape? '}' ;
-includeSet      : '&' shapeLabel+ ;
-inclPropertySet : KW_EXTRA predicate+ ;
+notStartAction  : start | shapeExprDecl ;
+start           : KW_START '=' shapeExpression ;
+startActions	: codeDecl+ ;
+statement 		: directive | notStartAction ;
+shapeExprDecl   : shapeLabel (shapeExpression | KW_EXTERNAL) ;
+shapeExpression : shapeOr ;
+shapeOr  		: shapeAnd (KW_OR shapeAnd)* ;
+shapeAnd		: shapeNot (KW_AND shapeNot)* ;
+shapeNot	    : (KW_NOT | '!')? shapeAtom ;
+inlineShapeExpression : inlineShapeOr ;
+inlineShapeOr   : inlineShapeAnd (KW_OR inlineShapeAnd)* ;
+inlineShapeAnd  : inlineShapeNot (KW_AND inlineShapeNot)* ;
+inlineShapeNot  : (KW_NOT | '!')? inlineShapeAtom ;
+shapeDefinition : (includeSet | extraPropertySet | KW_CLOSED)* '{' someOfShape? '}' annotation* semanticActions ;
+inlineShapeDefinition : (includeSet | extraPropertySet | KW_CLOSED)* '{' someOfShape? '}' ;
+extraPropertySet : KW_EXTRA predicate+ ;
 someOfShape     : groupShape
 				| multiElementSomeOf
 				;
@@ -43,48 +47,42 @@ innerShape      : multiElementGroup
 groupShape      : singleElementGroup
 				| multiElementGroup
 				;
-singleElementGroup : unaryShape ','? ;
-multiElementGroup : unaryShape (',' unaryShape)+ ','? ;
-unaryShape      : tripleConstraint
+singleElementGroup : unaryShape ';'? ;
+multiElementGroup : unaryShape (';' unaryShape)+ ';'? ;
+unaryShape      : productionLabel? (tripleConstraint | encapsulatedShape)
 				| include
-				| encapsulatedShape
 				;
 encapsulatedShape  : '(' innerShape ')' cardinality? annotation* semanticActions ;
-include			: '&' shapeLabel ;
-shapeLabel      : iri
-				| blankNode
+shapeAtom		: nodeConstraint shapeOrRef?    # shapeAtomNodeConstraint
+				| shapeOrRef                    # shapeAtomShapeOrRef
+				| '(' shapeExpression ')'		# shapeAtomShapeExpression
+				| '.'							# shapeAtomAny			// no constraint
 				;
-tripleConstraint : senseFlags? predicate valueClassExpr cardinality? annotation* semanticActions;
-senseFlags      : '!' '^'?
-				| '^' '!'?		// inverse not
+inlineShapeAtom : nodeConstraint inlineShapeOrRef? # inlineShapeAtomNodeConstraint
+				| inlineShapeOrRef nodeConstraint? # inlineShapeAtomShapeOrRef
+				| '(' shapeExpression ')'		# inlineShapeAtomShapeExpression
+				| '.'							# inlineShapeAtomAny   // no constraint
 				;
-// BNF: predicate ::= iri | RDF_TYPE
-predicate       : iri
-				| rdfType
+nodeConstraint  : KW_LITERAL xsFacet*			# nodeConstraintLiteral
+				| nonLiteralKind stringFacet*	# nodeConstraintNonLiteral
+				| datatype xsFacet*				# nodeConstraintDatatype
+				| valueSet xsFacet*				# nodeConstraintValueSet
+				| xsFacet+						# nodeConstraintFacet
 				;
-valueClass		: '!'? negatableValueClass;
-negatableValueClass : KW_LITERAL xsFacet*		# valueClassLiteral
-				| (KW_IRI | KW_BNODE | KW_NONLITERAL) shapeOrRef? stringFacet*	# valueClassNonLiteral
-				| datatype xsFacet*				# valueClassDatatype
-				| shapeOrRef stringFacet*		# valueClassGroup
-				| valueSet						# valueClassValueSet
-				| valueExprLabel				# valueClassZ
-				| '.'							# valueClassAny			// no constraint
-				| '[' valueClassExpr ']'		# valueClassNested
-				;
-shapeOrRef      : ATPNAME_LN
-				| ATPNAME_NS
-				| '@' shapeLabel
-				| shapeDefinition
+nonLiteralKind  : KW_IRI
+				| KW_BNODE
+				| KW_NONLITERAL
 				;
 xsFacet			: stringFacet
 				| numericFacet;
-stringFacet     : KW_PATTERN string
+stringFacet     : stringLength INTEGER
+			    | KW_PATTERN string
 				| '~' string			// shortcut for "PATTERN"
-				| stringLength INTEGER
 				;
-stringLength	: KW_LENGTH | KW_MINLENGTH | KW_MAXLENGTH;
-numericFacet	: numericRange numericLiteral
+stringLength	: KW_LENGTH
+				| KW_MINLENGTH
+				| KW_MAXLENGTH;
+numericFacet	: numericRange (numericLiteral | string '^^' datatype)
 				| numericLength INTEGER
 				;
 numericRange	: KW_MININCLUSIVE
@@ -95,9 +93,41 @@ numericRange	: KW_MININCLUSIVE
 numericLength   : KW_TOTALDIGITS
 				| KW_FRACTIONDIGITS
 				;
+tripleConstraint : senseFlags? predicate inlineShapeExpression cardinality? annotation* semanticActions ;
+senseFlags      : '!' '^'?
+				| '^' '!'?		// inverse not
+				;
+valueSet		: '[' valueSetValue* ']' ;
+valueSetValue   : iriRange
+				| literal
+				;
+iriRange        : iri ('~' exclusion*)?
+				| '.' exclusion+
+				;
+exclusion       : '-' iri '~'? ;
+literal         : rdfLiteral
+				| numericLiteral
+				| booleanLiteral
+				;
+shapeOrRef      : ATPNAME_LN
+				| ATPNAME_NS
+				| '@' shapeLabel
+				| shapeDefinition
+				;
+inlineShapeOrRef : ATPNAME_LN
+				| ATPNAME_NS
+				| '@' shapeLabel
+				| inlineShapeDefinition
+				;
+include			: '&' shapeLabel ;
+semanticActions	: codeDecl* ;
+annotation      : '//' predicate (iri | literal) ;
+// BNF: predicate ::= iri | RDF_TYPE
+predicate       : iri
+				| rdfType
+				;
+rdfType			: RDF_TYPE ;
 datatype        : iri ;
-annotation      : ';' predicate (iri | literal) ;
-// BNF: cardinality ::= '*' | '+' | '?' | REPEAT_RANGE
 cardinality     :  '*'
 				| '+'
 				| '?'
@@ -109,17 +139,8 @@ min_range       : INTEGER ;
 max_range       : INTEGER
 				| '*'
 				;
-valueSet        : '(' value* ')' ;
-value           : iriRange
-				| literal
-				;
-iriRange        : iri ('~' exclusion*)?
-				| '.' exclusion+
-				;
-exclusion       : '-' iri '~'? ;
-literal         : rdfLiteral
-				| numericLiteral
-				| booleanLiteral
+shapeLabel      : iri
+				| blankNode
 				;
 numericLiteral  : INTEGER
 				| DECIMAL
@@ -141,12 +162,11 @@ prefixedName    : PNAME_LN
 				| PNAME_NS
 				;
 blankNode       : BLANK_NODE_LABEL ;
-// BNF: codeDecl ::= '%' iri? CODE
-codeDecl		: '%' (productionName '%' | iri? CODE) ;
-productionName  : PRODUCTION_LABEL ;
-startActions	: codeDecl+ ;
-semanticActions	: codeDecl* ;
-rdfType			: RDF_TYPE ;
+codeDecl		: '%' iri (CODE | '%') ;
+productionLabel : '$' (iri | blankNode) ;
+
+// Reserved for future use
+includeSet      : '&' shapeLabel+ ;
 
 
 // Keywords
@@ -173,6 +193,7 @@ KW_MINLENGTH    	: M I N L E N G T H ;
 KW_MAXLENGTH    	: M A X L E N G T H ;
 KW_TOTALDIGITS  	: T O T A L D I G I T S ;
 KW_FRACTIONDIGITS 	: F R A C T I O N D I G I T S ;
+KW_NOT				: N O T ;
 KW_TRUE         	: 'true' ;
 KW_FALSE        	: 'false' ;
 
@@ -192,7 +213,7 @@ LANGTAG               : '@' [a-zA-Z]+ ('-' [a-zA-Z0-9]+)* ;
 INTEGER               : [+-]? [0-9]+ ;
 DECIMAL               : [+-]? [0-9]* '.' [0-9]+ ;
 DOUBLE                : [+-]? ([0-9]+ '.' [0-9]* EXPONENT | '.'? [0-9]+ EXPONENT) ;
-PRODUCTION_LABEL      : [A-Za-z_][A-Za-z0-9_]* ;
+
 fragment EXPONENT     : [eE] [+-]? [0-9]+ ;
 
 STRING_LITERAL1       : '\'' (~[\u0027\u005C\u000A\u000D] | ECHAR | UCHAR)* '\'' ; /* #x27=' #x5C=\ #xA=new line #xD=carriage return */
