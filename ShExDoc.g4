@@ -38,11 +38,11 @@ shapeDefinition : (includeSet | extraPropertySet | KW_CLOSED)* '{' someOfShape? 
 inlineShapeDefinition : (includeSet | extraPropertySet | KW_CLOSED)* '{' someOfShape? '}' ;
 extraPropertySet : KW_EXTRA predicate+ ;
 someOfShape     : groupShape
-				| multiElementSomeOf
+				| multiElementOneOf
 				;
-multiElementSomeOf : groupShape ( '|' groupShape)+ ;
+multiElementOneOf : groupShape ( '|' groupShape)+ ;
 innerShape      : multiElementGroup
-				| multiElementSomeOf
+				| multiElementOneOf
 				;
 groupShape      : singleElementGroup
 				| multiElementGroup
