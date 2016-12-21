@@ -34,10 +34,10 @@ inlineShapeExpression : inlineShapeOr ;
 inlineShapeOr   : inlineShapeAnd (KW_OR inlineShapeAnd)* ;
 inlineShapeAnd  : inlineShapeNot (KW_AND inlineShapeNot)* ;
 inlineShapeNot  : (KW_NOT | '!')? inlineShapeAtom ;
-shapeDefinition : (includeSet | extraPropertySet | KW_CLOSED)* '{' someOfShape? '}' annotation* semanticActions ;
-inlineShapeDefinition : (includeSet | extraPropertySet | KW_CLOSED)* '{' someOfShape? '}' ;
+shapeDefinition : (includeSet | extraPropertySet | KW_CLOSED)* '{' oneOfShape? '}' annotation* semanticActions ;
+inlineShapeDefinition : (includeSet | extraPropertySet | KW_CLOSED)* '{' oneOfShape? '}' ;
 extraPropertySet : KW_EXTRA predicate+ ;
-someOfShape     : groupShape
+oneOfShape     : groupShape
 				| multiElementOneOf
 				;
 multiElementOneOf : groupShape ( '|' groupShape)+ ;

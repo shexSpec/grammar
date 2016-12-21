@@ -127,8 +127,8 @@
 [31]    inlineShapeDefinition ::= (extraPropertySet | "CLOSED")* '{' tripleExpression? '}'
 [32]    extraPropertySet      ::= "EXTRA" predicate+
 
-[33]    tripleExpression      ::= someOfTripleExpr
-[34]    someOfTripleExpr      ::= groupTripleExpr | multiElementOneOf
+[33]    tripleExpression      ::= oneOfTripleExpr
+[34]    oneOfTripleExpr       ::= groupTripleExpr | multiElementOneOf
 [35]    multiElementOneOf     ::= groupTripleExpr ('|' groupTripleExpr)+
 [36]    innerTripleExpr       ::= multiElementGroup | multiElementOneOf
 [37]    groupTripleExpr       ::= singleElementGroup | multiElementGroup
