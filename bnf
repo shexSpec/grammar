@@ -104,8 +104,10 @@
 				| "(" shapeExpression ")"
                                 | '.'  # no constraint
 
-[20]    shapeOrRef            ::= ATPNAME_LN | ATPNAME_NS | '@' shapeLabel | shapeDefinition
-[21]    inlineShapeOrRef      ::= ATPNAME_LN | ATPNAME_NS | '@' shapeLabel | inlineShapeDefinition
+[20]    shapeOrRef            ::= shapeDefinition
+                                | ATPNAME_LN | ATPNAME_NS | '@' shapeLabel
+[21]    inlineShapeOrRef      ::= inlineShapeDefinition
+                                | ATPNAME_LN | ATPNAME_NS | '@' shapeLabel
 
 [22]    nodeConstraint        ::= "LITERAL" xsFacet*
                                 | nonLiteralKind stringFacet*
@@ -123,8 +125,8 @@
 [28]    numericRange          ::= "MININCLUSIVE" | "MINEXCLUSIVE" | "MAXINCLUSIVE" | "MAXEXCLUSIVE"
 [29]    numericLength         ::= "TOTALDIGITS" | "FRACTIONDIGITS"
 
-[30]    shapeDefinition       ::= (extraPropertySet | "CLOSED")* '{' tripleExpression? '}' annotation* semanticActions
-[31]    inlineShapeDefinition ::= (extraPropertySet | "CLOSED")* '{' tripleExpression? '}'
+[30]    shapeDefinition       ::= (includeSet | extraPropertySet | "CLOSED")* '{' tripleExpression? '}' annotation* semanticActions
+[31]    inlineShapeDefinition ::= (includeSet | extraPropertySet | "CLOSED")* '{' tripleExpression? '}'
 [32]    extraPropertySet      ::= "EXTRA" predicate+
 
 [33]    tripleExpression      ::= oneOfTripleExpr
@@ -165,6 +167,9 @@
 [136s]  iri                   ::= IRIREF | prefixedName
 [137s]  prefixedName          ::= PNAME_LN | PNAME_NS
 [138s]  blankNode             ::= BLANK_NODE_LABEL
+
+# Reserved for future use
+[57]    includeSet            ::= '&' shapeLabel+
 
 @terminals
 
