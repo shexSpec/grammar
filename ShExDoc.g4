@@ -38,16 +38,16 @@ inlineShapeExpression : inlineShapeOr ;
 inlineShapeOr   : inlineShapeAnd (KW_OR inlineShapeAnd)* ;
 inlineShapeAnd  : inlineShapeNot (KW_AND inlineShapeNot)* ;
 inlineShapeNot  : negation? inlineShapeAtom ;
-inlineShapeDefinition : qualifier* '{' someOfShape? '}' ;
-shapeDefinition : qualifier* '{' someOfShape? '}' annotation* semanticActions ;
+inlineShapeDefinition : qualifier* '{' oneOfShape? '}' ;
+shapeDefinition : qualifier* '{' oneOfShape? '}' annotation* semanticActions ;
 qualifier       : includeSet | extraPropertySet | KW_CLOSED ;
 extraPropertySet : KW_EXTRA predicate+ ;
-someOfShape     : groupShape
-				| multiElementSomeOf
+oneOfShape     : groupShape
+				| multiElementOneOf
 				;
-multiElementSomeOf : groupShape ( '|' groupShape)+ ;
+multiElementOneOf : groupShape ( '|' groupShape)+ ;
 innerShape      : multiElementGroup
-				| multiElementSomeOf
+				| multiElementOneOf
 				;
 groupShape      : singleElementGroup
 				| multiElementGroup
