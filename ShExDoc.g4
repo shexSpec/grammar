@@ -25,7 +25,7 @@ notStartAction  : start | shapeExprDecl ;
 start           : KW_START '=' shapeExpression ;
 startActions	: codeDecl+ ;
 statement 		: directive | notStartAction ;
-shapeExprDecl   : shapeLabel (shapeExpression | KW_EXTERNAL) ;
+shapeExprDecl   : shapeExprLabel (shapeExpression | KW_EXTERNAL) ;
 shapeExpression : shapeOr ;
 shapeOr  		: shapeAnd (KW_OR shapeAnd)* ;
 shapeAnd		: shapeNot (KW_AND shapeNot)* ;
@@ -49,7 +49,7 @@ groupShape      : singleElementGroup
 				;
 singleElementGroup : unaryShape ';'? ;
 multiElementGroup : unaryShape (';' unaryShape)+ ';'? ;
-unaryShape      : productionLabel? (tripleConstraint | encapsulatedShape)
+unaryShape      : ('$' tripleExprLabel)? (tripleConstraint | encapsulatedShape)
 				| include
 				;
 encapsulatedShape  : '(' innerShape ')' cardinality? annotation* semanticActions ;
@@ -111,15 +111,15 @@ literal         : rdfLiteral
 				;
 shapeOrRef      : ATPNAME_LN
 				| ATPNAME_NS
-				| '@' shapeLabel
+				| '@' shapeExprLabel
 				| shapeDefinition
 				;
 inlineShapeOrRef : ATPNAME_LN
 				| ATPNAME_NS
-				| '@' shapeLabel
+				| '@' shapeExprLabel
 				| inlineShapeDefinition
 				;
-include			: '&' shapeLabel ;
+include			: '&' tripleExprLabel ;
 semanticActions	: codeDecl* ;
 annotation      : '//' predicate (iri | literal) ;
 // BNF: predicate ::= iri | RDF_TYPE
@@ -139,7 +139,10 @@ min_range       : INTEGER ;
 max_range       : INTEGER
 				| '*'
 				;
-shapeLabel      : iri
+shapeExprLabel  : iri
+				| blankNode
+				;
+tripleExprLabel : iri
 				| blankNode
 				;
 numericLiteral  : INTEGER
@@ -163,10 +166,9 @@ prefixedName    : PNAME_LN
 				;
 blankNode       : BLANK_NODE_LABEL ;
 codeDecl		: '%' iri (CODE | '%') ;
-productionLabel : '$' (iri | blankNode) ;
 
 // Reserved for future use
-includeSet      : '&' shapeLabel+ ;
+includeSet      : '&' tripleExprLabel+ ;
 
 
 // Keywords
