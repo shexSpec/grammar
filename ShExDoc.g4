@@ -15,6 +15,7 @@
 // Oct 27, 2016 - Added comments to '*', '*' and '?' to facilitate parsing
 // Oct 27, 2016 - Added qualifier rule to be reused by shapeDefinition and inlineShapeDefinition
 // Oct 27, 2016 - Added negation rule
+// Mar 03, 2017 - removed ^^-style facet arguments per shex#41
 
 grammar ShExDoc;
 

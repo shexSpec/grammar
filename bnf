@@ -71,6 +71,7 @@
 # ~ s/SomeOf/OneOf/g (EGP 20161201)
 # ~ s/shapeLabel/shapeExprLabel/? (EGP 20170228)
 # + tripleExprLabel (EGP 20170228)
+# - ^^-style facet arguments per shex#41 (EGP 20170303)
 
 # Notation:
 #   in-line terminals in ""s are case-insensitive
