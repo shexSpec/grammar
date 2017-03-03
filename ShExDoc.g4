@@ -215,7 +215,7 @@ PNAME_NS              : PN_PREFIX? ':' ;
 PNAME_LN              : PNAME_NS PN_LOCAL ;
 ATPNAME_NS			  : '@' PN_PREFIX? ':' ;
 ATPNAME_LN			  : '@' PNAME_NS PN_LOCAL ;
-REGEXP                : '/' ([^\u002f\u005C\u00A\u00D] | '\\' [tbnrf\\/] | UCHAR)* '/' [smix]*
+REGEXP                : '~/' ([^\u002f\u005C\u00A\u00D] | '\\' [tbnrf\\/] | UCHAR)* '/' [smix]*
 BLANK_NODE_LABEL      : '_:' (PN_CHARS_U | [0-9]) ((PN_CHARS | '.')* PN_CHARS)? ;
 LANGTAG               : '@' [a-zA-Z]+ ('-' [a-zA-Z0-9]+)* ;
 INTEGER               : [+-]? [0-9]+ ;
