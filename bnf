@@ -72,6 +72,7 @@
 # ~ s/shapeLabel/shapeExprLabel/? (EGP 20170228)
 # + tripleExprLabel (EGP 20170228)
 # - ^^-style facet arguments per shex#41 (EGP 20170303)
+# ~ switch to ~/regexp/ (EGP 20170303)
 
 # Notation:
 #   in-line terminals in ""s are case-insensitive
@@ -120,8 +121,7 @@
 [23]    nonLiteralKind        ::= "IRI" | "BNODE" | "NONLITERAL"
 [24]    xsFacet               ::= stringFacet | numericFacet
 [25]    stringFacet           ::= stringLength INTEGER
-                                | "PATTERN" string
-                                | '~' string  # shortcut for "PATTERN"
+                                | REGEXP
 [26]    stringLength          ::= "LENGTH" | "MINLENGTH" | "MAXLENGTH"
 [27]    numericFacet          ::= numericRange numericLiteral
                                 | numericLength INTEGER
@@ -184,6 +184,7 @@
 [141s]  PNAME_LN              ::= PNAME_NS PN_LOCAL
 [61]    ATPNAME_NS            ::= '@' PN_PREFIX? ':'
 [62]    ATPNAME_LN            ::= '@' PNAME_NS PN_LOCAL
+[63]    REGEXP                ::= '/' ([^#x2f#x5C#xA#xD] | '\\' [tbnrf\\/] | UCHAR)* '/' [smix]*
 
 [142s]  BLANK_NODE_LABEL      ::= '_:' (PN_CHARS_U | [0-9]) ((PN_CHARS | '.')* PN_CHARS)?
 [145s]  LANGTAG               ::= '@' [a-zA-Z]+ ('-' [a-zA-Z0-9]+)*

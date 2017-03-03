@@ -16,6 +16,7 @@
 // Oct 27, 2016 - Added qualifier rule to be reused by shapeDefinition and inlineShapeDefinition
 // Oct 27, 2016 - Added negation rule
 // Mar 03, 2017 - removed ^^-style facet arguments per shex#41
+// Mar 03, 2017 - switch to ~/regexp/
 
 grammar ShExDoc;
 
@@ -82,8 +83,7 @@ nonLiteralKind  : KW_IRI
 xsFacet			: stringFacet
 				| numericFacet;
 stringFacet     : stringLength INTEGER
-			    | KW_PATTERN string
-				| '~' string			// shortcut for "PATTERN"
+				| REGEXP
 				;
 stringLength	: KW_LENGTH
 				| KW_MINLENGTH
@@ -188,7 +188,6 @@ KW_EXTRA        	: E X T R A ;
 KW_LITERAL      	: L I T E R A L ;
 KW_IRI          	: I R I ;
 KW_NONLITERAL   	: N O N L I T E R A L ;
-KW_PATTERN      	: P A T T E R N ;
 KW_BNODE        	: B N O D E ;
 KW_AND          	: A N D ;
 KW_OR           	: O R ;
@@ -216,6 +215,7 @@ PNAME_NS              : PN_PREFIX? ':' ;
 PNAME_LN              : PNAME_NS PN_LOCAL ;
 ATPNAME_NS			  : '@' PN_PREFIX? ':' ;
 ATPNAME_LN			  : '@' PNAME_NS PN_LOCAL ;
+REGEXP                : '/' ([^\u002f\u005C\u00A\u00D] | '\\' [tbnrf\\/] | UCHAR)* '/' [smix]*
 BLANK_NODE_LABEL      : '_:' (PN_CHARS_U | [0-9]) ((PN_CHARS | '.')* PN_CHARS)? ;
 LANGTAG               : '@' [a-zA-Z]+ ('-' [a-zA-Z0-9]+)* ;
 INTEGER               : [+-]? [0-9]+ ;
