@@ -17,6 +17,14 @@
 // Oct 27, 2016 - Added negation rule
 // Mar 03, 2017 - removed ^^-style facet arguments per shex#41
 // Mar 03, 2017 - switch to ~/regexp/
+// Apr 09, 2017 - removed WS fragment (unused)
+// Apr 09, 2017 - revise REGEXP definition
+// Apr 09, 2017 - factor out REGEXP_FLAGS so we don't have to parse them out
+// Apr 09, 2017 - literalRange / languageRange additions
+// Apr 09, 2017 - factor out shapeRef to match spec
+// Apr 09, 2017 - update repeatRange to allow differentiation of {INTEGER} and {INTEGER,}
+// Apr 09, 2017 - add STEM_MARK and UNBOUNDED tokens to eliminate lex token parsing
+
 
 grammar ShExDoc;
 
@@ -83,7 +91,7 @@ nonLiteralKind  : KW_IRI
 xsFacet			: stringFacet
 				| numericFacet;
 stringFacet     : stringLength INTEGER
-				| REGEXP
+				| REGEXP REGEXP_FLAGS?
 				;
 stringLength	: KW_LENGTH
 				| KW_MINLENGTH
@@ -105,25 +113,29 @@ senseFlags      : '!' '^'?
 				;
 valueSet		: '[' valueSetValue* ']' ;
 valueSetValue   : iriRange
-				| literal
+				| literalRange
+				| languageRange
+				| '.' (iriExclusion+ | literalExclusion+ | languageExclusion+)
 				;
-iriRange        : iri ('~' exclusion*)?
-				| '.' exclusion+
-				;
-exclusion       : '-' iri '~'? ;
+iriRange        : iri (STEM_MARK iriExclusion*)? ;
+iriExclusion    : '-' iri STEM_MARK? ;
+literalRange    : literal (STEM_MARK literalExclusion*)? ;
+literalExclusion : '-' literal STEM_MARK? ;
+languageRange   : LANGTAG (STEM_MARK languageExclusion*)? ;
+languageExclusion : '-' LANGTAG STEM_MARK? ;
 literal         : rdfLiteral
 				| numericLiteral
 				| booleanLiteral
 				;
-shapeOrRef      : ATPNAME_LN
-				| ATPNAME_NS
-				| '@' shapeExprLabel
-				| shapeDefinition
+shapeOrRef      : shapeDefinition
+				| shapeRef
 				;
-inlineShapeOrRef : ATPNAME_LN
+inlineShapeOrRef : inlineShapeDefinition
+				| shapeRef
+				;
+shapeRef 		: ATPNAME_LN
 				| ATPNAME_NS
 				| '@' shapeExprLabel
-				| inlineShapeDefinition
 				;
 include			: '&' tripleExprLabel ;
 semanticActions	: codeDecl* ;
@@ -140,10 +152,8 @@ cardinality     :  '*'         # starCardinality
 				| repeatRange  # repeatCardinality
 				;
 // BNF: REPEAT_RANGE ::= '{' INTEGER (',' (INTEGER | '*')?)? '}'
-repeatRange     : '{' min_range (',' max_range?)? '}' ;
-min_range       : INTEGER ;
-max_range       : INTEGER
-				| '*'
+repeatRange     : '{' INTEGER '}'							  # exactRange
+				| '{' INTEGER ',' (INTEGER | UNBOUNDED)? '}'  # minMaxRange
 				;
 shapeExprLabel  : iri
 				| blankNode
@@ -211,16 +221,19 @@ COMMENT				  : '#' ~[\r\n]* -> skip;
 CODE                  : '{' (~[%\\] | '\\' [%\\] | UCHAR)* '%' '}' ;
 RDF_TYPE              : 'a' ;
 IRIREF                : '<' (~[\u0000-\u0020=<>\"{}|^`\\] | UCHAR)* '>' ; /* #x00=NULL #01-#x1F=control codes #x20=space */
-PNAME_NS              : PN_PREFIX? ':' ;
-PNAME_LN              : PNAME_NS PN_LOCAL ;
+PNAME_NS			  : PN_PREFIX? ':' ;
+PNAME_LN			  : PNAME_NS PN_LOCAL ;
 ATPNAME_NS			  : '@' PN_PREFIX? ':' ;
 ATPNAME_LN			  : '@' PNAME_NS PN_LOCAL ;
-REGEXP                : '~/' ([^\u002f\u005C\u000A\u000D] | '\\' [tbnrf\\/] | UCHAR)* '/' [smix]* ;
+REGEXP                : '/' (~[/\n\r\\] | '\\' [/nrt\\|.?*+(){}[\]$^-] | UCHAR)+ '/' ;
+REGEXP_FLAGS		  : [smix]+ ;
 BLANK_NODE_LABEL      : '_:' (PN_CHARS_U | [0-9]) ((PN_CHARS | '.')* PN_CHARS)? ;
 LANGTAG               : '@' [a-zA-Z]+ ('-' [a-zA-Z0-9]+)* ;
 INTEGER               : [+-]? [0-9]+ ;
 DECIMAL               : [+-]? [0-9]* '.' [0-9]+ ;
 DOUBLE                : [+-]? ([0-9]+ '.' [0-9]* EXPONENT | '.'? [0-9]+ EXPONENT) ;
+STEM_MARK			  : '~' ;
+UNBOUNDED             : '*' ;
 
 fragment EXPONENT     : [eE] [+-]? [0-9]+ ;
 
@@ -231,7 +244,6 @@ STRING_LITERAL_LONG2  : '"""' (('"' | '""')? (~[\"\\] | ECHAR | UCHAR))* '"""' ;
 
 fragment UCHAR                 : '\\u' HEX HEX HEX HEX | '\\U' HEX HEX HEX HEX HEX HEX HEX HEX ;
 fragment ECHAR                 : '\\' [tbnrf\\\"\'] ;
-fragment WS                    : [\u0020\u0009\u000D\u000A] ; /* #x20=space #x9=character tabulation #xD=carriage return #xA=new line */
 
 fragment PN_CHARS_BASE 		   : [A-Z] | [a-z] | [\u00C0-\u00D6] | [\u00D8-\u00F6] | [\u00F8-\u02FF] | [\u0370-\u037D]
 					   		   | [\u037F-\u1FFF] | [\u200C-\u200D] | [\u2070-\u218F] | [\u2C00-\u2FEF] | [\u3001-\uD7FF]
