@@ -26,16 +26,26 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 import unittest
+import os
+import sys
 
 import requests
+from typing import Optional
 from dict_compare import compare_dicts, json_filtr
 from jsonasobj import loads as jao_loads
 from pyjsg.jsglib.jsg import loads as jsg_loads
 from pyjsg.jsglib.logger import Logger
 
-from pyshexc.parser_impl import parse
+from pyshexc.parser_impl.generate_shexj import parse
 from pyshexc.shexj import ShExJ
-from tests.memlogger import MemLogger
+
+class MemLogger:
+    def __init__(self, prefix: Optional[str] = None):
+        self.prefix = prefix
+        self.log = ""
+
+    def write(self, txt):
+        self.log += self.prefix + txt
 
 # Test harness for all files in shexTest
 # TODO: Incorporate the manifest.json into this test once we get a JSG for it

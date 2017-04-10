@@ -34,9 +34,8 @@ from pyjsg.jsglib.jsg import loads as jsg_loads
 from pyjsg.jsglib.logger import Logger
 from typing import Optional
 
-from pyshexc.parser_impl import parse
+from pyshexc.parser_impl.generate_shexj import parse
 from pyshexc.shexj import ShExJ
-from tests.memlogger import MemLogger
 
 # This module is used for one-time tests on individual failing files or snippets of text.
 # To test a file:  Enter the file URL below
@@ -50,6 +49,15 @@ text = r"""<http://a.example/S1> BNODE {
    } AND CLOSED { }
 }
 """
+
+
+class MemLogger:
+    def __init__(self, prefix: Optional[str] = None):
+        self.prefix = prefix
+        self.log = ""
+
+    def write(self, txt):
+        self.log += self.prefix + txt
 
 
 def compare_json(shex_url: str, shex_json: str, log: Logger) -> bool:
