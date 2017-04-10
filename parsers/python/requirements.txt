@@ -1,0 +1,5 @@
+antlr4-python3-runtime>=4.6
+jsonasobj>=1.0.0
+PyJSG>=0.1.2
+requests>=2.13.0
+yadict-compare>=1.1.2
