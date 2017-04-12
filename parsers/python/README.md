@@ -14,21 +14,31 @@ This package converts the Shape Expression Compact (ShExC) into Python JSON Sche
 
 ### Command Line
 ```bash
-> shexc_to_shexj -h
-usage: shexc_to_shexj [-h] [-o OUTFILE] infile
+usage: shexc_to_shexj [-h] [-nj] [-nr] [-j JSONFILE] [-r RDFFILE]
+                      [--context CONTEXT]
+                      [-f {trix,trig,ttl,n3,turtle,ntriples,xml,json-ld,nt11,pretty-xml,nquads,nt}]
+                      infile
 
 positional arguments:
   infile                Input ShExC specification
 
 optional arguments:
   -h, --help            show this help message and exit
-  -o OUTFILE, --outfile OUTFILE
+  -nj, --nojson         Do not produce json output
+  -nr, --nordf          Do not produce rdf output
+  -j JSONFILE, --jsonfile JSONFILE
                         Output ShExJ file (Default: {infile}.json)
+  -r RDFFILE, --rdffile RDFFILE
+                        Output ShExR file (Default: {infile}.{fmt suffix})
+  --context CONTEXT     Alternative @context for json to RDF
+  -f {trix,trig,ttl,n3,turtle,ntriples,xml,json-ld,nt11,pretty-xml,nquads,nt}, --format {trix,trig,ttl,n3,turtle,ntriples,xml,json-ld,nt11,pretty-xml,nquads,nt}
+                        Output format (Default: turtle)
 ```
 ```bash
  > wget https://raw.githubusercontent.com/shexSpec/shexTest/master/schemas/FocusIRI2groupBnodeNested2groupIRIRef.shex -O test.shex
- > shexc_to_shexj test.shex
-   Output written to test.json
+ > shexc_to_shexj test.shex  --context shex.jsonld
+  JSON output written to test.json
+  turtle output written to test.ttl
  ```
 **test.shex**
 ```
@@ -147,3 +157,56 @@ optional arguments:
 }
 ```
 
+**test.ttl**
+```rdf
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix shex: <http://www.w3.org/ns/shex#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://a.example/S1> a shex:ShapeAnd ;
+    shex:shapeExprs ( [ a shex:NodeConstraint ;
+                shex:nodeKind shex:iri ;
+                shex:pattern "^https?://" ] [ a shex:Shape ;
+                shex:expression [ a shex:EachOf ;
+                        shex:expressions ( [ a shex:TripleConstraint ;
+                                    shex:predicate <http://a.example/p1> ;
+                                    shex:valueExpr [ a shex:NodeConstraint ;
+                                            shex:datatype <http://a.example/dt1> ] ] [ a shex:TripleConstraint ;
+                                    shex:predicate <http://a.example/p2> ;
+                                    shex:valueExpr [ a shex:ShapeAnd ;
+                                            shex:shapeExprs ( [ a shex:ShapeAnd ;
+                                                        shex:shapeExprs ( [ a shex:NodeConstraint ;
+                                                                    shex:nodeKind shex:bnode ] [ a shex:Shape ;
+                                                                    shex:expression [ a shex:EachOf ;
+                                                                            shex:expressions ( [ a shex:TripleConstraint ;
+
+        shex:predicate <http://a.example/p3> ;
+
+        shex:valueExpr [ a shex:NodeConstraint ;
+
+                shex:nodeKind shex:literal ] ] [ a shex:TripleConstraint ;
+
+        shex:max 1 ;
+
+        shex:min 0 ;
+
+        shex:predicate <http://a.example/p4> ;
+
+        shex:valueExpr [ a shex:ShapeAnd ;
+
+                shex:shapeExprs ( [ a shex:NodeConstraint ;
+
+                            shex:nodeKind shex:iri ;
+
+                            shex:pattern "^https?://" ] <http://a.example/S1> ) ] ] ) ] ] ) ] [ a shex:Shape ;
+                                                        shex:closed true ;
+                                                        shex:expression [ a shex:EachOf ;
+                                                                shex:expressions ( [ a shex:TripleConstraint ;
+                                                                            shex:predicate <http://a.example/p3> ] [ a shex:TripleConstraint ;
+                                                                            shex:predicate <http://a.example/p4> ] ) ] ] ) ] ] ) ] ] ) .
+
+[] a shex:Schema ;
+    shex:shapes <http://a.example/S1> .
+```

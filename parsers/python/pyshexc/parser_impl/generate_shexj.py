@@ -68,6 +68,7 @@ from rdflib.util import SUFFIX_FORMAT_MAP
 from pyshexc.parser_impl.shex_doc_parser import ShexDocParser
 from pyshexc.parser.ShExDocLexer import ShExDocLexer
 from pyshexc.parser.ShExDocParser import ShExDocParser
+from shexj.ShExJ import Schema
 
 
 class ParseErrorListener(ErrorListener):
@@ -82,13 +83,15 @@ class ParseErrorListener(ErrorListener):
         self.errors.append("line " + str(line) + ":" + str(column) + " " + msg)
 
 
-def do_parse(infilename: str, jsonfilename: Optional[str], rdffilename: Optional[str], rdffmt: str) -> bool:
+def do_parse(infilename: str, jsonfilename: Optional[str], rdffilename: Optional[str], rdffmt: str,
+             context: Optional[str] = None) -> bool:
     """
     Parse the jsg in infilename and save the results in outfilename
     :param infilename: name of the file containing the ShExC
     :param jsonfilename: target ShExJ equivalent
     :param rdffilename: target ShExR equivalent
     :param rdffmt: target RDF format
+    :param context: @context to use for rdf generation. If None use what is in the file
     :return: true if success
     """
     shexj = parse(FileStream(infilename, encoding="utf-8"))
@@ -97,17 +100,19 @@ def do_parse(infilename: str, jsonfilename: Optional[str], rdffilename: Optional
             with open(jsonfilename, 'w') as outfile:
                 outfile.write(shexj._as_json_dumps())
         if rdffilename:
+            if context:
+                shexj['@context'] = context
             g = Graph().parse(data=shexj._as_json, format="json-ld")
             g.serialize(open(rdffilename, "wb"), format=rdffmt)
         return True
     return False
 
 
-def parse(input_: Union[str, FileStream]) -> Optional[JSGObject]:
+def parse(input_: Union[str, FileStream]) -> Optional[Schema]:
     """
-    Parse the text in infile and save the results in outfile
+    Parse the text in infile and return the resulting schema
     :param input_: text or input stream to parse
-    :return: ShExJ text if successful.  None if error.
+    :return: ShExJ Schema object.  None if error.
     """
 
     # Step 1: Tokenize the input stream
@@ -138,7 +143,7 @@ def parse(input_: Union[str, FileStream]) -> Optional[JSGObject]:
 
 def rdf_suffix(fmt: str) -> str:
     """ Map the RDF format to the approproate suffix """
-    for k, v in SUFFIX_FORMAT_MAP:
+    for k, v in SUFFIX_FORMAT_MAP.items():
         if fmt == v:
             return k
     return 'rdf'
@@ -155,6 +160,7 @@ def genargs() -> ArgumentParser:
     parser.add_argument("-nr", "--nordf", help="Do not produce rdf output", action="store_true")
     parser.add_argument("-j", "--jsonfile", help="Output ShExJ file (Default: {infile}.json)")
     parser.add_argument("-r", "--rdffile", help="Output ShExR file (Default: {infile}.{fmt suffix})")
+    parser.add_argument("--context", help="Alternative @context for json to RDF")
     parser.add_argument("-f", "--format",
                         choices=list(set(x.name for x in rdflib_plugins(None, rdflib_Serializer)
                                          if '/' not in str(x.name))),
@@ -178,7 +184,7 @@ def generate(argv: List[str]) -> bool:
         opts.rdffile = None
     elif not opts.rdffile:
         opts.rdffile = filebase + "." + rdf_suffix(opts.format)
-    if do_parse(opts.infile, opts.outfile, opts.rdffile, opts.format):
+    if do_parse(opts.infile, opts.jsonfile, opts.rdffile, opts.format, opts.context):
         if opts.jsonfile:
             print("JSON output written to {}".format(opts.jsonfile))
         if opts.rdffile:
