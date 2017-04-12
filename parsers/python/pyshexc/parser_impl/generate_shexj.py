@@ -60,7 +60,6 @@ from typing import Optional, Union, List
 from antlr4 import CommonTokenStream
 from antlr4 import FileStream, InputStream
 from antlr4.error.ErrorListener import ErrorListener
-from pyjsg.jsglib.jsg import JSGObject
 from rdflib import Graph
 from rdflib.plugin import plugins as rdflib_plugins, Serializer as rdflib_Serializer
 from rdflib.util import SUFFIX_FORMAT_MAP
@@ -68,7 +67,7 @@ from rdflib.util import SUFFIX_FORMAT_MAP
 from pyshexc.parser_impl.shex_doc_parser import ShexDocParser
 from pyshexc.parser.ShExDocLexer import ShExDocLexer
 from pyshexc.parser.ShExDocParser import ShExDocParser
-from shexj.ShExJ import Schema
+from pyshexc.shexj.ShExJ import Schema
 
 
 class ParseErrorListener(ErrorListener):
