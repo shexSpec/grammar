@@ -6,13 +6,13 @@ except ImportError:
 
 # typing library was introduced as a core module in version 3.5.0
 # NOTE: the antlr4-python3-runtime must be the same version that was used to create the parser library
-requires = ["PyJSG>=0.1.2", "antlr4-python3-runtime==4.6", "jsonasobj"]
+requires = ["PyJSG>=0.1.2", "antlr4-python3-runtime==4.6", "jsonasobj", "rdflib", "rdflib-jsonld"]
 if sys.version_info < (3, 5):
     requires.append("typing")
 
 setup(
     name='PyShExC',
-    version='0.1.0',
+    version='0.2.0',
     packages=['pyshexc.parser', 'pyshexc.parser_impl', 'pyshexc.shexj'],
     url="http://github.com/shexSpec/grammar/parsers/python",
     license='Apache 2.0',
