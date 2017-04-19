@@ -22,6 +22,20 @@ These tests require the [requests](http://docs.python-requests.org/en/master/) a
 _all.shex
 ```
 
+* A set of stem tests, where the current JSON emits StemRange for stems without exclusions, while this parser emits stem. See: [Issue #18](https://github.com/shexSpec/shexTest/issues/18). Example:
+```text
+< expected.expression.valueExpr.values: [{'type': 'IriStemRange', 'stem': 'http://a.example/v'}]
+> actual  .expression.valueExpr.values: [{'type': 'IriStem', 'stem': 'http://a.example/v'}] 
+```
+The tests that currently have this problem are:
+```text
+1val1iriStem.shex
+1val1languageStem.shex
+1val1literalAtlanguageStem.shex
+1val1literalStem.shex
+1val1literaliriStem.shex
+1val1literallanguageStem.whex
+```
 
 * A curious optimization done by the Javascript implementation of ShExC to ShExJ that simplifies certain constructs of the form "AND(AND(b, c), a)" to "AND(b, c, a)". We have chosen NOT do implement this optimization as:
 

@@ -41,8 +41,8 @@ from tests.build_test_harness import ValidationTestCase
 ValidationTestCase.repo_url = "https://api.github.com/repos/shexSpec/shexTest/contents/schemas"
 ValidationTestCase.file_suffix = ".shex"
 
-#ValidationTestCase.start_at = "kitchenSink.shex"
-#ValidationTestCase.single_file = True
+# ValidationTestCase.start_at = "FocusIRI2groupBnodeNested2groupIRIRef.shex"
+# ValidationTestCase.single_file = True
 
 
 class MemLogger:
