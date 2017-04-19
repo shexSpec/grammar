@@ -32,7 +32,7 @@ from pyshexc.parser.ShExDocVisitor import ShExDocVisitor
 
 from pyshexc.parser_impl.parser_context import ParserContext
 from pyshexc.shexj.ShExJ import NodeConstraint, Wildcard, IriStemRange, LiteralStemRange, LanguageStemRange, IriStem, \
-    LiteralStem, ObjectLiteral, LanguageStem, INTEGER, STRING
+    LiteralStem, ObjectLiteral, LanguageStem, INTEGER, STRING, LANGTAG
 
 
 class ShexNodeExpressionParser(ShExDocVisitor):
@@ -70,70 +70,83 @@ class ShexNodeExpressionParser(ShExDocVisitor):
             '.' (iriExclusion+ | literalExclusion+ | languageExclusion+) """
         if ctx.iriRange() or ctx.literalRange() or ctx.languageRange():
             self.visitChildren(ctx)
-        else:
+        else:                               # '.' branch - wild card with exclusions
             if ctx.iriExclusion():
-                stem = IriStemRange(Wildcard(), [])
-                self._iri_exclusions(stem, ctx.iriExclusion())
+                vs_value = IriStemRange(Wildcard(), [])
+                self._iri_exclusions(vs_value, ctx.iriExclusion())
             elif ctx.literalExclusion():
-                stem = LiteralStemRange(Wildcard(), [])
-                self._literal_exclusions(stem, ctx.literalExclusion())
+                vs_value = LiteralStemRange(Wildcard(), [])
+                self._literal_exclusions(vs_value, ctx.literalExclusion())
             else:
-                stem = LanguageStemRange(Wildcard(), [])
-                self._language_exclusions(stem, ctx.languageExclusion())
-            self.nodeconstraint.values.append(stem)
+                vs_value = LanguageStemRange(Wildcard(), [])
+                self._language_exclusions(vs_value, ctx.languageExclusion())
+            self.nodeconstraint.values.append(vs_value)
 
     def visitIriRange(self, ctx: ShExDocParser.IriRangeContext):
         """ iriRange: iri (STEM_MARK iriExclusion*)? """
         baseiri = self.context.iri_to_IRI(ctx.iri())
         if not ctx.STEM_MARK():
-            stem = baseiri
+            vsvalue = baseiri                   # valueSetValue = objectValue  / objectValue = IRI
         else:
-            stem = IriStemRange(baseiri)
-            if ctx.iriExclusion():
-                stem.exclusions = []
-            self._iri_exclusions(stem, ctx.iriExclusion())
-        self.nodeconstraint.values.append(stem)
+            if ctx.iriExclusion():              # valueSetValue = IriStemRange / iriStemRange = stem + exclusions
+                vsvalue = IriStemRange(baseiri, exclusions=[])
+                self._iri_exclusions(vsvalue, ctx.iriExclusion())
+            else:
+                vsvalue = IriStem(baseiri)      # valueSetValue = IriStem  /  IriStem: {stem:IRI}
+        self.nodeconstraint.values.append(vsvalue)
 
-    def _iri_exclusions(self, stem: IriStemRange, exclusions: List[ShExDocParser.IriExclusionContext]) -> None:
+    def _iri_exclusions(self, stemrange: IriStemRange, exclusions: List[ShExDocParser.IriExclusionContext]) -> None:
         for excl in exclusions:
             excl_iri = self.context.iri_to_IRI(excl.iri())
-            stem.exclusions.append(IriStem(excl_iri) if excl.STEM_MARK() else excl_iri)
+            stemrange.exclusions.append(IriStem(excl_iri) if excl.STEM_MARK() else excl_iri)
 
     def visitLiteralRange(self, ctx: ShExDocParser.LiteralRangeContext):
-        """ literalRange: literal (STEM_MARK literalExclusion*)? """
+        """ ShExC: literalRange: literal (STEM_MARK literalExclusion*)? 
+            ShExJ: valueSetValue: objectValue | LiteralStem | LiteralStemRange
+                   literalStem: {stem:STRING}
+                   literalStemRange: {stem:STRING exclusions:[STRING|LiteralStem+]?
+        """
         baseliteral = self.context.literal_to_ObjectLiteral(ctx.literal())
         if not ctx.STEM_MARK():
-            stem = baseliteral
+            vsvalue = baseliteral               # valueSetValue = objectValue / objectValue = ObjectLiteral
         else:
-            stem = LiteralStemRange(baseliteral)
-            if ctx.literalExclusion():
-                stem.exclusions = []
-                self._literal_exclusions(stem, ctx.literalExclusion())
-        self.nodeconstraint.values.append(stem)
+            if ctx.literalExclusion():          # valueSetValue = LiteralStemRange /
+                vsvalue = LiteralStemRange(STRING(baseliteral.value), exclusions=[])
+                self._literal_exclusions(vsvalue, ctx.literalExclusion())
+            else:
+                vsvalue = LiteralStem(STRING(baseliteral.value))
+        self.nodeconstraint.values.append(vsvalue)
 
     def _literal_exclusions(self, stem: LiteralStemRange,
                             exclusions: List[ShExDocParser.LiteralExclusionContext]) -> None:
+        """ ShExC: literalExclusion = '-' literal STEM_MARK?
+            ShExJ: exclusions: [STRING|LiteralStem +]
+                   literalStem: {stem:STRING}
+        """
         for excl in exclusions:
-            excl_literal = self.context.literal_to_ObjectLiteral(excl.literal())
+            excl_literal = STRING(self.context.literal_to_ObjectLiteral(excl.literal()).value)
             stem.exclusions.append(LiteralStem(excl_literal) if excl.STEM_MARK() else excl_literal)
 
     def visitLanguageRange(self, ctx: ShExDocParser.LanguageRangeContext):
-        """ langRange : LANGTAG (STEM_MARK languagExclusion*)? """
-        baselang = ObjectLiteral(value=ctx.LANGTAG().getText()[1:])
-        if not ctx.STEM_MARK():
-            stem = LanguageStem(baselang)
+        """ ShExC: languageRange : LANGTAG (STEM_MARK languagExclusion*)? 
+            ShExJ: valueSetValue = objectValue | LanguageStem | LanguageStemRange """
+        baselang = ctx.LANGTAG().getText()
+        if not ctx.STEM_MARK():                 # valueSetValue = objectValue / objectValue = ObjectLiteral
+            vsvalue = ObjectLiteral(value=baselang)
         else:
-            stem = LanguageStemRange(baselang)
             if ctx.languageExclusion():
-                stem.exclusions = []
-                self._language_exclusions(stem, ctx.languageExclusion())
-        self.nodeconstraint.values.append(stem)
+                vsvalue = LanguageStemRange(LANGTAG(baselang[1:]), exclusions=[])
+                self._language_exclusions(vsvalue, ctx.languageExclusion())
+            else:
+                vsvalue = LanguageStem(LANGTAG(baselang[1:]))
+        self.nodeconstraint.values.append(vsvalue)
 
     @staticmethod
     def _language_exclusions(stem: LanguageStemRange,
                              exclusions: List[ShExDocParser.LanguageExclusionContext]) -> None:
+        """ languageExclusion = '-' LANGTAG STEM_MARK?"""
         for excl in exclusions:
-            excl_langtag = ObjectLiteral(value=excl.LANGTAG().getText()[1:])
+            excl_langtag = LANGTAG(excl.LANGTAG().getText()[1:])
             stem.exclusions.append(LanguageStem(excl_langtag) if excl.STEM_MARK() else excl_langtag)
 
     def visitStringFacet(self, ctx: ShExDocParser.StringFacetContext):

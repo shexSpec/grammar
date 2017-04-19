@@ -115,11 +115,11 @@ class ShexShapeExpressionParser(ShExDocVisitor):
             self.expr = ShapeAnd(id=self.label, shapeExprs=[nc.nodeconstraint])
             sorref_parser = ShexShapeExpressionParser(self.context)
             sorref_parser.visit(ctx.shapeOrRef())
-            if isinstance(sorref_parser.expr, Shape) and self.context.is_empty_shape(sorref_parser.expr):
-                self.expr = nc.nodeconstraint
-                self.expr.id = self.label
-            else:
-                self.expr.shapeExprs.append(sorref_parser.expr)
+            # if isinstance(sorref_parser.expr, Shape) and self.context.is_empty_shape(sorref_parser.expr):
+            #     self.expr = nc.nodeconstraint
+            #     self.expr.id = self.label
+            # else:
+            self.expr.shapeExprs.append(sorref_parser.expr)
         else:
             self.expr = nc.nodeconstraint
             self.expr.id = self.label
@@ -132,10 +132,10 @@ class ShexShapeExpressionParser(ShExDocVisitor):
             self.expr = ShapeAnd(shapeExprs=[nc.nodeconstraint])
             sorref_parser = ShexShapeExpressionParser(self.context)
             sorref_parser.visit(ctx.inlineShapeOrRef())
-            if isinstance(sorref_parser.expr, Shape) and self.context.is_empty_shape(sorref_parser.expr):
-                self.expr = nc.nodeconstraint
-            else:
-                self.expr.shapeExprs.append(sorref_parser.expr)
+            # if isinstance(sorref_parser.expr, Shape) and self.context.is_empty_shape(sorref_parser.expr):
+            #     self.expr = nc.nodeconstraint
+            # else:
+            self.expr.shapeExprs.append(sorref_parser.expr)
         else:
             self.expr = nc.nodeconstraint
 

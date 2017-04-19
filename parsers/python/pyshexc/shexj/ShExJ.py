@@ -1,5 +1,5 @@
 # Auto generated from ../pyshexc/shexj/ShExJ.jsg by PyJSG version 0.1.2
-# Generation date: 2017-04-10 11:50
+# Generation date: 2017-04-19 09:45
 #
 from typing import Optional, Dict, List, Union, _ForwardRef
 
@@ -38,6 +38,10 @@ class DECIMAL(JSGString):
     pattern = JSGPattern(r'[+-]?[0-9]*\.[0-9]+')
 
 
+class LANGTAG(JSGString):
+    pattern = JSGPattern(r'([a-zA-Z])+(\-([a-zA-Z0-9])+)*')
+
+
 class STRING(JSGString):
     pattern = JSGPattern(r'.*')
 
@@ -52,10 +56,6 @@ class HEX(JSGString):
 
 class EXPONENT(JSGString):
     pattern = JSGPattern(r'[eE][+-]?[0-9]+')
-
-
-class LANGTAG(JSGString):
-    pattern = JSGPattern(r'\@[a-zA-Z]+(\-[a-zA-Z0-9]+)*')
 
 
 class DOUBLE(JSGString):
@@ -75,7 +75,7 @@ class PN_CHARS(JSGString):
 
 
 class IRI(JSGString):
-    pattern = JSGPattern(r'({PN_CHARS}|\.|\:|\/|\\\\|\#|\@|\%|\&|{UCHAR})*'.format(UCHAR=UCHAR.pattern, PN_CHARS=PN_CHARS.pattern))
+    pattern = JSGPattern(r'({PN_CHARS}|\.|\:|\/|\\\\|\#|\@|\%|\&|{UCHAR})*'.format(PN_CHARS=PN_CHARS.pattern, UCHAR=UCHAR.pattern))
 
 
 class BNODE(JSGString):
@@ -83,7 +83,7 @@ class BNODE(JSGString):
 
 
 class PN_PREFIX(JSGString):
-    pattern = JSGPattern(r'{PN_CHARS_BASE}(({PN_CHARS}|\.)*{PN_CHARS})?'.format(PN_CHARS_BASE=PN_CHARS_BASE.pattern, PN_CHARS=PN_CHARS.pattern))
+    pattern = JSGPattern(r'{PN_CHARS_BASE}(({PN_CHARS}|\.)*{PN_CHARS})?'.format(PN_CHARS=PN_CHARS.pattern, PN_CHARS_BASE=PN_CHARS_BASE.pattern))
 
 class Wildcard(JSGObject):
     def __init__(self,
@@ -92,21 +92,9 @@ class Wildcard(JSGObject):
         
 
 
-class ObjectLiteral(JSGObject):
-    def __init__(self,
-                 value: STRING = None,
-                 language: Optional[STRING] = None,
-                 type: Optional[STRING] = None,
-                 **_extra: Dict[str, object]):
-        JSGObject.__init__(self, _CONTEXT, **_extra)
-        self.value = value
-        self.language = language
-        self.type = type
-
-
 class LiteralStem(JSGObject):
     def __init__(self,
-                 stem: ObjectLiteral = None,
+                 stem: STRING = None,
                  **_extra: Dict[str, object]):
         JSGObject.__init__(self, _CONTEXT, **_extra)
         self.stem = stem
@@ -114,10 +102,30 @@ class LiteralStem(JSGObject):
 
 class LanguageStem(JSGObject):
     def __init__(self,
-                 stem: ObjectLiteral = None,
+                 stem: LANGTAG = None,
                  **_extra: Dict[str, object]):
         JSGObject.__init__(self, _CONTEXT, **_extra)
         self.stem = stem
+
+
+class LiteralStemRange(JSGObject):
+    def __init__(self,
+                 stem: Union[STRING, Wildcard] = None,
+                 exclusions: List[Union[STRING, LiteralStem]] = None,
+                 **_extra: Dict[str, object]):
+        JSGObject.__init__(self, _CONTEXT, **_extra)
+        self.stem = stem
+        self.exclusions = exclusions
+
+
+class LanguageStemRange(JSGObject):
+    def __init__(self,
+                 stem: Union[LANGTAG, Wildcard] = None,
+                 exclusions: List[Union[LANGTAG, LanguageStem]] = None,
+                 **_extra: Dict[str, object]):
+        JSGObject.__init__(self, _CONTEXT, **_extra)
+        self.stem = stem
+        self.exclusions = exclusions
 
 
 class ShapeExternal(JSGObject):
@@ -136,26 +144,6 @@ class IriStem(JSGObject):
         self.stem = stem
 
 
-class LiteralStemRange(JSGObject):
-    def __init__(self,
-                 stem: Union[ObjectLiteral, Wildcard] = None,
-                 exclusions: Optional[List[Union[IRI, ObjectLiteral, LiteralStem]]] = None,
-                 **_extra: Dict[str, object]):
-        JSGObject.__init__(self, _CONTEXT, **_extra)
-        self.stem = stem
-        self.exclusions = exclusions
-
-
-class LanguageStemRange(JSGObject):
-    def __init__(self,
-                 stem: Union[ObjectLiteral, Wildcard] = None,
-                 exclusions: Optional[List[Union[IRI, ObjectLiteral, LanguageStem]]] = None,
-                 **_extra: Dict[str, object]):
-        JSGObject.__init__(self, _CONTEXT, **_extra)
-        self.stem = stem
-        self.exclusions = exclusions
-
-
 class SemAct(JSGObject):
     def __init__(self,
                  name: IRI = None,
@@ -166,6 +154,28 @@ class SemAct(JSGObject):
         self.code = code
 
 
+class ObjectLiteral(JSGObject):
+    def __init__(self,
+                 value: STRING = None,
+                 language: Optional[LANGTAG] = None,
+                 type: Optional[IRI] = None,
+                 **_extra: Dict[str, object]):
+        JSGObject.__init__(self, _CONTEXT, **_extra)
+        self.value = value
+        self.language = language
+        self.type = type
+
+
+class IriStemRange(JSGObject):
+    def __init__(self,
+                 stem: Union[IRI, Wildcard] = None,
+                 exclusions: List[Union[IRI, IriStem]] = None,
+                 **_extra: Dict[str, object]):
+        JSGObject.__init__(self, _CONTEXT, **_extra)
+        self.stem = stem
+        self.exclusions = exclusions
+
+
 class Annotation(JSGObject):
     def __init__(self,
                  predicate: IRI = None,
@@ -174,72 +184,6 @@ class Annotation(JSGObject):
         JSGObject.__init__(self, _CONTEXT, **_extra)
         self.predicate = predicate
         self.object = object
-
-
-class Shape(JSGObject):
-    def __init__(self,
-                 id: Optional[Union[IRI, BNODE]] = None,
-                 virtual: Optional[BOOL] = None,
-                 closed: Optional[BOOL] = None,
-                 extra: Optional[List[IRI]] = None,
-                 expression: Optional[Union[EachOft_, OneOft_, TripleConstraintt_, IRI, BNODE]] = None,
-                 inherit: Optional[List[Union[IRI, BNODE]]] = None,
-                 semActs: Optional[List[SemAct]] = None,
-                 **_extra: Dict[str, object]):
-        JSGObject.__init__(self, _CONTEXT, **_extra)
-        self.id = id
-        self.virtual = virtual
-        self.closed = closed
-        self.extra = extra
-        self.expression = expression
-        self.inherit = inherit
-        self.semActs = semActs
-
-
-class EachOf(JSGObject):
-    def __init__(self,
-                 id: Optional[Union[IRI, BNODE]] = None,
-                 expressions: List[Union[EachOft_, OneOft_, TripleConstraintt_, IRI, BNODE]] = None,
-                 min: Optional[INTEGER] = None,
-                 max: Optional[INTEGER] = None,
-                 semActs: Optional[List[SemAct]] = None,
-                 annotations: Optional[List[Annotation]] = None,
-                 **_extra: Dict[str, object]):
-        JSGObject.__init__(self, _CONTEXT, **_extra)
-        self.id = id
-        self.expressions = expressions
-        self.min = min
-        self.max = max
-        self.semActs = semActs
-        self.annotations = annotations
-
-
-class OneOf(JSGObject):
-    def __init__(self,
-                 id: Optional[Union[IRI, BNODE]] = None,
-                 expressions: List[Union[EachOft_, OneOft_, TripleConstraintt_, IRI, BNODE]] = None,
-                 min: Optional[INTEGER] = None,
-                 max: Optional[INTEGER] = None,
-                 semActs: Optional[List[SemAct]] = None,
-                 annotations: Optional[List[Annotation]] = None,
-                 **_extra: Dict[str, object]):
-        JSGObject.__init__(self, _CONTEXT, **_extra)
-        self.id = id
-        self.expressions = expressions
-        self.min = min
-        self.max = max
-        self.semActs = semActs
-        self.annotations = annotations
-
-
-class IriStemRange(JSGObject):
-    def __init__(self,
-                 stem: Union[IRI, Wildcard] = None,
-                 exclusions: Optional[List[Union[IRI, ObjectLiteral, IriStem]]] = None,
-                 **_extra: Dict[str, object]):
-        JSGObject.__init__(self, _CONTEXT, **_extra)
-        self.stem = stem
-        self.exclusions = exclusions
 
 
 class NodeConstraint(JSGObject):
@@ -276,6 +220,64 @@ class NodeConstraint(JSGObject):
         self.totaldigits = totaldigits
         self.fractiondigits = fractiondigits
         self.values = values
+
+
+class Shape(JSGObject):
+    def __init__(self,
+                 id: Optional[Union[IRI, BNODE]] = None,
+                 virtual: Optional[BOOL] = None,
+                 closed: Optional[BOOL] = None,
+                 extra: Optional[List[IRI]] = None,
+                 expression: Optional[Union[EachOft_, OneOft_, TripleConstraintt_, IRI, BNODE]] = None,
+                 inherit: Optional[List[Union[IRI, BNODE]]] = None,
+                 semActs: Optional[List[SemAct]] = None,
+                 annotations: Optional[List[Annotation]] = None,
+                 **_extra: Dict[str, object]):
+        JSGObject.__init__(self, _CONTEXT, **_extra)
+        self.id = id
+        self.virtual = virtual
+        self.closed = closed
+        self.extra = extra
+        self.expression = expression
+        self.inherit = inherit
+        self.semActs = semActs
+        self.annotations = annotations
+
+
+class EachOf(JSGObject):
+    def __init__(self,
+                 id: Optional[Union[IRI, BNODE]] = None,
+                 expressions: List[Union[EachOft_, OneOft_, TripleConstraintt_, IRI, BNODE]] = None,
+                 min: Optional[INTEGER] = None,
+                 max: Optional[INTEGER] = None,
+                 semActs: Optional[List[SemAct]] = None,
+                 annotations: Optional[List[Annotation]] = None,
+                 **_extra: Dict[str, object]):
+        JSGObject.__init__(self, _CONTEXT, **_extra)
+        self.id = id
+        self.expressions = expressions
+        self.min = min
+        self.max = max
+        self.semActs = semActs
+        self.annotations = annotations
+
+
+class OneOf(JSGObject):
+    def __init__(self,
+                 id: Optional[Union[IRI, BNODE]] = None,
+                 expressions: List[Union[EachOft_, OneOft_, TripleConstraintt_, IRI, BNODE]] = None,
+                 min: Optional[INTEGER] = None,
+                 max: Optional[INTEGER] = None,
+                 semActs: Optional[List[SemAct]] = None,
+                 annotations: Optional[List[Annotation]] = None,
+                 **_extra: Dict[str, object]):
+        JSGObject.__init__(self, _CONTEXT, **_extra)
+        self.id = id
+        self.expressions = expressions
+        self.min = min
+        self.max = max
+        self.semActs = semActs
+        self.annotations = annotations
 
 
 class Schema(JSGObject):

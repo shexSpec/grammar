@@ -20,7 +20,6 @@ These tests require the [requests](http://docs.python-requests.org/en/master/) a
 1val1STRING_LITERAL1_with_ECHAR_escapes.shex
 1val1STRING_LITERAL1_with_UTF8_boundaries.shex
 _all.shex
-kitchenSink.shex
 ```
 
 
@@ -35,14 +34,8 @@ FocusIRI2groupBnodeNested2groupIRIRef.shex
 ```
 
 ### test_shexr
-```test_shexr.py``` traverses the ```.json``` files in the [shexTest/schemas](https://github.com/shexSpec/shexTest/schemas) directory and, using the [rdflib-jsonld](https://github.com/RDFLib/rdflib-jsonld_ package, converts them to RDF.  It then compares the result with the corresponding ```.ttl`` directory.
+```test_shexr.py``` traverses the ```.json``` files in the [shexTest/schemas](https://github.com/shexSpec/shexTest/schemas) directory and, using the [rdflib-jsonld](https://github.com/RDFLib/rdflib-jsonld) package, converts them to RDF.  It then compares the result with the corresponding ```.ttl`` directory.
 
-This process detected two issues:
-
-* [#16](https://github.com/shexSpec/shexTest/issues/16), where the additional "uri" alias caused all tests to fail a
-* [#15](https://github.com/shexSpec/shexTest/issues/15), where the "flags" portion of a pattern was not getting converted.
-
-There is a temporary copy of ```shex.jsonld``` in the test directory, and the test_shexr script has "USE_LOCAL_CONTEXT" set to `True`.  Once shex.jsonld is fixed, this can be changed to `False` and shex.jsonld can be removed from the project.
 
 _Failing Tests_
 The following tests fail the conversion:
@@ -61,4 +54,6 @@ All three fail the python rdflib parse call: ```Graph().parse(<url>, format="tur
   File "<string>", line None
 rdflib.plugins.parsers.notation3.BadSyntax: <no detail available>
 ```
+
+This is due to an error in rdflib 4.2.2, as reported at [Issue 732](https://github.com/RDFLib/rdflib/issues/732) . A temporary fix for this problem can be found at [https://github.com/hsolbrig/rdflib](https://github.com/hsolbrig/rdflib).
 

@@ -67,6 +67,7 @@ class ShexOneOfShapeParser(ShExDocVisitor):
                 self.visit(ctx.tripleConstraint())
             elif ctx.encapsulatedShape():
                 self.visit(ctx.encapsulatedShape())
+                self.expression.id = lbl
 
     def visitEncapsulatedShape(self, ctx: ShExDocParser.EncapsulatedShapeContext):
         """ encapsulatedShape: '(' innerShape ')' cardinality? annotation* semanticActions """

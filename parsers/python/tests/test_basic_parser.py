@@ -39,9 +39,10 @@ from pyshexc.shexj import ShExJ
 from tests.build_test_harness import ValidationTestCase
 
 ValidationTestCase.repo_url = "https://api.github.com/repos/shexSpec/shexTest/contents/schemas"
-# ValidationTestCase.start_at = "1literalPattern_with_REGEXP_escapes.shex"
-ValidationTestCase.skip = ['coverage.json', 'manifest.json']
 ValidationTestCase.file_suffix = ".shex"
+
+#ValidationTestCase.start_at = "kitchenSink.shex"
+#ValidationTestCase.single_file = True
 
 
 class MemLogger:

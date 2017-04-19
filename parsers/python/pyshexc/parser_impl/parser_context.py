@@ -28,7 +28,8 @@
 from typing import Union
 
 from pyshexc.parser.ShExDocParser import ShExDocParser
-from pyshexc.shexj.ShExJ import IRI, STRING, BOOL, Schema, BNODE, INTEGER, DECIMAL, DOUBLE, ObjectLiteral, Shape
+from pyshexc.shexj.ShExJ import IRI, STRING, BOOL, Schema, BNODE, INTEGER, DECIMAL, DOUBLE, ObjectLiteral, Shape, \
+    LANGTAG
 
 IRIstr = str
 PREFIXstr = str
@@ -118,7 +119,7 @@ class ParserContext:
         if tripleExprLabel.iri():
             return self.iri_to_IRI(tripleExprLabel.iri())
         else:
-            return BNODE(tripleExprLabel.blankNode().getText)
+            return BNODE(tripleExprLabel.blankNode().getText())
 
     def shapeexprlabel_to_IRI(self, shapeExprLabel: ShExDocParser.ShapeExprLabelContext) -> Union[BNODE, IRI]:
         """ shapeExprLabel: iri | blankNode """
@@ -149,7 +150,6 @@ class ParserContext:
         """ literal: rdfLiteral | numericLiteral | booleanLiteral """
         rval = ObjectLiteral()
         if literal.rdfLiteral():
-            rval = ObjectLiteral()
             rdflit = literal.rdfLiteral()
             txt = rdflit.string().getText()
             txt = txt[3:-3] \
@@ -157,9 +157,9 @@ class ParserContext:
                                      txt.startswith('"""') and txt.endswith('"""')) else txt[1:-1]
             rval.value = STRING(txt.replace("\\'", "'").replace('\\"', '"'))
             if rdflit.LANGTAG():
-                rval.language = STRING(rdflit.LANGTAG().getText()[1:].lower())
+                rval.language = LANGTAG(rdflit.LANGTAG().getText()[1:].lower())
             if rdflit.datatype():
-                rval.type = STRING(self.iri_to_str(rdflit.datatype().iri()))
+                rval.type = self.iri_to_str(rdflit.datatype().iri())
         elif literal.numericLiteral():
             numlit = literal.numericLiteral()
             if numlit.INTEGER():

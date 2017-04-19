@@ -25,8 +25,9 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 # OF THE POSSIBILITY OF SUCH DAMAGE.
-import json
 import unittest
+
+import json
 import requests
 import sys
 
@@ -36,14 +37,15 @@ from rdflib.compare import to_isomorphic, graph_diff
 from tests.build_test_harness import ValidationTestCase
 
 ValidationTestCase.repo_url = "https://api.github.com/repos/shexSpec/shexTest/contents/schemas"
-# ValidationTestCase.start_at = "1literalPatterni.ttl"
 ValidationTestCase.file_suffix = ".ttl"
-ValidationTestCase.single_file = False
 ValidationTestCase.skip = ['coverage.ttl', 'manifest.ttl', 'meta.ttl']
+
+# ValidationTestCase.start_at = "1literalPattern_with_all_punctionation.shex"
+# ValidationTestCase.single_file = True
 
 # True means use shex.jsonld from the tests directory. False means use the link in the file
 # (Used for testing fixes to @context)
-USE_LOCAL_CONTEXT = True
+USE_LOCAL_CONTEXT = False
 
 
 def compare_rdf(shex_ttl_url: str) -> bool:

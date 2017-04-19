@@ -59,7 +59,7 @@ class ShexShapeDefinitionParser(ShExDocVisitor):
             if ansem_parser.semacts:
                 self.shape.semActs = ansem_parser.semacts
             if ansem_parser.annotations:
-                raise NotImplementedError("Missing annotation")
+                self.shape.annotations = ansem_parser.annotations
 
     def visitInlineShapeDefinition(self, ctx: ShExDocParser.InlineShapeDefinitionContext):
         """ shapeDefinition: qualifier* '{' oneOfShape? '}' """

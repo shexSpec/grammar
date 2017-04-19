@@ -12,7 +12,7 @@ if sys.version_info < (3, 5):
 
 setup(
     name='PyShExC',
-    version='0.2.1',
+    version='0.2.2',
     packages=['pyshexc.parser', 'pyshexc.parser_impl', 'pyshexc.shexj'],
     url="http://github.com/shexSpec/grammar/parsers/python",
     license='Apache 2.0',
