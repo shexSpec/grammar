@@ -36,12 +36,15 @@ from rdflib.compare import to_isomorphic, graph_diff
 
 from tests.build_test_harness import ValidationTestCase
 
-ValidationTestCase.repo_url = "https://api.github.com/repos/shexSpec/shexTest/contents/schemas"
-ValidationTestCase.file_suffix = ".ttl"
-ValidationTestCase.skip = ['coverage.ttl', 'manifest.ttl', 'meta.ttl']
+class ShexJToShexRTestCase(ValidationTestCase):
+    pass
 
-# ValidationTestCase.start_at = "1literalPattern_with_all_punctionation.shex"
-# ValidationTestCase.single_file = True
+ShexJToShexRTestCase.repo_url = "https://api.github.com/repos/shexSpec/shexTest/contents/schemas"
+ShexJToShexRTestCase.file_suffix = ".ttl"
+ShexJToShexRTestCase.skip = ['coverage.ttl', 'manifest.ttl', 'meta.ttl']
+
+# ShexJToShexRTestCase.start_at = "1literalPattern_with_all_punctionation.ttl"
+# ShexJToShexRTestCase.single_file = True
 
 # True means use shex.jsonld from the tests directory. False means use the link in the file
 # (Used for testing fixes to @context)
@@ -77,8 +80,8 @@ def compare_rdf(shex_ttl_url: str) -> bool:
 
     return True
 
-ValidationTestCase.validation_function = compare_rdf
-ValidationTestCase.build_test_harness()
+ShexJToShexRTestCase.validation_function = compare_rdf
+ShexJToShexRTestCase.build_test_harness()
 
 
 if __name__ == '__main__':

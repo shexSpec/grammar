@@ -38,11 +38,16 @@ from pyshexc.shexj import ShExJ
 
 from tests.build_test_harness import ValidationTestCase
 
-ValidationTestCase.repo_url = "https://api.github.com/repos/shexSpec/shexTest/contents/schemas"
-ValidationTestCase.file_suffix = ".shex"
 
-# ValidationTestCase.start_at = "FocusIRI2groupBnodeNested2groupIRIRef.shex"
-# ValidationTestCase.single_file = True
+class BasicParserTestCase(ValidationTestCase):
+    pass
+
+
+BasicParserTestCase.repo_url = "https://api.github.com/repos/shexSpec/shexTest/contents/schemas"
+BasicParserTestCase.file_suffix = ".shex"
+
+# BasicParserTestCase.start_at = "FocusIRI2groupBnodeNested2groupIRIRef.shex"
+# BasicParserTestCase.single_file = True
 
 
 class MemLogger:
@@ -122,8 +127,10 @@ def validate_file(download_url: str) -> bool:
         print("Error {}: {}".format(resp.status_code, resp.reason))
         return False
 
-ValidationTestCase.validation_function = validate_file
-ValidationTestCase.build_test_harness()
+
+BasicParserTestCase.validation_function = validate_file
+BasicParserTestCase.build_test_harness()
+
 
 if __name__ == '__main__':
     unittest.main()
