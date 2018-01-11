@@ -25,24 +25,23 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 # OF THE POSSIBILITY OF SUCH DAMAGE.
+import re
 from typing import Union
+from rdflib import RDF, XSD
 
 from pyshexc.parser.ShExDocParser import ShExDocParser
-from pyshexc.shexj.ShExJ import IRI, STRING, BOOL, Schema, BNODE, INTEGER, DECIMAL, DOUBLE, ObjectLiteral, Shape, \
-    LANGTAG
+from ShExJSG import ShExJ
+from pyjsg.jsglib import jsg
 
 IRIstr = str
 PREFIXstr = str
 
-RDF_TYPE = IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
+RDF_TYPE = ShExJ.IRIREF(str(RDF.type))
 
-RDF_INTEGER_TYPE = STRING("http://www.w3.org/2001/XMLSchema#integer")
-RDF_DOUBLE_TYPE = STRING("http://www.w3.org/2001/XMLSchema#double")
-RDF_DECIMAL_TYPE = STRING("http://www.w3.org/2001/XMLSchema#decimal")
-RDF_BOOL_TYPE = STRING("http://www.w3.org/2001/XMLSchema#boolean")
-
-BOOL_TRUE = BOOL('true')
-BOOL_FALSE = BOOL('false')
+RDF_INTEGER_TYPE = ShExJ.IRIREF(str(XSD.integer))
+RDF_DOUBLE_TYPE = ShExJ.IRIREF(str(XSD.double))
+RDF_DECIMAL_TYPE = ShExJ.IRIREF(str(XSD.decimal))
+RDF_BOOL_TYPE = ShExJ.IRIREF(str(XSD.boolean))
 
 
 class ParserContext:
@@ -50,7 +49,7 @@ class ParserContext:
     Context maintained across ShExC parser implementation modules
     """
     def __init__(self):
-        self.schema = Schema()
+        self.schema = ShExJ.Schema()
         self.ld_prefixes = {}       # Dict[PREFIXstr, IRIstr] - prefixes in the JSON-LD module
         self.prefixes = {}          # Dict[PREFIXstr, IRIstr]
         self.base = None            # IRIstr
@@ -64,13 +63,14 @@ class ParserContext:
             return self.prefixes.get(prefix, "")
 
     def iriref_to_str(self, ref: ShExDocParser.IRIREF) -> str:
-        """  '<' (~[\u0000-\u0020=<>\"{}|^`\\] | UCHAR)* '>' """
+        """ IRIREF: '<' (~[\u0000-\u0020=<>\"{}|^`\\] | UCHAR)* '>' """
         rval = ref.getText()[1:-1].encode('utf-8').decode('unicode-escape')
         return rval if ':' in rval else self.base.val + rval
 
-    def iriref_to_IRI(self, ref: ShExDocParser.IRIREF) -> IRI:
-        """  '<' (~[\u0000-\u0020=<>\"{}|^`\\] | UCHAR)* '>' """
-        return IRI(self.iriref_to_str(ref))
+    def iriref_to_shexj_iriref(self, ref: ShExDocParser.IRIREF) -> ShExJ.IRIREF:
+        """  IRIREF: '<' (~[\u0000-\u0020=<>\"{}|^`\\] | UCHAR)* '>'
+             IRI: (PN_CHARS | '!' | ''.' | ':' | '/' | '\\' | '#' | '@' | '%' | '&' | UCHAR)* """
+        return ShExJ.IRIREF(self.iriref_to_str(ref))
 
     def prefixedname_to_str(self, prefix: ShExDocParser.PrefixedNameContext) -> str:
         """ prefixedName: PNAME_LN | PNAME_NS
@@ -83,20 +83,20 @@ class ParserContext:
             prefix, local = prefix.PNAME_LN().getText().split(':', 1)
             return self._lookup_prefix(prefix + ':') + (local if local else "")
 
-    def prefixedname_to_IRI(self, prefix: ShExDocParser.PrefixedNameContext) -> IRI:
+    def prefixedname_to_iriref(self, prefix: ShExDocParser.PrefixedNameContext) -> ShExJ.IRIREF:
         """ prefixedName: PNAME_LN | PNAME_NS
             PNAME_NS: PN_PREFIX? ':' ;
             PNAME_LN: PNAME_NS PN_LOCAL ;
         """
-        return IRI(self.prefixedname_to_str(prefix))
+        return ShExJ.IRIREF(self.prefixedname_to_str(prefix))
 
-    def shapeRef_to_IRI(self, ref: ShExDocParser.ShapeRefContext) -> IRI:
-        """ shapeOrRef: ATPNAME_NS | ATPNAME_LN | '@' shapeExprLabel """
+    def shapeRef_to_iriref(self, ref: ShExDocParser.ShapeRefContext) -> ShExJ.IRIREF:
+        """ shapeRef: ATPNAME_NS | ATPNAME_LN | '@' shapeExprLabel """
         if ref.ATPNAME_NS():
-            return IRI(self._lookup_prefix(ref.ATPNAME_NS().getText()[1:]))
+            return ShExJ.IRIREF(self._lookup_prefix(ref.ATPNAME_NS().getText()[1:]))
         elif ref.ATPNAME_LN():
             prefix, local = ref.ATPNAME_LN().getText()[1:].split(':', 1)
-            return IRI(self._lookup_prefix(prefix + ':') + (local if local else ""))
+            return ShExJ.IRIREF(self._lookup_prefix(prefix + ':') + (local if local else ""))
         else:
             return self.shapeexprlabel_to_IRI(ref.shapeExprLabel())
 
@@ -108,76 +108,101 @@ class ParserContext:
         else:
             return self.prefixedname_to_str(iri_.prefixedName())
 
-    def iri_to_IRI(self, iri_: ShExDocParser.IriContext) -> IRI:
+    def iri_to_iriref(self, iri_: ShExDocParser.IriContext) -> ShExJ.IRIREF:
         """ iri: IRIREF | prefixedName 
             prefixedName: PNAME_LN | PNAME_NS 
         """
-        return IRI(self.iri_to_str(iri_))
+        return ShExJ.IRIREF(self.iri_to_str(iri_))
 
-    def tripleexprlabel_to_IRI(self, tripleExprLabel: ShExDocParser.TripleExprLabelContext) -> Union[BNODE, IRI]:
-        """ tripleExprLabel: ri | blankNode """
+    def tripleexprlabel_to_iriref(self, tripleExprLabel: ShExDocParser.TripleExprLabelContext) \
+            -> Union[ShExJ.BNODE, ShExJ.IRIREF]:
+        """ tripleExprLabel: iri | blankNode """
         if tripleExprLabel.iri():
-            return self.iri_to_IRI(tripleExprLabel.iri())
+            return self.iri_to_iriref(tripleExprLabel.iri())
         else:
-            return BNODE(tripleExprLabel.blankNode().getText())
+            return ShExJ.BNODE(tripleExprLabel.blankNode().getText())
 
-    def shapeexprlabel_to_IRI(self, shapeExprLabel: ShExDocParser.ShapeExprLabelContext) -> Union[BNODE, IRI]:
+    def shapeexprlabel_to_IRI(self, shapeExprLabel: ShExDocParser.ShapeExprLabelContext) \
+            -> Union[ShExJ.BNODE, ShExJ.IRIREF]:
         """ shapeExprLabel: iri | blankNode """
         if shapeExprLabel.iri():
-            return self.iri_to_IRI(shapeExprLabel.iri())
+            return self.iri_to_iriref(shapeExprLabel.iri())
         else:
-            return BNODE(shapeExprLabel.blankNode().getText())
+            return ShExJ.BNODE(shapeExprLabel.blankNode().getText())
 
-    def predicate_to_IRI(self, predicate: ShExDocParser.PredicateContext) -> IRI:
+    def predicate_to_IRI(self, predicate: ShExDocParser.PredicateContext) -> ShExJ.IRIREF:
         """ predicate: iri | rdfType """
         if predicate.iri():
-            return self.iri_to_IRI(predicate.iri())
+            return self.iri_to_iriref(predicate.iri())
         else:
             return RDF_TYPE
 
     @staticmethod
-    def numeric_literal_to_type(numlit: ShExDocParser.NumericLiteralContext) -> Union[INTEGER, DECIMAL, DOUBLE]:
+    def numeric_literal_to_type(numlit: ShExDocParser.NumericLiteralContext) -> Union[jsg.Integer, jsg.Number]:
         """ numericLiteral: INTEGER | DECIMAL | DOUBLE """
         if numlit.INTEGER():
-            rval = INTEGER(numlit.INTEGER().getText())
+            rval = jsg.Integer(str(int(numlit.INTEGER().getText())))
         elif numlit.DECIMAL():
-            rval = DECIMAL(numlit.DECIMAL().getText())
+            rval = jsg.Number(str(float(numlit.DECIMAL().getText())))
         else:
-            rval = DOUBLE(numlit.DOUBLE().getText())
+            rval = jsg.Number(str(float(numlit.DOUBLE().getText())))
         return rval
 
-    def literal_to_ObjectLiteral(self, literal: ShExDocParser.LiteralContext) -> ObjectLiteral:
+    def literal_to_ObjectLiteral(self, literal: ShExDocParser.LiteralContext) -> ShExJ.ObjectLiteral:
         """ literal: rdfLiteral | numericLiteral | booleanLiteral """
-        rval = ObjectLiteral()
+        rval = ShExJ.ObjectLiteral()
         if literal.rdfLiteral():
             rdflit = literal.rdfLiteral()
             txt = rdflit.string().getText()
             txt = txt[3:-3] \
                 if len(txt) > 5 and (txt.startswith("'''") and txt.endswith("'''") or
                                      txt.startswith('"""') and txt.endswith('"""')) else txt[1:-1]
-            rval.value = STRING(txt.replace("\\'", "'").replace('\\"', '"'))
+            txt = self.fix_text_escapes(txt)
+            rval.value = jsg.String(txt)
             if rdflit.LANGTAG():
-                rval.language = LANGTAG(rdflit.LANGTAG().getText()[1:].lower())
+                rval.language = ShExJ.LANGTAG(rdflit.LANGTAG().getText()[1:].lower())
             if rdflit.datatype():
                 rval.type = self.iri_to_str(rdflit.datatype().iri())
         elif literal.numericLiteral():
             numlit = literal.numericLiteral()
             if numlit.INTEGER():
-                rval.value = STRING(numlit.INTEGER().getText())
+                rval.value = jsg.String(numlit.INTEGER().getText())
                 rval.type = RDF_INTEGER_TYPE
             elif numlit.DECIMAL():
-                rval.value = STRING(numlit.DECIMAL().getText())
+                rval.value = jsg.String(numlit.DECIMAL().getText())
                 rval.type = RDF_DECIMAL_TYPE
             elif numlit.DOUBLE():
-                rval.value = STRING(numlit.DOUBLE().getText())
+                rval.value = jsg.String(numlit.DOUBLE().getText())
                 rval.type = RDF_DOUBLE_TYPE
         elif literal.booleanLiteral():
-            rval.value = STRING(literal.booleanLiteral().getText().lower())
+            rval.value = jsg.String(literal.booleanLiteral().getText().lower())
             rval.type = RDF_BOOL_TYPE
         return rval
 
     @staticmethod
-    def is_empty_shape(sh: Shape) -> bool:
+    def is_empty_shape(sh: ShExJ.Shape) -> bool:
         """ Determine whether sh has any value """
-        return sh.closed is None and sh.expression is None and sh.extra is None and sh.inherit is None and \
-            sh.inherit is None and sh.semActs is None and sh.virtual is None
+        return sh.closed is None and sh.expression is None and sh.extra is None and \
+            sh.semActs is None
+
+    re_trans_table = str.maketrans('bfnrt', '\b\f\n\r\t')
+
+    def fix_text_escapes(self, txt: str) -> str:
+        """ Fix the various text escapes """
+        def _subf(matchobj):
+            return matchobj.group(0).translate(self.re_trans_table)
+
+        return re.sub(r'\\.', _subf, txt, flags=re.MULTILINE + re.DOTALL + re.UNICODE)
+
+    def fix_re_escapes(self, txt: str) -> str:
+        """ The ShEx RE engine allows escaping any character.  We have to remove that escape for everything except those
+        that CAN be legitimately escaped
+
+        :param txt: text to be escaped
+        """
+        def _subf(matchobj):
+            # o = self.fix_text_escapes(matchobj.group(0))
+            o = matchobj.group(0).translate(self.re_trans_table)
+            return o if o[1] in '\\.?*+^$()[]{|}' 'bfntr' else o[1]
+
+        return re.sub(r'\\.', _subf, txt, flags=re.MULTILINE + re.DOTALL + re.UNICODE)

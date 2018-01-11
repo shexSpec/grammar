@@ -13,7 +13,7 @@ This package converts the Shape Expression Compact (ShExC) into Python JSON Sche
 ## Usage
 
 ### Command Line
-```bash
+```text
 usage: shexc_to_shexj [-h] [-nj] [-nr] [-j JSONFILE] [-r RDFFILE]
                       [--context CONTEXT]
                       [-f {trix,trig,ttl,n3,turtle,ntriples,xml,json-ld,nt11,pretty-xml,nquads,nt}]

@@ -32,12 +32,12 @@ from pyshexc.parser.ShExDocVisitor import ShExDocVisitor
 
 from pyshexc.parser_impl.parser_context import ParserContext
 from pyshexc.parser_impl.shex_node_expression_parser import ShexNodeExpressionParser
-from pyshexc.shexj.ShExJ import BNODE, IRI, ShapeOr, ShapeAnd, ShapeNot, Shape
+from ShExJSG.ShExJ import BNODE, IRIREF, ShapeOr, ShapeAnd, ShapeNot, Shape, shapeExpr
 
 
 class ShexShapeExpressionParser(ShExDocVisitor):
     """ Parser for Shape Expressions branch """
-    def __init__(self, context: ParserContext, label: Optional[Union[IRI, BNODE]]=None):
+    def __init__(self, context: ParserContext, label: Optional[Union[IRIREF, BNODE]]=None):
         ShExDocVisitor.__init__(self)
         self.context = context
         self.label = label
@@ -83,27 +83,39 @@ class ShexShapeExpressionParser(ShExDocVisitor):
             for sa in ctx.inlineShapeNot():
                 sep = ShexShapeExpressionParser(self.context)
                 sep.visit(sa)
-                self.expr.shapeExprs.append(sep.expr)
+                self._and_collapser(self.expr, sep.expr)
         else:
             self.visit(ctx.inlineShapeNot(0))
+
+    @staticmethod
+    def _and_collapser(container: ShapeAnd, containee: shapeExpr) -> None:
+        """ For various nefarious reaons, the reference parser has decided to implement
+            And(And(a, b), c) --> And(a, b, c).  We've got to do the same
+        """
+        if isinstance(containee, ShapeAnd):
+            for expr in containee.shapeExprs:
+                container.shapeExprs.append(expr)
+        else:
+            container.shapeExprs.append(containee)
 
     def visitShapeNot(self, ctx: ShExDocParser.ShapeNotContext):
         """ shapeNot: negation? shapeAtom """
         if ctx.negation():
-            self.expr = ShapeNot()
+            self.expr = ShapeNot(id=self.label)
             sn = ShexShapeExpressionParser(self.context)
             sn.visit(ctx.shapeAtom())
-            self.expr.shapeExpr = sn.expr
+            self.expr.shapeExpr = sn.expr if sn.expr is not None else Shape()
         else:
             self.visitChildren(ctx)
 
     def visitInlineShapeNot(self, ctx: ShExDocParser.InlineShapeNotContext):
         """ inlineShapeNot: negation? inlineShapeAtom """
         if ctx.negation():
-            self.expr = ShapeNot()
+            self.expr = ShapeNot(id=self.label)
             sn = ShexShapeExpressionParser(self.context)
+            ctx.inlineShapeAtom()
             sn.visit(ctx.inlineShapeAtom())
-            self.expr.shapeExpr = sn.expr
+            self.expr.shapeExpr = sn.expr if sn.expr is not None else Shape()
         else:
             self.visitChildren(ctx)
 
@@ -147,7 +159,7 @@ class ShexShapeExpressionParser(ShExDocVisitor):
             shdef_parser.visitChildren(ctx)
             self.expr = shdef_parser.shape
         else:
-            self.expr = self.context.shapeRef_to_IRI(ctx.shapeRef())
+            self.expr = self.context.shapeRef_to_iriref(ctx.shapeRef())
 
     def visitInlineShapeOrRef(self, ctx: ShExDocParser.InlineShapeOrRefContext):
         """ inlineShapeOrRef: inlineShapeDefinition | shapeRef """
@@ -157,4 +169,4 @@ class ShexShapeExpressionParser(ShExDocVisitor):
             shdef_parser.visitChildren(ctx)
             self.expr = shdef_parser.shape
         else:
-            self.expr = self.context.shapeRef_to_IRI(ctx.shapeRef())
+            self.expr = self.context.shapeRef_to_iriref(ctx.shapeRef())

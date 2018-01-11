@@ -29,7 +29,7 @@ from pyshexc.parser.ShExDocParser import ShExDocParser
 from pyshexc.parser.ShExDocVisitor import ShExDocVisitor
 
 from pyshexc.parser_impl.parser_context import ParserContext
-from pyshexc.shexj.ShExJ import Annotation, SemAct
+from ShExJSG.ShExJ import Annotation, SemAct
 
 
 class ShexAnnotationAndSemactsParser(ShExDocVisitor):
@@ -44,7 +44,7 @@ class ShexAnnotationAndSemactsParser(ShExDocVisitor):
         # Annotations apply to the expression, NOT the shape (!)
         annot = Annotation(self.context.predicate_to_IRI(ctx.predicate()))
         if ctx.iri():
-            annot.object = self.context.iri_to_IRI(ctx.iri())
+            annot.object = self.context.iri_to_iriref(ctx.iri())
         else:
             annot.object = self.context.literal_to_ObjectLiteral(ctx.literal())
         self.annotations.append(annot)
@@ -53,7 +53,7 @@ class ShexAnnotationAndSemactsParser(ShExDocVisitor):
         """ codeDecl: '%' iri (CODE | '%') 
             CODE: : '{' (~[%\\] | '\\' [%\\] | UCHAR)* '%' '}' """
         semact = SemAct()
-        semact.name = self.context.iri_to_IRI(ctx.iri())
+        semact.name = self.context.iri_to_iriref(ctx.iri())
         if ctx.CODE():
             semact.code = ctx.CODE().getText()[1:-2].replace('\\%', '%').encode('utf-8').decode('unicode-escape')
         self.semacts.append(semact)

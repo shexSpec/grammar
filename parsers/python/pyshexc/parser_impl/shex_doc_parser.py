@@ -31,7 +31,7 @@ from pyshexc.parser.ShExDocVisitor import ShExDocVisitor
 from pyshexc.parser_impl.parser_context import ParserContext
 from pyshexc.parser_impl.shex_annotations_and_semacts_parser import ShexAnnotationAndSemactsParser
 from pyshexc.parser_impl.shex_shape_expression_parser import ShexShapeExpressionParser
-from pyshexc.shexj.ShExJ import ShapeExternal
+from ShExJSG.ShExJ import ShapeExternal
 
 
 class ShexDocParser(ShExDocVisitor):
@@ -47,11 +47,11 @@ class ShexDocParser(ShExDocVisitor):
 
     def visitBaseDecl(self, ctx: ShExDocParser.BaseDeclContext):
         """ baseDecl: KW_BASE IRIREF """
-        self.context.base = self.context.iriref_to_IRI(ctx.IRIREF())
+        self.context.base = self.context.iriref_to_shexj_iriref(ctx.IRIREF())
 
     def visitPrefixDecl(self, ctx: ShExDocParser.PrefixDeclContext):
         """ prefixDecl: KW_PREFIX PNAME_NS IRIREF """
-        iri = self.context.iriref_to_IRI(ctx.IRIREF())
+        iri = self.context.iriref_to_shexj_iriref(ctx.IRIREF())
         prefix = ctx.PNAME_NS().getText()
         if iri not in self.context.ld_prefixes:
             self.context.prefixes.setdefault(prefix, iri.val)

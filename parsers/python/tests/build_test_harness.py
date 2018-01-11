@@ -27,7 +27,9 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 import unittest
 import sys
+from typing import Tuple
 
+import os
 import requests
 
 
@@ -50,19 +52,32 @@ class ValidationTestCase(unittest.TestCase):
     @classmethod
     def build_test_harness(cls) -> None:
         started = not bool(cls.start_at)
-        resp = requests.get(cls.repo_url)
+        for fname, fpath in \
+                (cls.enumerate_http_files(cls.repo_url) if ':' in cls.repo_url else
+                    cls.enumerate_directory(cls.repo_url)):
+            if fname.endswith(cls.file_suffix):
+                if fname not in cls.skip and (started or fname == cls.start_at):
+                    started = True
+                    test_func = cls.make_test_function(fpath)
+                    setattr(cls, 'test_{0}'.format(fname.rsplit('.', 1)[0]), test_func)
+                    if cls.single_file:
+                        break
+
+    @staticmethod
+    def enumerate_http_files(url) -> Tuple[str, str]:
+        resp = requests.get(url)
         if resp.ok:
             for f in resp.json():
-                fname = f['name']
-                if fname.endswith(cls.file_suffix):
-                    if fname not in cls.skip and (started or fname >= cls.start_at):
-                        started = True
-                        test_func = cls.make_test_function(f['download_url'])
-                        setattr(cls, 'test_{0}'.format(fname.rsplit('.', 1)[0]), test_func)
-                        if cls.single_file:
-                            break
+                yield f['name'], f['download_url']
         else:
             print("Error {}: {}".format(resp.status_code, resp.reason), file=sys.stderr)
+
+    @staticmethod
+    def enumerate_directory(dir_) -> Tuple[str, str]:
+        for fname in os.listdir(dir_):
+            fpath = os.path.join(dir_, fname)
+            if os.path.isfile(fpath):
+                yield fname, fpath
 
     def blank_test(self):
         self.assertTrue(True)

@@ -28,10 +28,10 @@
 from pyshexc.parser.ShExDocParser import ShExDocParser
 from pyshexc.parser.ShExDocVisitor import ShExDocVisitor
 
-from pyshexc.parser_impl.parser_context import ParserContext, BOOL_TRUE
+from pyshexc.parser_impl.parser_context import ParserContext
 from pyshexc.parser_impl.shex_annotations_and_semacts_parser import ShexAnnotationAndSemactsParser
 from pyshexc.parser_impl.shex_shape_expression_parser import ShexShapeExpressionParser
-from pyshexc.shexj.ShExJ import OneOf, EachOf, TripleConstraint
+from ShExJSG.ShExJ import OneOf, EachOf, TripleConstraint
 
 
 class ShexOneOfShapeParser(ShExDocVisitor):
@@ -59,9 +59,9 @@ class ShexOneOfShapeParser(ShExDocVisitor):
     def visitUnaryShape(self, ctx: ShExDocParser.UnaryShapeContext):
         """ unaryShape: ('$' tripleExprLabel)? (tripleConstraint | encapsulatedShape) | include """
         if ctx.include():
-            self.expression = self.context.tripleexprlabel_to_IRI(ctx.include().tripleExprLabel())
+            self.expression = self.context.tripleexprlabel_to_iriref(ctx.include().tripleExprLabel())
         else:
-            lbl = self.context.tripleexprlabel_to_IRI(ctx.tripleExprLabel()) if ctx.tripleExprLabel() else None
+            lbl = self.context.tripleexprlabel_to_iriref(ctx.tripleExprLabel()) if ctx.tripleExprLabel() else None
             if ctx.tripleConstraint():
                 self.expression = TripleConstraint(lbl)
                 self.visit(ctx.tripleConstraint())
@@ -114,9 +114,9 @@ class ShexOneOfShapeParser(ShExDocVisitor):
     def visitSenseFlags(self, ctx: ShExDocParser.SenseFlagsContext):
         """ '!' '^'? | '^' '!'? """
         if '!' in ctx.getText():
-            self.expression.negated = BOOL_TRUE
+            self.expression.negated = True
         if '^' in ctx.getText():
-            self.expression.inverse = BOOL_TRUE
+            self.expression.inverse = True
 
     def visitPredicate(self, ctx: ShExDocParser.PredicateContext):
         """ predicate: iri | rdfType """

@@ -30,14 +30,14 @@ from typing import Optional, Union
 from pyshexc.parser.ShExDocParser import ShExDocParser
 from pyshexc.parser.ShExDocVisitor import ShExDocVisitor
 
-from pyshexc.parser_impl.parser_context import ParserContext, BOOL_TRUE
+from pyshexc.parser_impl.parser_context import ParserContext
 from pyshexc.parser_impl.shex_annotations_and_semacts_parser import ShexAnnotationAndSemactsParser
 from pyshexc.parser_impl.shex_oneofshape_parser import ShexOneOfShapeParser
-from pyshexc.shexj.ShExJ import IRI, BNODE, Shape
+from ShExJSG.ShExJ import IRIREF, BNODE, Shape
 
 
 class ShexShapeDefinitionParser(ShExDocVisitor):
-    def __init__(self, context: ParserContext, label: Optional[Union[IRI, BNODE]]=None):
+    def __init__(self, context: ParserContext, label: Optional[Union[IRIREF, BNODE]]=None):
         ShExDocVisitor.__init__(self)
         self.context = context
         self.shape = Shape(label)
@@ -76,7 +76,7 @@ class ShexShapeDefinitionParser(ShExDocVisitor):
         if ctx.includeSet():
             if self.shape.inherit is None:
                 self.shape.inherit = []
-            self.shape.inherit += [self.context.tripleexprlabel_to_IRI(tel)
+            self.shape.inherit += [self.context.tripleexprlabel_to_iriref(tel)
                                    for tel in ctx.includeSet().tripleExpressionLabel()]
         elif ctx.extraPropertySet():
             if self.shape.extra is None:
@@ -84,4 +84,4 @@ class ShexShapeDefinitionParser(ShExDocVisitor):
             self.shape.extra += [self.context.predicate_to_IRI(p) for p in ctx.extraPropertySet().predicate()]
 
         elif ctx.KW_CLOSED():
-            self.shape.closed = BOOL_TRUE
+            self.shape.closed = True

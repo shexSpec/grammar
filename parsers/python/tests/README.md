@@ -1,7 +1,7 @@
 # PyShExC tests
 
 ## Requirements
-These tests require the [requests](http://docs.python-requests.org/en/master/) and [yadict-compare](https://github.com/hsolbrig/dict_compare) modules.  They can be installed by:
+These tests require the [requests](http://docs.python-requests.org/en/master/ and [yadict-compare](https://github.com/hsolbrig/dict_compare) modules.  They can be installed by:
 ```bash
 > pip install -r requirements.txt
 ```

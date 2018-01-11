@@ -67,7 +67,7 @@ from rdflib.util import SUFFIX_FORMAT_MAP
 from pyshexc.parser_impl.shex_doc_parser import ShexDocParser
 from pyshexc.parser.ShExDocLexer import ShExDocLexer
 from pyshexc.parser.ShExDocParser import ShExDocParser
-from pyshexc.shexj.ShExJ import Schema
+from ShExJSG.ShExJ import Schema
 
 
 class ParseErrorListener(ErrorListener):
@@ -77,7 +77,7 @@ class ParseErrorListener(ErrorListener):
         self.n_errors = 0
         self.errors = []
 
-    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
+    def syntaxError(self, recognizer, offending_symbol, line, column, msg, e):
         self.n_errors += 1
         self.errors.append("line " + str(line) + ":" + str(column) + " " + msg)
 

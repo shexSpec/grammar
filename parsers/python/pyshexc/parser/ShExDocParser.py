@@ -1,11 +1,13 @@
-# Generated from ShExDoc.g4 by ANTLR 4.6
+# Generated from ShExDoc.g4 by ANTLR 4.7.1
 # encoding: utf-8
 from antlr4 import *
 from io import StringIO
+from typing.io import TextIO
+import sys
 
 def serializedATN():
     with StringIO() as buf:
-        buf.write("\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3G")
+        buf.write("\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3G")
         buf.write("\u0282\4\2\t\2\4\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7")
         buf.write("\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t\13\4\f\t\f\4\r\t\r\4\16")
         buf.write("\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22\4\23\t\23")
@@ -71,7 +73,7 @@ def serializedATN():
         buf.write("Z\\^`bdfhjlnprtvxz|~\u0080\u0082\u0084\u0086\u0088\u008a")
         buf.write("\u008c\u008e\u0090\u0092\2\r\4\2\4\4//\3\2!#\3\2*,\3\2")
         buf.write("&)\3\2-.\4\2??CC\3\2?A\3\2\60\61\3\2DG\3\2\678\4\2\30")
-        buf.write("\30\64\64\u029d\2\u0097\3\2\2\2\4\u00aa\3\2\2\2\6\u00ac")
+        buf.write("\30\64\64\2\u029d\2\u0097\3\2\2\2\4\u00aa\3\2\2\2\6\u00ac")
         buf.write("\3\2\2\2\b\u00af\3\2\2\2\n\u00b5\3\2\2\2\f\u00b7\3\2\2")
         buf.write("\2\16\u00bc\3\2\2\2\20\u00c2\3\2\2\2\22\u00c4\3\2\2\2")
         buf.write("\24\u00c9\3\2\2\2\26\u00cb\3\2\2\2\30\u00d3\3\2\2\2\32")
@@ -525,9 +527,9 @@ class ShExDocParser ( Parser ):
     STRING_LITERAL_LONG1=68
     STRING_LITERAL_LONG2=69
 
-    def __init__(self, input:TokenStream):
-        super().__init__(input)
-        self.checkVersion("4.6")
+    def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
+        super().__init__(input, output)
+        self.checkVersion("4.7.1")
         self._interp = ParserATNSimulator(self, self.atn, self.decisionsToDFA, self.sharedContextCache)
         self._predicates = None
 

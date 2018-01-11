@@ -27,12 +27,13 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 from typing import Optional, List
 
+from ShExJSG.ShExJ import Language, NodeConstraint, Wildcard, IriStemRange, LiteralStemRange, \
+    LanguageStemRange, IriStem, LiteralStem, LanguageStem, LANGTAG
+from pyjsg.jsglib import jsg
+
 from pyshexc.parser.ShExDocParser import ShExDocParser
 from pyshexc.parser.ShExDocVisitor import ShExDocVisitor
-
 from pyshexc.parser_impl.parser_context import ParserContext
-from pyshexc.shexj.ShExJ import NodeConstraint, Wildcard, IriStemRange, LiteralStemRange, LanguageStemRange, IriStem, \
-    LiteralStem, ObjectLiteral, LanguageStem, INTEGER, STRING, LANGTAG
 
 
 class ShexNodeExpressionParser(ShExDocVisitor):
@@ -57,7 +58,7 @@ class ShexNodeExpressionParser(ShExDocVisitor):
 
     def visitNodeConstraintDatatype(self, ctx: ShExDocParser.NodeConstraintDatatypeContext):
         """ nodeConstraint: datatype xsFacet* # nodeConstraintDatatype """
-        self.nodeconstraint.datatype = self.context.iri_to_IRI(ctx.datatype().iri())
+        self.nodeconstraint.datatype = self.context.iri_to_iriref(ctx.datatype().iri())
         self.visitChildren(ctx)
 
     def visitNodeConstraintValueSet(self, ctx: ShExDocParser.NodeConstraintValueSetContext):
@@ -84,7 +85,7 @@ class ShexNodeExpressionParser(ShExDocVisitor):
 
     def visitIriRange(self, ctx: ShExDocParser.IriRangeContext):
         """ iriRange: iri (STEM_MARK iriExclusion*)? """
-        baseiri = self.context.iri_to_IRI(ctx.iri())
+        baseiri = self.context.iri_to_iriref(ctx.iri())
         if not ctx.STEM_MARK():
             vsvalue = baseiri                   # valueSetValue = objectValue  / objectValue = IRI
         else:
@@ -97,7 +98,7 @@ class ShexNodeExpressionParser(ShExDocVisitor):
 
     def _iri_exclusions(self, stemrange: IriStemRange, exclusions: List[ShExDocParser.IriExclusionContext]) -> None:
         for excl in exclusions:
-            excl_iri = self.context.iri_to_IRI(excl.iri())
+            excl_iri = self.context.iri_to_iriref(excl.iri())
             stemrange.exclusions.append(IriStem(excl_iri) if excl.STEM_MARK() else excl_iri)
 
     def visitLiteralRange(self, ctx: ShExDocParser.LiteralRangeContext):
@@ -111,10 +112,10 @@ class ShexNodeExpressionParser(ShExDocVisitor):
             vsvalue = baseliteral               # valueSetValue = objectValue / objectValue = ObjectLiteral
         else:
             if ctx.literalExclusion():          # valueSetValue = LiteralStemRange /
-                vsvalue = LiteralStemRange(STRING(baseliteral.value), exclusions=[])
+                vsvalue = LiteralStemRange(baseliteral.value.val, exclusions=[])
                 self._literal_exclusions(vsvalue, ctx.literalExclusion())
             else:
-                vsvalue = LiteralStem(STRING(baseliteral.value))
+                vsvalue = LiteralStem(baseliteral.value)
         self.nodeconstraint.values.append(vsvalue)
 
     def _literal_exclusions(self, stem: LiteralStemRange,
@@ -124,15 +125,16 @@ class ShexNodeExpressionParser(ShExDocVisitor):
                    literalStem: {stem:STRING}
         """
         for excl in exclusions:
-            excl_literal = STRING(self.context.literal_to_ObjectLiteral(excl.literal()).value)
-            stem.exclusions.append(LiteralStem(excl_literal) if excl.STEM_MARK() else excl_literal)
+            excl_literal_v = self.context.literal_to_ObjectLiteral(excl.literal()).value
+            stem.exclusions.append(LiteralStem(excl_literal_v) if excl.STEM_MARK() else excl_literal_v)
 
     def visitLanguageRange(self, ctx: ShExDocParser.LanguageRangeContext):
         """ ShExC: languageRange : LANGTAG (STEM_MARK languagExclusion*)? 
             ShExJ: valueSetValue = objectValue | LanguageStem | LanguageStemRange """
         baselang = ctx.LANGTAG().getText()
         if not ctx.STEM_MARK():                 # valueSetValue = objectValue / objectValue = ObjectLiteral
-            vsvalue = ObjectLiteral(value=baselang)
+            vsvalue = Language()
+            vsvalue.languageTag = baselang[1:]
         else:
             if ctx.languageExclusion():
                 vsvalue = LanguageStemRange(LANGTAG(baselang[1:]), exclusions=[])
@@ -153,7 +155,7 @@ class ShexNodeExpressionParser(ShExDocVisitor):
         """ stringFacet: stringLength INTEGER | REGEXP REGEXP_FLAGS
             stringLength: KW_LENGTH | KW_MINLENGTH | KW_MAXLENGTH """
         if ctx.stringLength():
-            slen = INTEGER(ctx.INTEGER().getText())
+            slen = jsg.Integer(ctx.INTEGER().getText())
             if ctx.stringLength().KW_LENGTH():
                 self.nodeconstraint.length = slen
             elif ctx.stringLength().KW_MINLENGTH():
@@ -162,17 +164,9 @@ class ShexNodeExpressionParser(ShExDocVisitor):
                 self.nodeconstraint.maxlength = slen
 
         else:
-            p = ctx.REGEXP().getText()[1:-1]
-            p = p.replace('\/', '/').replace("\\'", "'")
-            self.nodeconstraint.pattern = STRING(p)
-            # TODO: Clean this up
-            # self.nodeconstraint.pattern = STRING(ctx.REGEXP().getText()[1:-1].
-            #                                      encode('utf-8').
-            #                                      decode('unicode-escape').
-            #                                      replace(r'\/', '/').
-            #                                      replace(r'\\', '\\\\'))
+            self.nodeconstraint.pattern = jsg.String(self.context.fix_re_escapes(ctx.REGEXP().getText()[1:-1]))
             if ctx.REGEXP_FLAGS():
-                self.nodeconstraint.flags = STRING(ctx.REGEXP_FLAGS().getText())
+                self.nodeconstraint.flags = jsg.String(ctx.REGEXP_FLAGS().getText())
 
     def visitNumericFacet(self, ctx: ShExDocParser.NumericFacetContext):
         """ numericFacet: numericRange numericLiteral | numericLength INTEGER
@@ -189,7 +183,7 @@ class ShexNodeExpressionParser(ShExDocVisitor):
             elif ctx.numericRange().KW_MAXINCLUSIVE():
                 self.nodeconstraint.maxinclusive = numlit
         else:
-            nlen = INTEGER(ctx.INTEGER().getText())
+            nlen = jsg.Integer(ctx.INTEGER().getText())
             if ctx.numericLength().KW_TOTALDIGITS():
                 self.nodeconstraint.totaldigits = nlen
             elif ctx.numericLength().KW_FRACTIONDIGITS():
