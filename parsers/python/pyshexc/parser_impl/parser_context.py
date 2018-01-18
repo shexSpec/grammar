@@ -65,7 +65,7 @@ class ParserContext:
     def iriref_to_str(self, ref: ShExDocParser.IRIREF) -> str:
         """ IRIREF: '<' (~[\u0000-\u0020=<>\"{}|^`\\] | UCHAR)* '>' """
         rval = ref.getText()[1:-1].encode('utf-8').decode('unicode-escape')
-        return rval if ':' in rval else self.base.val + rval
+        return rval if ':' in rval or not self.base else self.base.val + rval
 
     def iriref_to_shexj_iriref(self, ref: ShExDocParser.IRIREF) -> ShExJ.IRIREF:
         """  IRIREF: '<' (~[\u0000-\u0020=<>\"{}|^`\\] | UCHAR)* '>'

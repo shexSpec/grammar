@@ -95,12 +95,11 @@ def do_parse(infilename: str, jsonfilename: Optional[str], rdffilename: Optional
     """
     shexj = parse(FileStream(infilename, encoding="utf-8"))
     if shexj is not None:
+        shexj['@context'] = context if context else "http://www.w3.org/ns/shex.jsonld"
         if jsonfilename:
             with open(jsonfilename, 'w') as outfile:
                 outfile.write(shexj._as_json_dumps())
         if rdffilename:
-            if context:
-                shexj['@context'] = context
             g = Graph().parse(data=shexj._as_json, format="json-ld")
             g.serialize(open(rdffilename, "wb"), format=rdffmt)
         return True
@@ -159,7 +158,7 @@ def genargs() -> ArgumentParser:
     parser.add_argument("-nr", "--nordf", help="Do not produce rdf output", action="store_true")
     parser.add_argument("-j", "--jsonfile", help="Output ShExJ file (Default: {infile}.json)")
     parser.add_argument("-r", "--rdffile", help="Output ShExR file (Default: {infile}.{fmt suffix})")
-    parser.add_argument("--context", help="Alternative @context for json to RDF")
+    parser.add_argument("--context", help="Alternative @context")
     parser.add_argument("-f", "--format",
                         choices=list(set(x.name for x in rdflib_plugins(None, rdflib_Serializer)
                                          if '/' not in str(x.name))),
