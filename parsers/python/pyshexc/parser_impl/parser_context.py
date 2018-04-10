@@ -209,6 +209,9 @@ class ParserContext:
         def _subf(matchobj):
             # o = self.fix_text_escapes(matchobj.group(0))
             o = matchobj.group(0).translate(self.re_trans_table)
-            return o if o[1] in '\\.?*+^$()[]{|}' 'bfntr' else o[1]
+            if o[1] in '\b\f\n\t\r':
+                return o[0] + 'bfntr'['\b\f\n\t\r'.index(o[1])]
+            else:
+                return o if o[1] in '\\.?*+^$()[]{|}' else o[1]
 
         return re.sub(r'\\.', _subf, txt, flags=re.MULTILINE + re.DOTALL + re.UNICODE)
