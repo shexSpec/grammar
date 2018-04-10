@@ -154,10 +154,15 @@ class ParserContext:
         if literal.rdfLiteral():
             rdflit = literal.rdfLiteral()
             txt = rdflit.string().getText()
-            txt = txt[3:-3] \
-                if len(txt) > 5 and (txt.startswith("'''") and txt.endswith("'''") or
-                                     txt.startswith('"""') and txt.endswith('"""')) else txt[1:-1]
-            txt = self.fix_text_escapes(txt)
+            quote_char = ''
+            if len(txt) > 5 and (txt.startswith("'''") and txt.endswith("'''") or
+                                 txt.startswith('"""') and txt.endswith('"""')):
+                txt = txt[3:-3]
+            else:
+                quote_char = txt[0]
+                txt = txt[1:-1]
+
+            txt = self.fix_text_escapes(txt, quote_char)
             rval.value = jsg.String(txt)
             if rdflit.LANGTAG():
                 rval.language = ShExJ.LANGTAG(rdflit.LANGTAG().getText()[1:].lower())
@@ -187,11 +192,12 @@ class ParserContext:
 
     re_trans_table = str.maketrans('bfnrt', '\b\f\n\r\t')
 
-    def fix_text_escapes(self, txt: str) -> str:
+    def fix_text_escapes(self, txt: str, quote_char: str) -> str:
         """ Fix the various text escapes """
         def _subf(matchobj):
             return matchobj.group(0).translate(self.re_trans_table)
-
+        if quote_char:
+            txt = re.sub(r'\\'+quote_char, quote_char, txt)
         return re.sub(r'\\.', _subf, txt, flags=re.MULTILINE + re.DOTALL + re.UNICODE)
 
     def fix_re_escapes(self, txt: str) -> str:
