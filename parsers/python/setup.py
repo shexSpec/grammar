@@ -17,7 +17,7 @@ if sys.version_info < (3, 5):
 
 setup(
     name='PyShExC',
-    version='0.3.2',
+    version='0.3.4',
     packages=['pyshexc.parser', 'pyshexc.parser_impl'],
     url="http://github.com/shexSpec/grammar/parsers/python",
     license='Apache 2.0',
@@ -29,7 +29,7 @@ setup(
     tests_require=['yadict-compare>=1.1.2'],
     scripts=['scripts/shexc_to_shexj'],
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Environment :: Console',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Compilers',

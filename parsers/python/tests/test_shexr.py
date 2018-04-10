@@ -62,12 +62,11 @@ SHT = Namespace("file://" + fpath + '/')
 class ShexJToShexRTestCase(ValidationTestCase):
     pass
 
-
-# ShexJToShexRTestCase.repo_url = "(local path to)/shexSpec/shexTest/schemas"
+# ShexJToShexRTestCase.repo_url = "~/Development/git/shexSpec/shexTest/schemas"
 ShexJToShexRTestCase.repo_url = "https://api.github.com/repos/shexSpec/shexTest/contents/schemas"
 ShexJToShexRTestCase.file_suffix = ".ttl"
 ShexJToShexRTestCase.skip = ['coverage.ttl', 'manifest.ttl', 'meta.ttl']
-ShexJToShexRTestCase.start_at = START_AT if not START_AT or START_AT[::-1].startswith('xehs.') else START_AT + '.shex'
+ShexJToShexRTestCase.start_at = START_AT if not START_AT or START_AT.endswith('.ttl') else START_AT + '.ttl'
 ShexJToShexRTestCase.single_file = SINGLE_FILE
 
 
@@ -96,6 +95,9 @@ def complete_definition(subj: Identifier,
             complete_definition(o, source_graph, target_graph)
     return target_graph
 
+def bare_bnode(n: BNode, g: Graph) -> bool:
+    """ Return True if n is a lone BNode"""
+    return bool(g.subjects(None, n))
 
 def compare_rdf(ttl_text: str, shex_ttl_url: str) -> bool:
     shex_json_url = shex_ttl_url.rsplit(".", 1)[0] + ".json"
@@ -116,19 +118,20 @@ def compare_rdf(ttl_text: str, shex_ttl_url: str) -> bool:
     else:
         g2 = Graph().parse(data=resp_json, format="json-ld")
 
-    g1_subjs = set([s for s in g1.subjects() if isinstance(s, URIRef)])
-    g2_subjs = set([s for s in g2.subjects() if isinstance(s, URIRef)])
-
     if g1.isomorphic(g2):
         return True
 
+    g1_subjs = set([s for s in g1.subjects() if isinstance(s, URIRef) or bare_bnode(s, g1)])
+    g2_subjs = set([s for s in g2.subjects() if isinstance(s, URIRef) or bare_bnode(s, g2)])
     for s in g1_subjs - g2_subjs:
-        print(f"Missed: {s}")
+        if not isinstance(s, BNode):
+            print(f"Missed: {s}")
 
     for s in g2_subjs - g2_subjs:
-        print(f"Added: {s}")
+        if not isinstance(s, BNode):
+            print(f"Added: {s}")
 
-
+    rval = True
     for s in g1_subjs.intersection(g2_subjs):
         s_in_g1 = complete_definition(s, g1)
         s_in_g2 = complete_definition(s, g2)
@@ -137,8 +140,9 @@ def compare_rdf(ttl_text: str, shex_ttl_url: str) -> bool:
             print(strip_prefixes(s_in_g1.serialize(format="turtle").decode()))
             print(f"{shex_ttl_url}")
             print(strip_prefixes(s_in_g2.serialize(format="turtle").decode()))
+            rval = False
 
-    return False
+    return rval
 
 
 def validate_file(download_url: str) -> bool:

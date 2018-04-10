@@ -72,16 +72,11 @@ skip = {
     "3circRefS3-IS12.shex": V2_1_IMPORT,
     "3circRefS3-Icirc.shex": V2_1_IMPORT,
     "1val1STRING_LITERAL1_with_UTF8_boundaries.shex": LONG_UNICODE_LITERALS,
-    "test__all.shex": LONG_UNICODE_LITERALS,
     "1refbnode_with_spanning_PN_CHARS_BASE1.shex": LONG_UNICODE_LITERALS,
-    "1literalPattern_with_UTF8_boundaries": LONG_UNICODE_LITERALS,
     "1literalPattern_with_REGEXP_escapes_bare.shex": LONG_UNICODE_LITERALS,
     "1val1STRING_LITERAL1_with_ECHAR_escapes.shex": LONG_UNICODE_LITERALS,
-    "1literalPattern_with_REGEXP_escapes_escaped.shex": LONG_UNICODE_LITERALS,
     "1literalPattern_with_REGEXP_escapes.shex": LONG_UNICODE_LITERALS,
     "1literalPattern_with_UTF8_boundaries.shex": LONG_UNICODE_LITERALS,
-    "_all.shex": LONG_UNICODE_LITERALS
-
 }
 
 
@@ -92,7 +87,7 @@ class BasicParserTestCase(ValidationTestCase):
 BasicParserTestCase.repo_url = "https://api.github.com/repos/shexSpec/shexTest/contents/schemas"
 # BasicParserTestCase.repo_url = "(path to git)/shexSpec/shexTest/schemas"
 BasicParserTestCase.file_suffix = ".shex"
-BasicParserTestCase.start_at = START_AT if not START_AT or START_AT[::-1].startswith('xehs.') else START_AT + '.shex'
+BasicParserTestCase.start_at = START_AT if not START_AT or START_AT.endswith('.shex') else START_AT + '.shex'
 BasicParserTestCase.single_file = SINGLE_FILE
 
 BasicParserTestCase.skip = list(skip.keys())
@@ -161,7 +156,7 @@ def validate_shexc(shexc_str: str, input_fname: str) -> bool:
         print("File: {} - ".format(input_fname))
         print(log.log)
         return False
-    elif not compare_json(input_fname, shex_obj._as_json, logger):
+    elif not compare_json(input_fname, shex_obj._as_json, log):
         print("File: {} - ".format(input_fname))
         print(log.log)
         return False
