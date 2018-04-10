@@ -25,28 +25,31 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 # OF THE POSSIBILITY OF SUCH DAMAGE.
+from typing import Optional
+
 from pyshexc.parser.ShExDocParser import ShExDocParser
 from pyshexc.parser.ShExDocVisitor import ShExDocVisitor
 
 from pyshexc.parser_impl.parser_context import ParserContext
 from pyshexc.parser_impl.shex_annotations_and_semacts_parser import ShexAnnotationAndSemactsParser
 from pyshexc.parser_impl.shex_shape_expression_parser import ShexShapeExpressionParser
-from ShExJSG.ShExJ import ShapeExternal
+from ShExJSG.ShExJ import ShapeExternal, IRIREF
 
 
 class ShexDocParser(ShExDocVisitor):
     """ parser for sheExDoc production """
-    def __init__(self):
+    def __init__(self, default_base: Optional[str]=None):
         ShExDocVisitor.__init__(self)
-        self.context = ParserContext()                 # ParserContext
+        self.context = ParserContext()
+        self.context.base = IRIREF(default_base) if default_base else None
 
     def visitShExDoc(self, ctx: ShExDocParser.ShExDocContext):
         """ shExDoc: directive* ((notStartAction | startActions) statement*)? EOF """
-        self.context = ParserContext()
         self.visitChildren(ctx)
 
     def visitBaseDecl(self, ctx: ShExDocParser.BaseDeclContext):
         """ baseDecl: KW_BASE IRIREF """
+        self.context.base = None
         self.context.base = self.context.iriref_to_shexj_iriref(ctx.IRIREF())
 
     def visitPrefixDecl(self, ctx: ShExDocParser.PrefixDeclContext):

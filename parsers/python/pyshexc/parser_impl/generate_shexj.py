@@ -106,10 +106,11 @@ def do_parse(infilename: str, jsonfilename: Optional[str], rdffilename: Optional
     return False
 
 
-def parse(input_: Union[str, FileStream]) -> Optional[Schema]:
+def parse(input_: Union[str, FileStream], default_base: Optional[str]=None) -> Optional[Schema]:
     """
     Parse the text in infile and return the resulting schema
     :param input_: text or input stream to parse
+    :param default_base_: base URI for relative URI's in schema
     :return: ShExJ Schema object.  None if error.
     """
 
@@ -133,7 +134,7 @@ def parse(input_: Union[str, FileStream]) -> Optional[Schema]:
         return None
 
     # Step 3: Transform the results the results
-    parser = ShexDocParser()
+    parser = ShexDocParser(default_base=default_base)
     parser.visit(parse_tree)
 
     return parser.context.schema
