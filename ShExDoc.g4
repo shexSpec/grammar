@@ -216,7 +216,8 @@ KW_FALSE        	: 'false' ;
 
 // terminals
 PASS				  : [ \t\r\n]+ -> skip;
-COMMENT				  : '#' ~[\r\n]* -> skip;
+COMMENT				  : ('#' ~[\r\n]*
+ 					  | '/*' (~[*] | '*' ('\\/' | ~[/]))* '*/') -> skip;
 
 CODE                  : '{' (~[%\\] | '\\' [%\\] | UCHAR)* '%' '}' ;
 RDF_TYPE              : 'a' ;
