@@ -259,6 +259,11 @@ class ShExDocVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by ShExDocParser#onShapeExpr.
+    def visitOnShapeExpr(self, ctx:ShExDocParser.OnShapeExprContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by ShExDocParser#tripleConstraint.
     def visitTripleConstraint(self, ctx:ShExDocParser.TripleConstraintContext):
         return self.visitChildren(ctx)
@@ -439,8 +444,13 @@ class ShExDocVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ShExDocParser#includeSet.
-    def visitIncludeSet(self, ctx:ShExDocParser.IncludeSetContext):
+    # Visit a parse tree produced by ShExDocParser#extensions.
+    def visitExtensions(self, ctx:ShExDocParser.ExtensionsContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#restrictions.
+    def visitRestrictions(self, ctx:ShExDocParser.RestrictionsContext):
         return self.visitChildren(ctx)
 
 

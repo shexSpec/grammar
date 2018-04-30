@@ -23,7 +23,8 @@
 // Apr 09, 2017 - literalRange / languageRange additions
 // Apr 09, 2017 - factor out shapeRef to match spec
 // Apr 09, 2017 - update repeatRange to allow differentiation of {INTEGER} and {INTEGER,}
-// Apr 09, 2017 - add STEM_MARK and UNBOUNDED tokens to eliminate lex token parsing
+// Apr 09, 2017 - add STEM_MARK and UNBOUNDED tokens to eliminate lex token parsingf
+// Apr 17, 2018 - add 2.1 rules -- extensions, restrictions and ABSTRACT
 
 
 grammar ShExDoc;
@@ -38,7 +39,7 @@ notStartAction  : start | shapeExprDecl ;
 start           : KW_START '=' shapeExpression ;
 startActions	: codeDecl+ ;
 statement 		: directive | notStartAction ;
-shapeExprDecl   : shapeExprLabel (shapeExpression | KW_EXTERNAL) ;
+shapeExprDecl   : KW_ABSTRACT? shapeExprLabel restrictions* (shapeExpression | KW_EXTERNAL) ;
 shapeExpression : shapeOr ;
 shapeOr  		: shapeAnd (KW_OR shapeAnd)* ;
 shapeAnd		: shapeNot (KW_AND shapeNot)* ;
@@ -50,7 +51,7 @@ inlineShapeAnd  : inlineShapeNot (KW_AND inlineShapeNot)* ;
 inlineShapeNot  : negation? inlineShapeAtom ;
 inlineShapeDefinition : qualifier* '{' oneOfShape? '}' ;
 shapeDefinition : qualifier* '{' oneOfShape? '}' annotation* semanticActions ;
-qualifier       : includeSet | extraPropertySet | KW_CLOSED ;
+qualifier       : extensions | extraPropertySet | KW_CLOSED ;
 extraPropertySet : KW_EXTRA predicate+ ;
 oneOfShape     : groupShape
 				| multiElementOneOf
@@ -67,7 +68,7 @@ multiElementGroup : unaryShape (';' unaryShape)+ ';'? ;
 unaryShape      : ('$' tripleExprLabel)? (tripleConstraint | encapsulatedShape)
 				| include
 				;
-encapsulatedShape  : '(' innerShape ')' cardinality? annotation* semanticActions ;
+encapsulatedShape  : '(' innerShape ')' cardinality? onShapeExpr? annotation* semanticActions ;
 shapeAtom		: nodeConstraint shapeOrRef?    # shapeAtomNodeConstraint
 				| shapeOrRef                    # shapeAtomShapeOrRef
 				| '(' shapeExpression ')'		# shapeAtomShapeExpression
@@ -107,7 +108,8 @@ numericRange	: KW_MININCLUSIVE
 numericLength   : KW_TOTALDIGITS
 				| KW_FRACTIONDIGITS
 				;
-tripleConstraint : senseFlags? predicate inlineShapeExpression cardinality? annotation* semanticActions ;
+onShapeExpr     : KW_ON (KW_SHAPE KW_EXPRESSION)? inlineShapeExpression ;
+tripleConstraint : senseFlags? predicate inlineShapeExpression cardinality? onShapeExpr? annotation* semanticActions ;
 senseFlags      : '!' '^'?
 				| '^' '!'?		// inverse not
 				;
@@ -182,13 +184,19 @@ prefixedName    : PNAME_LN
 				;
 blankNode       : BLANK_NODE_LABEL ;
 codeDecl		: '%' iri (CODE | '%') ;
-
-// Reserved for future use
-includeSet      : '&' tripleExprLabel+ ;
+extensions      : KW_EXTENDS shapeExprLabel+
+                | '&' shapeExprLabel+
+                ;
+restrictions    : KW_RESTRICTS shapeExprLabel
+                | '-' shapeExprLabel
+                ;
 
 
 // Keywords
+KW_ABSTRACT         : A B S T R A C T ;
 KW_BASE 			: B A S E ;
+KW_EXTENDS          : E X T E N D S ;
+KW_RESTRICTS        : R E S T R I C T S ;
 KW_EXTERNAL			: E X T E R N A L ;
 KW_PREFIX       	: P R E F I X ;
 KW_START        	: S T A R T ;
@@ -201,6 +209,9 @@ KW_NONLITERAL   	: N O N L I T E R A L ;
 KW_BNODE        	: B N O D E ;
 KW_AND          	: A N D ;
 KW_OR           	: O R ;
+KW_ON               : O N ;
+KW_SHAPE            : S H A P E ;
+KW_EXPRESSION       : E X P R E S S I O N ;
 KW_MININCLUSIVE 	: M I N I N C L U S I V E ;
 KW_MINEXCLUSIVE 	: M I N E X C L U S I V E ;
 KW_MAXINCLUSIVE 	: M A X I N C L U S I V E ;
