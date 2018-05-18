@@ -32,7 +32,7 @@ from pyshexc.parser.ShExDocVisitor import ShExDocVisitor
 
 from pyshexc.parser_impl.parser_context import ParserContext
 from pyshexc.parser_impl.shex_annotations_and_semacts_parser import ShexAnnotationAndSemactsParser
-from pyshexc.parser_impl.shex_oneofshape_parser import ShexOneOfShapeParser
+from pyshexc.parser_impl.shex_oneofshape_parser import ShexTripleExpressionParser
 from ShExJSG.ShExJ import IRIREF, BNODE, Shape
 
 
@@ -47,9 +47,9 @@ class ShexShapeDefinitionParser(ShExDocVisitor):
         if ctx.qualifier():
             for q in ctx.qualifier():
                 self.visit(q)
-        if ctx.oneOfShape():
-            oneof_parser = ShexOneOfShapeParser(self.context)
-            oneof_parser.visit(ctx.oneOfShape())
+        if ctx.tripleExpression():
+            oneof_parser = ShexTripleExpressionParser(self.context)
+            oneof_parser.visit(ctx.tripleExpression())
             self.shape.expression = oneof_parser.expression
         if ctx.annotation() or ctx.semanticActions():
             ansem_parser = ShexAnnotationAndSemactsParser(self.context)
@@ -66,18 +66,19 @@ class ShexShapeDefinitionParser(ShExDocVisitor):
         if ctx.qualifier():
             for q in ctx.qualifier():
                 self.visit(q)
-        if ctx.oneOfShape():
-            oneof_parser = ShexOneOfShapeParser(self.context)
-            oneof_parser.visit(ctx.oneOfShape())
+        if ctx.tripleExpression():
+            oneof_parser = ShexTripleExpressionParser(self.context)
+            oneof_parser.visit(ctx.tripleExpression())
             self.shape.expression = oneof_parser.expression
 
     def visitQualifier(self, ctx: ShExDocParser.QualifierContext):
-        """ qualifier: includeSet | extraPropertySet | KW_CLOSED """
-        if ctx.includeSet():
-            if self.shape.inherit is None:
-                self.shape.inherit = []
-            self.shape.inherit += [self.context.tripleexprlabel_to_iriref(tel)
-                                   for tel in ctx.includeSet().tripleExpressionLabel()]
+        """ qualifier: extensions | extraPropertySet | KW_CLOSED
+            extensions: KW_EXTENDS shapeExprLabel | '&' shapeExprLabel
+        """
+        if ctx.extension():
+            if self.shape.extends is None:
+                self.shape.extends = []
+            self.shape.extends.append(self.context.shapeexprlabel_to_IRI(ctx.extension().shapeExprLabel()))
         elif ctx.extraPropertySet():
             if self.shape.extra is None:
                 self.shape.extra = []

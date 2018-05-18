@@ -25,39 +25,39 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 # OF THE POSSIBILITY OF SUCH DAMAGE.
+from ShExJSG.ShExJ import OneOf, EachOf, TripleConstraint
+
 from pyshexc.parser.ShExDocParser import ShExDocParser
 from pyshexc.parser.ShExDocVisitor import ShExDocVisitor
-
 from pyshexc.parser_impl.parser_context import ParserContext
 from pyshexc.parser_impl.shex_annotations_and_semacts_parser import ShexAnnotationAndSemactsParser
 from pyshexc.parser_impl.shex_shape_expression_parser import ShexShapeExpressionParser
-from ShExJSG.ShExJ import OneOf, EachOf, TripleConstraint
 
 
-class ShexOneOfShapeParser(ShExDocVisitor):
+class ShexTripleExpressionParser(ShExDocVisitor):
     def __init__(self, context: ParserContext):
         ShExDocVisitor.__init__(self)
         self.context = context
-        self.expression = None
+        self.expression: TripleConstraint = None
 
     def visitMultiElementOneOf(self, ctx: ShExDocParser.MultiElementOneOfContext):
         """ multiElementOneOf: groupShape ('|' groupShape)+ """
         self.expression = OneOf(expressions=[])
-        for gs in ctx.groupShape():
-            parser = ShexOneOfShapeParser(self.context)
+        for gs in ctx.groupTripleExpr():
+            parser = ShexTripleExpressionParser(self.context)
             parser.visit(gs)
             self.expression.expressions.append(parser.expression)
 
     def visitMultiElementGroup(self, ctx: ShExDocParser.MultiElementGroupContext):
         """ multiElementGroup: unaryShape (';' unaryShape)+ ';'? """
         self.expression = EachOf(expressions=[])
-        for us in ctx.unaryShape():
-            parser = ShexOneOfShapeParser(self.context)
+        for us in ctx.unaryTripleExpr():
+            parser = ShexTripleExpressionParser(self.context)
             parser.visit(us)
             self.expression.expressions.append(parser.expression)
 
-    def visitUnaryShape(self, ctx: ShExDocParser.UnaryShapeContext):
-        """ unaryShape: ('$' tripleExprLabel)? (tripleConstraint | encapsulatedShape) | include """
+    def visitUnaryTripleExpr(self, ctx: ShExDocParser.UnaryTripleExprContext):
+        """ unaryTripleExpr: ('$' tripleExprLabel)? (tripleConstraint | bracketedTripleExpr) | include """
         if ctx.include():
             self.expression = self.context.tripleexprlabel_to_iriref(ctx.include().tripleExprLabel())
         else:
@@ -65,16 +65,24 @@ class ShexOneOfShapeParser(ShExDocVisitor):
             if ctx.tripleConstraint():
                 self.expression = TripleConstraint(lbl)
                 self.visit(ctx.tripleConstraint())
-            elif ctx.encapsulatedShape():
-                self.visit(ctx.encapsulatedShape())
+            elif ctx.bracketedTripleExpr():
+                self.visit(ctx.bracketedTripleExpr())
                 self.expression.id = lbl
 
-    def visitEncapsulatedShape(self, ctx: ShExDocParser.EncapsulatedShapeContext):
-        """ encapsulatedShape: '(' innerShape ')' cardinality? annotation* semanticActions """
-        enc_shape = ShexOneOfShapeParser(self.context)
-        enc_shape.visit(ctx.innerShape())
+    def visitBracketedTripleExpr(self, ctx:ShExDocParser.BracketedTripleExprContext):
+        """ bracketedTripleExpr: '(' innerTripleExpr ')' cardinality? onShapeExpr? annotation* semanticActions """
+        enc_shape = ShexTripleExpressionParser(self.context)
+        enc_shape.visit(ctx.innerTripleExpr())
         self.expression = enc_shape.expression
+        if ctx.onShapeExpr():
+            self.expression.onShapeExpression = self._onShapeExpr(ctx.onShapeExpr())
         self._card_annotations_and_semacts(ctx)
+
+    def _onShapeExpr(self, ctx: ShExDocParser.OnShapeExprContext) -> TripleConstraint:
+        """ onShapeExpr : KW_ON (KW_SHAPE KW_EXPRESSION)? inlineShapeExpression """
+        expr_parser = ShexShapeExpressionParser(self.context)
+        expr_parser.visit(ctx.inlineShapeExpression())
+        return expr_parser.expr
 
     def visitTripleConstraint(self, ctx: ShExDocParser.TripleConstraintContext):
         """ tripleConstraint: senseFlags? predicate inlineShapeExpression cardinality? annotation* semanticActions """
@@ -84,6 +92,8 @@ class ShexOneOfShapeParser(ShExDocVisitor):
             self.visit(ctx.senseFlags())
         self.visit(ctx.predicate())
         self.visit(ctx.inlineShapeExpression())
+        if ctx.onShapeExpr():
+            self.expression.onShapeExpression = self._onShapeExpr(ctx.onShapeExpr())
         self._card_annotations_and_semacts(ctx)
 
     def visitStarCardinality(self, ctx: ShExDocParser.StarCardinalityContext):

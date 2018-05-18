@@ -33,7 +33,7 @@ from pyshexc.parser.ShExDocVisitor import ShExDocVisitor
 from pyshexc.parser_impl.parser_context import ParserContext
 from pyshexc.parser_impl.shex_annotations_and_semacts_parser import ShexAnnotationAndSemactsParser
 from pyshexc.parser_impl.shex_shape_expression_parser import ShexShapeExpressionParser
-from ShExJSG.ShExJ import ShapeExternal, IRIREF
+from ShExJSG.ShExJ import ShapeExternal, IRIREF, ShapeDecl
 
 
 class ShexDocParser(ShExDocVisitor):
@@ -66,17 +66,32 @@ class ShexDocParser(ShExDocVisitor):
         self.context.schema.start = shexpr.expr
 
     def visitShapeExprDecl(self, ctx: ShExDocParser.ShapeExprDeclContext):
-        """ shapeExprDecl: shapeExprLabel (shapeExpression | KW_EXTERNAL) """
+        """ shapeExprDecl: KW_ABSTRACT? shapeExprLabel restrictions* (shapeExpression | KW_EXTERNAL) """
         label = self.context.shapeexprlabel_to_IRI(ctx.shapeExprLabel())
         if self.context.schema.shapes is None:
             self.context.schema.shapes = []
+        if ctx.KW_ABSTRACT() or ctx.restrictions():
+            decl = ShapeDecl(id=label)
+            label = None
+            if ctx.KW_ABSTRACT():
+                decl.abstract = True
+            if ctx.restrictions():
+                decl.restricts = []
+                for lbl in ctx.restrictions():
+                    decl.restricts.append(self.context.shapeexprlabel_to_IRI(lbl.shapeExprLabel()))
+            self.context.schema.shapes.append(decl)
+        else:
+            decl = None
         if ctx.KW_EXTERNAL():
             shape = ShapeExternal(id=label)
         else:
             shexpr = ShexShapeExpressionParser(self.context, label)
             shexpr.visit(ctx.shapeExpression())
             shape = shexpr.expr
-        self.context.schema.shapes.append(shape)
+        if not decl:
+            self.context.schema.shapes.append(shape)
+        else:
+            decl.shapeExpr = shape
 
     def visitStartActions(self, ctx: ShExDocParser.StartActionsContext):
         """ startActions: codeDecl+ """

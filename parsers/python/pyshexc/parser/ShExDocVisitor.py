@@ -119,8 +119,13 @@ class ShExDocVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ShExDocParser#oneOfShape.
-    def visitOneOfShape(self, ctx:ShExDocParser.OneOfShapeContext):
+    # Visit a parse tree produced by ShExDocParser#tripleExpression.
+    def visitTripleExpression(self, ctx:ShExDocParser.TripleExpressionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#oneOfTripleExpr.
+    def visitOneOfTripleExpr(self, ctx:ShExDocParser.OneOfTripleExprContext):
         return self.visitChildren(ctx)
 
 
@@ -129,13 +134,13 @@ class ShExDocVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ShExDocParser#innerShape.
-    def visitInnerShape(self, ctx:ShExDocParser.InnerShapeContext):
+    # Visit a parse tree produced by ShExDocParser#innerTripleExpr.
+    def visitInnerTripleExpr(self, ctx:ShExDocParser.InnerTripleExprContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ShExDocParser#groupShape.
-    def visitGroupShape(self, ctx:ShExDocParser.GroupShapeContext):
+    # Visit a parse tree produced by ShExDocParser#groupTripleExpr.
+    def visitGroupTripleExpr(self, ctx:ShExDocParser.GroupTripleExprContext):
         return self.visitChildren(ctx)
 
 
@@ -149,13 +154,13 @@ class ShExDocVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ShExDocParser#unaryShape.
-    def visitUnaryShape(self, ctx:ShExDocParser.UnaryShapeContext):
+    # Visit a parse tree produced by ShExDocParser#unaryTripleExpr.
+    def visitUnaryTripleExpr(self, ctx:ShExDocParser.UnaryTripleExprContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ShExDocParser#encapsulatedShape.
-    def visitEncapsulatedShape(self, ctx:ShExDocParser.EncapsulatedShapeContext):
+    # Visit a parse tree produced by ShExDocParser#bracketedTripleExpr.
+    def visitBracketedTripleExpr(self, ctx:ShExDocParser.BracketedTripleExprContext):
         return self.visitChildren(ctx)
 
 
@@ -444,8 +449,8 @@ class ShExDocVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ShExDocParser#extensions.
-    def visitExtensions(self, ctx:ShExDocParser.ExtensionsContext):
+    # Visit a parse tree produced by ShExDocParser#extension.
+    def visitExtension(self, ctx:ShExDocParser.ExtensionContext):
         return self.visitChildren(ctx)
 
 

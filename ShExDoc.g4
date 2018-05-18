@@ -49,26 +49,27 @@ inlineShapeExpression : inlineShapeOr ;
 inlineShapeOr   : inlineShapeAnd (KW_OR inlineShapeAnd)* ;
 inlineShapeAnd  : inlineShapeNot (KW_AND inlineShapeNot)* ;
 inlineShapeNot  : negation? inlineShapeAtom ;
-inlineShapeDefinition : qualifier* '{' oneOfShape? '}' ;
-shapeDefinition : qualifier* '{' oneOfShape? '}' annotation* semanticActions ;
-qualifier       : extensions | extraPropertySet | KW_CLOSED ;
+inlineShapeDefinition : qualifier* '{' tripleExpression? '}' ;
+shapeDefinition : qualifier* '{' tripleExpression? '}' annotation* semanticActions ;
+qualifier       : extension | extraPropertySet | KW_CLOSED ;
 extraPropertySet : KW_EXTRA predicate+ ;
-oneOfShape     : groupShape
+tripleExpression : oneOfTripleExpr ;
+oneOfTripleExpr : groupTripleExpr
 				| multiElementOneOf
 				;
-multiElementOneOf : groupShape ( '|' groupShape)+ ;
-innerShape      : multiElementGroup
+multiElementOneOf : groupTripleExpr ( '|' groupTripleExpr )+ ;
+innerTripleExpr : multiElementGroup
 				| multiElementOneOf
 				;
-groupShape      : singleElementGroup
+groupTripleExpr : singleElementGroup
 				| multiElementGroup
 				;
-singleElementGroup : unaryShape ';'? ;
-multiElementGroup : unaryShape (';' unaryShape)+ ';'? ;
-unaryShape      : ('$' tripleExprLabel)? (tripleConstraint | encapsulatedShape)
+singleElementGroup : unaryTripleExpr ';'? ;
+multiElementGroup : unaryTripleExpr (';' unaryTripleExpr)+ ';'? ;
+unaryTripleExpr : ('$' tripleExprLabel)? (tripleConstraint | bracketedTripleExpr)
 				| include
 				;
-encapsulatedShape  : '(' innerShape ')' cardinality? onShapeExpr? annotation* semanticActions ;
+bracketedTripleExpr : '(' innerTripleExpr ')' cardinality? onShapeExpr? annotation* semanticActions ;
 shapeAtom		: nodeConstraint shapeOrRef?    # shapeAtomNodeConstraint
 				| shapeOrRef                    # shapeAtomShapeOrRef
 				| '(' shapeExpression ')'		# shapeAtomShapeExpression
@@ -184,8 +185,8 @@ prefixedName    : PNAME_LN
 				;
 blankNode       : BLANK_NODE_LABEL ;
 codeDecl		: '%' iri (CODE | '%') ;
-extensions      : KW_EXTENDS shapeExprLabel+
-                | '&' shapeExprLabel+
+extension       : KW_EXTENDS shapeExprLabel
+                | '&' shapeExprLabel
                 ;
 restrictions    : KW_RESTRICTS shapeExprLabel
                 | '-' shapeExprLabel
