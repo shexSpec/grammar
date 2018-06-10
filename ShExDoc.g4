@@ -24,6 +24,7 @@
 // Apr 09, 2017 - factor out shapeRef to match spec
 // Apr 09, 2017 - update repeatRange to allow differentiation of {INTEGER} and {INTEGER,}
 // Apr 09, 2017 - add STEM_MARK and UNBOUNDED tokens to eliminate lex token parsing
+// Jun 10, 2018 - add empty language stem
 
 
 grammar ShExDoc;
@@ -121,7 +122,8 @@ iriRange        : iri (STEM_MARK iriExclusion*)? ;
 iriExclusion    : '-' iri STEM_MARK? ;
 literalRange    : literal (STEM_MARK literalExclusion*)? ;
 literalExclusion : '-' literal STEM_MARK? ;
-languageRange   : LANGTAG (STEM_MARK languageExclusion*)? ;
+languageRange   : LANGTAG (STEM_MARK languageExclusion*)?
+                | '@' '~' languageExclusion* ;
 languageExclusion : '-' LANGTAG STEM_MARK? ;
 literal         : rdfLiteral
 				| numericLiteral
