@@ -32,9 +32,11 @@ grammar ShExDoc;
 shExDoc 		: directive* ((notStartAction | startActions) statement*)? EOF;  // leading CODE
 directive       : baseDecl
 				| prefixDecl
+				| importDecl
 				;
 baseDecl 		: KW_BASE  IRIREF ;
 prefixDecl		: KW_PREFIX PNAME_NS IRIREF ;
+importDecl      : KW_IMPORT IRIREF ;
 notStartAction  : start | shapeExprDecl ;
 start           : KW_START '=' shapeExpression ;
 startActions	: codeDecl+ ;
@@ -80,6 +82,7 @@ inlineShapeAtom : nodeConstraint inlineShapeOrRef? # inlineShapeAtomNodeConstrai
 				| '(' shapeExpression ')'		# inlineShapeAtomShapeExpression
 				| '.'							# inlineShapeAtomAny   // no constraint
 				;
+nodeConstraint  : nodeConstraint
 nodeConstraint  : KW_LITERAL xsFacet*			# nodeConstraintLiteral
 				| nonLiteralKind stringFacet*	# nodeConstraintNonLiteral
 				| datatype xsFacet*				# nodeConstraintDatatype
@@ -197,6 +200,7 @@ restrictions    : KW_RESTRICTS shapeExprLabel
 KW_ABSTRACT         : A B S T R A C T ;
 KW_BASE 			: B A S E ;
 KW_EXTENDS          : E X T E N D S ;
+KW_IMPORT           : I M P O R T ;
 KW_RESTRICTS        : R E S T R I C T S ;
 KW_EXTERNAL			: E X T E R N A L ;
 KW_PREFIX       	: P R E F I X ;
