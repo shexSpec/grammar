@@ -82,7 +82,6 @@ inlineShapeAtom : nodeConstraint inlineShapeOrRef? # inlineShapeAtomNodeConstrai
 				| '(' shapeExpression ')'		# inlineShapeAtomShapeExpression
 				| '.'							# inlineShapeAtomAny   // no constraint
 				;
-nodeConstraint  : nodeConstraint
 nodeConstraint  : KW_LITERAL xsFacet*			# nodeConstraintLiteral
 				| nonLiteralKind stringFacet*	# nodeConstraintNonLiteral
 				| datatype xsFacet*				# nodeConstraintDatatype
