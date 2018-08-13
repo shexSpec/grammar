@@ -43,15 +43,71 @@ startActions	: codeDecl+ ;
 statement 		: directive | notStartAction ;
 shapeExprDecl   : KW_ABSTRACT? shapeExprLabel restrictions* (shapeExpression | KW_EXTERNAL) ;
 shapeExpression : shapeOr ;
-shapeOr  		: shapeAnd (KW_OR shapeAnd)* ;
-shapeAnd		: shapeNot (KW_AND shapeNot)* ;
-shapeNot	    : KW_NOT? shapeAtom ;
 inlineShapeExpression : inlineShapeOr ;
+shapeOr  		: shapeAnd (KW_OR shapeAnd)* ;
 inlineShapeOr   : inlineShapeAnd (KW_OR inlineShapeAnd)* ;
+shapeAnd		: shapeNot (KW_AND shapeNot)* ;
 inlineShapeAnd  : inlineShapeNot (KW_AND inlineShapeNot)* ;
-inlineShapeNot  : KW_NOT? inlineShapeAtom ;
-inlineShapeDefinition : qualifier* '{' tripleExpression? '}' ;
+shapeNot	    : KW_NOT? shapeAtom ;
+shapeAtom		: nonLitNodeConstraint shapeOrRef?    # shapeAtomNonLitNodeConstraint
+                | litNodeConstraint             # shapeAtomLitNodeConstraint
+				| shapeOrRef nonLitNodeConstraint?    # shapeAtomShapeOrRef
+				| '(' shapeExpression ')'		# shapeAtomShapeExpression
+				| '.'							# shapeAtomAny			// no constraint
+				;
+inlineShapeAtom : nonLitNodeConstraint inlineShapeOrRef? # inlineShapeAtomNonLitNodeConstraint
+                | litNodeConstraint             # inlineShapeAtomLitNodeConstraint
+				| inlineShapeOrRef nonLitNodeConstraint? # inlineShapeAtomShapeOrRef
+				| '(' shapeExpression ')'		# inlineShapeAtomShapeExpression
+				| '.'							# inlineShapeAtomAny   // no constraint
+				;
+shapeOrRef      : shapeDefinition
+				| shapeRef
+				;
+inlineShapeOrRef : inlineShapeDefinition
+				| shapeRef
+				;
+shapeRef 		: ATPNAME_LN
+				| ATPNAME_NS
+				| '@' shapeExprLabel
+				;
+inlineLitNodeConstraint : KW_LITERAL xsFacet*	# nodeConstraintLiteral
+				| nonLiteralKind stringFacet*	# nodeConstraintNonLiteral
+				| datatype xsFacet*				# nodeConstraintDatatype
+				| valueSet xsFacet*				# nodeConstraintValueSet
+				| numericFacet+					# nodeConstraintNumericFacet
+				;
+litNodeConstraint : inlineLitNodeConstraint  annotation* semanticActions ;
+inlineNonLitNodeConstraint  : nonLiteralKind stringFacet*	# litNodeConstraintLiteral
+                | stringFacet+                  # litNodeConstraintStringFacet
+				;
+nonLitNodeConstraint : inlineNonLitNodeConstraint  annotation* semanticActions ;
+nonLiteralKind  : KW_IRI
+				| KW_BNODE
+				| KW_NONLITERAL
+				;
+xsFacet			: stringFacet
+				| numericFacet
+				;
+stringFacet     : stringLength INTEGER
+				| REGEXP REGEXP_FLAGS?
+				;
+stringLength	: KW_LENGTH
+				| KW_MINLENGTH
+				| KW_MAXLENGTH;
+numericFacet	: numericRange numericLiteral
+				| numericLength INTEGER
+				;
+numericRange	: KW_MININCLUSIVE
+			    | KW_MINEXCLUSIVE
+			    | KW_MAXINCLUSIVE
+			    | KW_MAXEXCLUSIVE
+			    ;
+numericLength   : KW_TOTALDIGITS
+				| KW_FRACTIONDIGITS
+				;
 shapeDefinition : inlineShapeDefinition annotation* semanticActions ;
+inlineShapeDefinition : qualifier* '{' tripleExpression? '}' ;
 qualifier       : extension | extraPropertySet | KW_CLOSED ;
 extraPropertySet : KW_EXTRA predicate+ ;
 tripleExpression : oneOfTripleExpr ;
@@ -71,57 +127,17 @@ unaryTripleExpr : ('$' tripleExprLabel)? (tripleConstraint | bracketedTripleExpr
 				| include
 				;
 bracketedTripleExpr : '(' innerTripleExpr ')' cardinality? onShapeExpr? annotation* semanticActions ;
-shapeAtom		: nonLitNodeConstraint shapeOrRef?    # shapeAtomNonLitNodeConstraint
-                | litNodeConstraint             # shapeAtomLitNodeConstraint
-				| shapeOrRef nonLitNodeConstraint?    # shapeAtomShapeOrRef
-				| '(' shapeExpression ')'		# shapeAtomShapeExpression
-				| '.'							# shapeAtomAny			// no constraint
-				;
-inlineShapeAtom : nonLitNodeConstraint inlineShapeOrRef? # inlineShapeAtomNonLitNodeConstraint
-                | litNodeConstraint             # inlineShapeAtomLitNodeConstraint
-				| inlineShapeOrRef nonLitNodeConstraint? # inlineShapeAtomShapeOrRef
-				| '(' shapeExpression ')'		# inlineShapeAtomShapeExpression
-				| '.'							# inlineShapeAtomAny   // no constraint
-				;
-inlineLitNodeConstraint : KW_LITERAL xsFacet*	# nodeConstraintLiteral
-				| nonLiteralKind stringFacet*	# nodeConstraintNonLiteral
-				| datatype xsFacet*				# nodeConstraintDatatype
-				| valueSet xsFacet*				# nodeConstraintValueSet
-				| numericFacet+					# nodeConstraintNumericFacet
-				;
-litNodeConstraint : inlineLitNodeConstraint  annotation* semanticActions ;
-inlineNonLitNodeConstraint  : nonLiteralKind stringFacet*	# litNodeConstraintLiteral
-                | stringFacet+                  # litNodeConstraintStringFacet
-				;
-nonLitNodeConstraint : inlineNonLitNodeConstraint  annotation* semanticActions ;
-nonLiteralKind  : KW_IRI
-				| KW_BNODE
-				| KW_NONLITERAL
-				;
-xsFacet			: stringFacet
-				| numericFacet;
-stringFacet     : stringLength INTEGER
-				| REGEXP REGEXP_FLAGS?
-				;
-stringLength	: KW_LENGTH
-				| KW_MINLENGTH
-				| KW_MAXLENGTH;
-numericFacet	: numericRange numericLiteral
-				| numericLength INTEGER
-				;
-numericRange	: KW_MININCLUSIVE
-			    | KW_MINEXCLUSIVE
-			    | KW_MAXINCLUSIVE
-			    | KW_MAXEXCLUSIVE
-			    ;
-numericLength   : KW_TOTALDIGITS
-				| KW_FRACTIONDIGITS
-				;
-onShapeExpr     : KW_ON (KW_SHAPE KW_EXPRESSION)? inlineShapeExpression ;
 tripleConstraint : senseFlags? predicate inlineShapeExpression cardinality? onShapeExpr? annotation* semanticActions ;
-senseFlags      : '!' '^'?
-				| '^' '!'?		// inverse not
+cardinality     :  '*'         # starCardinality
+				| '+'          # plusCardinality
+				| '?'          # optionalCardinality
+				| repeatRange  # repeatCardinality
 				;
+// BNF: REPEAT_RANGE ::= '{' INTEGER (',' (INTEGER | '*')?)? '}'
+repeatRange     : '{' INTEGER '}'							  # exactRange
+				| '{' INTEGER ',' (INTEGER | UNBOUNDED)? '}'  # minMaxRange
+				;
+senseFlags      : '^ ' ;
 valueSet		: '[' valueSetValue* ']' ;
 valueSetValue   : iriRange
 				| literalRange
@@ -134,38 +150,20 @@ literalRange    : literal (STEM_MARK literalExclusion*)? ;
 literalExclusion : '-' literal STEM_MARK? ;
 languageRange   : LANGTAG (STEM_MARK languageExclusion*)? ;
 languageExclusion : '-' LANGTAG STEM_MARK? ;
+include			: '&' tripleExprLabel ;
+annotation      : '//' predicate (iri | literal) ;
+				semanticActions	: codeDecl* ;
+codeDecl		: '%' iri (CODE | '%') ;
 literal         : rdfLiteral
 				| numericLiteral
 				| booleanLiteral
 				;
-shapeOrRef      : shapeDefinition
-				| shapeRef
-				;
-inlineShapeOrRef : inlineShapeDefinition
-				| shapeRef
-				;
-shapeRef 		: ATPNAME_LN
-				| ATPNAME_NS
-				| '@' shapeExprLabel
-				;
-include			: '&' tripleExprLabel ;
-semanticActions	: codeDecl* ;
-annotation      : '//' predicate (iri | literal) ;
 // BNF: predicate ::= iri | RDF_TYPE
 predicate       : iri
 				| rdfType
 				;
 rdfType			: RDF_TYPE ;
 datatype        : iri ;
-cardinality     :  '*'         # starCardinality
-				| '+'          # plusCardinality
-				| '?'          # optionalCardinality
-				| repeatRange  # repeatCardinality
-				;
-// BNF: REPEAT_RANGE ::= '{' INTEGER (',' (INTEGER | '*')?)? '}'
-repeatRange     : '{' INTEGER '}'							  # exactRange
-				| '{' INTEGER ',' (INTEGER | UNBOUNDED)? '}'  # minMaxRange
-				;
 shapeExprLabel  : iri
 				| blankNode
 				;
@@ -185,6 +183,8 @@ string          : STRING_LITERAL_LONG1
                 | STRING_LITERAL1
 				| STRING_LITERAL2
 				;
+inlineShapeNot  : KW_NOT? inlineShapeAtom ;
+onShapeExpr     : KW_ON (KW_SHAPE KW_EXPRESSION)? inlineShapeExpression ;
 iri             : IRIREF
 				| prefixedName
 				;
@@ -192,14 +192,12 @@ prefixedName    : PNAME_LN
 				| PNAME_NS
 				;
 blankNode       : BLANK_NODE_LABEL ;
-codeDecl		: '%' iri (CODE | '%') ;
 extension       : KW_EXTENDS shapeExprLabel
                 | '&' shapeExprLabel
                 ;
 restrictions    : KW_RESTRICTS shapeExprLabel
                 | '-' shapeExprLabel
                 ;
-
 
 // Keywords
 KW_ABSTRACT         : A B S T R A C T ;
