@@ -45,14 +45,13 @@ shapeExprDecl   : KW_ABSTRACT? shapeExprLabel restrictions* (shapeExpression | K
 shapeExpression : shapeOr ;
 shapeOr  		: shapeAnd (KW_OR shapeAnd)* ;
 shapeAnd		: shapeNot (KW_AND shapeNot)* ;
-shapeNot	    : negation? shapeAtom ;
-negation        : KW_NOT | '!' ;
+shapeNot	    : KW_NOT? shapeAtom ;
 inlineShapeExpression : inlineShapeOr ;
 inlineShapeOr   : inlineShapeAnd (KW_OR inlineShapeAnd)* ;
 inlineShapeAnd  : inlineShapeNot (KW_AND inlineShapeNot)* ;
-inlineShapeNot  : negation? inlineShapeAtom ;
+inlineShapeNot  : KW_NOT? inlineShapeAtom ;
 inlineShapeDefinition : qualifier* '{' tripleExpression? '}' ;
-shapeDefinition : qualifier* '{' tripleExpression? '}' annotation* semanticActions ;
+shapeDefinition : inlineShapeDefinition annotation* semanticActions ;
 qualifier       : extension | extraPropertySet | KW_CLOSED ;
 extraPropertySet : KW_EXTRA predicate+ ;
 tripleExpression : oneOfTripleExpr ;
@@ -72,22 +71,29 @@ unaryTripleExpr : ('$' tripleExprLabel)? (tripleConstraint | bracketedTripleExpr
 				| include
 				;
 bracketedTripleExpr : '(' innerTripleExpr ')' cardinality? onShapeExpr? annotation* semanticActions ;
-shapeAtom		: nodeConstraint shapeOrRef?    # shapeAtomNodeConstraint
-				| shapeOrRef                    # shapeAtomShapeOrRef
+shapeAtom		: nonLitNodeConstraint shapeOrRef?    # shapeAtomNonLitNodeConstraint
+                | litNodeConstraint             # shapeAtomLitNodeConstraint
+				| shapeOrRef nonLitNodeConstraint?    # shapeAtomShapeOrRef
 				| '(' shapeExpression ')'		# shapeAtomShapeExpression
 				| '.'							# shapeAtomAny			// no constraint
 				;
-inlineShapeAtom : nodeConstraint inlineShapeOrRef? # inlineShapeAtomNodeConstraint
-				| inlineShapeOrRef nodeConstraint? # inlineShapeAtomShapeOrRef
+inlineShapeAtom : nonLitNodeConstraint inlineShapeOrRef? # inlineShapeAtomNonLitNodeConstraint
+                | litNodeConstraint             # inlineShapeAtomLitNodeConstraint
+				| inlineShapeOrRef nonLitNodeConstraint? # inlineShapeAtomShapeOrRef
 				| '(' shapeExpression ')'		# inlineShapeAtomShapeExpression
 				| '.'							# inlineShapeAtomAny   // no constraint
 				;
-nodeConstraint  : KW_LITERAL xsFacet*			# nodeConstraintLiteral
+inlineLitNodeConstraint : KW_LITERAL xsFacet*	# nodeConstraintLiteral
 				| nonLiteralKind stringFacet*	# nodeConstraintNonLiteral
 				| datatype xsFacet*				# nodeConstraintDatatype
 				| valueSet xsFacet*				# nodeConstraintValueSet
-				| xsFacet+						# nodeConstraintFacet
+				| numericFacet+					# nodeConstraintNumericFacet
 				;
+litNodeConstraint : inlineLitNodeConstraint  annotation* semanticActions ;
+inlineNonLitNodeConstraint  : nonLiteralKind stringFacet*	# litNodeConstraintLiteral
+                | stringFacet+                  # litNodeConstraintStringFacet
+				;
+nonLitNodeConstraint : inlineNonLitNodeConstraint  annotation* semanticActions ;
 nonLiteralKind  : KW_IRI
 				| KW_BNODE
 				| KW_NONLITERAL
