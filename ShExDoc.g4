@@ -115,9 +115,6 @@ oneOfTripleExpr : groupTripleExpr
 				| multiElementOneOf
 				;
 multiElementOneOf : groupTripleExpr ( '|' groupTripleExpr )+ ;
-innerTripleExpr : multiElementGroup
-				| multiElementOneOf
-				;
 groupTripleExpr : singleElementGroup
 				| multiElementGroup
 				;
@@ -126,7 +123,7 @@ multiElementGroup : unaryTripleExpr (';' unaryTripleExpr)+ ';'? ;
 unaryTripleExpr : ('$' tripleExprLabel)? (tripleConstraint | bracketedTripleExpr)
 				| include
 				;
-bracketedTripleExpr : '(' innerTripleExpr ')' cardinality? onShapeExpr? annotation* semanticActions ;
+bracketedTripleExpr : '(' tripleExpression ')' cardinality? onShapeExpr? annotation* semanticActions ;
 tripleConstraint : senseFlags? predicate inlineShapeExpression cardinality? onShapeExpr? annotation* semanticActions ;
 cardinality     :  '*'         # starCardinality
 				| '+'          # plusCardinality
