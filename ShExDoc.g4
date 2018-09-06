@@ -25,6 +25,9 @@
 // Apr 09, 2017 - update repeatRange to allow differentiation of {INTEGER} and {INTEGER,}
 // Apr 09, 2017 - add STEM_MARK and UNBOUNDED tokens to eliminate lex token parsingf
 // Apr 17, 2018 - add 2.1 rules -- extensions, restrictions and ABSTRACT
+// Aug 13, 2018 - Re-order rules to approximate Yakker BNF
+// Aug 13, 2018 - Remove '!' for NOT
+// Aug 13, 2018 - Add annotations and semanticActions to nodeconstraint
 
 
 grammar ShExDoc;
@@ -49,6 +52,7 @@ inlineShapeOr   : inlineShapeAnd (KW_OR inlineShapeAnd)* ;
 shapeAnd		: shapeNot (KW_AND shapeNot)* ;
 inlineShapeAnd  : inlineShapeNot (KW_AND inlineShapeNot)* ;
 shapeNot	    : KW_NOT? shapeAtom ;
+inlineShapeNot  : KW_NOT? inlineShapeAtom ;
 shapeAtom		: nonLitNodeConstraint shapeOrRef?    # shapeAtomNonLitNodeConstraint
                 | litNodeConstraint             # shapeAtomLitNodeConstraint
 				| shapeOrRef nonLitNodeConstraint?    # shapeAtomShapeOrRef
@@ -94,7 +98,8 @@ stringFacet     : stringLength INTEGER
 				;
 stringLength	: KW_LENGTH
 				| KW_MINLENGTH
-				| KW_MAXLENGTH;
+				| KW_MAXLENGTH
+				;
 numericFacet	: numericRange numericLiteral
 				| numericLength INTEGER
 				;
@@ -137,7 +142,7 @@ cardinality     :  '*'         # starCardinality
 repeatRange     : '{' INTEGER '}'							  # exactRange
 				| '{' INTEGER ',' (INTEGER | UNBOUNDED)? '}'  # minMaxRange
 				;
-senseFlags      : '^ ' ;
+senseFlags      : '^' ;
 valueSet		: '[' valueSetValue* ']' ;
 valueSetValue   : iriRange
 				| literalRange
@@ -152,7 +157,7 @@ languageRange   : LANGTAG (STEM_MARK languageExclusion*)? ;
 languageExclusion : '-' LANGTAG STEM_MARK? ;
 include			: '&' tripleExprLabel ;
 annotation      : '//' predicate (iri | literal) ;
-				semanticActions	: codeDecl* ;
+semanticActions	: codeDecl* ;
 codeDecl		: '%' iri (CODE | '%') ;
 literal         : rdfLiteral
 				| numericLiteral
@@ -183,7 +188,6 @@ string          : STRING_LITERAL_LONG1
                 | STRING_LITERAL1
 				| STRING_LITERAL2
 				;
-inlineShapeNot  : KW_NOT? inlineShapeAtom ;
 onShapeExpr     : KW_ON (KW_SHAPE KW_EXPRESSION)? inlineShapeExpression ;
 iri             : IRIREF
 				| prefixedName
