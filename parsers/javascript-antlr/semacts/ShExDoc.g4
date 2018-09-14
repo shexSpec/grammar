@@ -464,7 +464,8 @@ inlineShapeExpression : inlineShapeOr	{ this.$1(localctx); } ;
 shapeOr  		: shapeAnd (KW_OR shapeAnd)*	{ localctx.$$ = localctx.shapeAnd().length == 1 ? localctx.shapeAnd()[0].$$ : { type: "ShapeOr", shapeExprs: localctx.shapeAnd().map(c => c.$$) };  };
 inlineShapeOr   : inlineShapeAnd (KW_OR inlineShapeAnd)*	{ localctx.$$ = localctx.inlineShapeAnd().length == 1 ? localctx.inlineShapeAnd()[0].$$ : { type: "ShapeOr", shapeExprs: localctx.inlineShapeAnd().map(c => c.$$) }; };
 shapeAnd		: shapeNot (KW_AND shapeNot)*	{ localctx.$$ = localctx.shapeNot().length == 1 ? localctx.shapeNot()[0].$$ : { type: "ShapeAnd", shapeExprs: localctx.shapeNot().map(c => c.$$) }; } ;
-inlineShapeAnd  : inlineShapeNot (KW_AND inlineShapeNot)*	{ localctx.$$ = localctx.inlineShapeNot().length == 1 ? localctx.inlineShapeNot()[0].$$ : { type: "ShapeAnd", shapeExprs: localctx.inlineShapeNot().map(c => c.$$) }; } ;
+// inlineShapeAnd  : inlineShapeNot (KW_AND inlineShapeNot)*	{ localctx.$$ = localctx.inlineShapeNot().length == 1 ? localctx.inlineShapeNot()[0].$$ : { type: "ShapeAnd", shapeExprs: localctx.inlineShapeNot().map(c => c.$$) }; } ;
+inlineShapeAnd  : inlineShapeNot (KW_AND inlineShapeNot)*	{ localctx.$$ = this.shapeJunction("ShapeAnd", localctx.inlineShapeNot()[0].$$, localctx.inlineShapeNot().slice(1).map(c => c.$$)) } ;
 shapeNot	    : KW_NOT? shapeAtom	{ localctx.$$ = localctx.KW_NOT() ? { type: "ShapeNot", "shapeExpr": localctx.shapeAtom().$$ } : localctx.shapeAtom().$$; } ;
 shapeAtom		: nonLitNodeConstraint shapeOrRef?	{
         localctx.$$ = localctx.children[2-1] ? { type: "ShapeAnd", shapeExprs: [ this.extend({ type: "NodeConstraint" }, localctx.children[1-1].$$), localctx.children[2-1].$$ ] } : localctx.children[1-1].$$
@@ -820,7 +821,7 @@ fragment ECHAR                 : '\\' [tbnrf\\"'] ;
 
 fragment PN_CHARS_BASE 		   : [A-Z] | [a-z] | [\u00C0-\u00D6] | [\u00D8-\u00F6] | [\u00F8-\u02FF] | [\u0370-\u037D]
 					   		   | [\u037F-\u1FFF] | [\u200C-\u200D] | [\u2070-\u218F] | [\u2C00-\u2FEF] | [\u3001-\uD7FF]
-					           | [\uF900-\uFDCF] | [\uFDF0-\uFFFD]
+					           | [\uF900-\uFDCF] | [\uFDF0-\uFFFD] | [\uD800-\uDB7F][\uDC00-\uDFFF]
 					   		   ;
 fragment PN_CHARS_U            : PN_CHARS_BASE | '_' ;
 fragment PN_CHARS              : PN_CHARS_U | '-' | [0-9] | [\u00B7] | [\u0300-\u036F] | [\u203F-\u2040] ;

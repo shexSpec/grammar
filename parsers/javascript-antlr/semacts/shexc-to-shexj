@@ -27,10 +27,10 @@ ShExCToShExJ = (function () {
 })()
 
 if (typeof require !== 'undefined' && typeof exports !== 'undefined') {
-  if (module.parent) {
-    module.exports = ShExCToShExJ; // node require
-  } else {
-    let buffer = ''; // node command line
+  if (module.parent) /* node require */ {
+    module.exports = ShExCToShExJ;
+  } else /* istanbul ignore next -- node command line interface */ {
+    let buffer = '';
     process.stdin.setEncoding('utf8');
     process.stdin.on('readable', () => {
       let chunk;

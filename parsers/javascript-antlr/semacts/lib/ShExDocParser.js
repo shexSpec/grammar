@@ -2530,7 +2530,7 @@ ShExDocParser.prototype.inlineShapeAnd = function() {
             this._errHandler.sync(this);
             _la = this._input.LA(1);
         }
-         localctx.$$ = localctx.inlineShapeNot().length == 1 ? localctx.inlineShapeNot()[0].$$ : { type: "ShapeAnd", shapeExprs: localctx.inlineShapeNot().map(c => c.$$) }; 
+         localctx.$$ = this.shapeJunction("ShapeAnd", localctx.inlineShapeNot()[0].$$, localctx.inlineShapeNot().slice(1).map(c => c.$$)) 
     } catch (re) {
     	if(re instanceof antlr4.error.RecognitionException) {
 	        localctx.exception = re;
