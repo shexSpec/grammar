@@ -277,8 +277,8 @@ shExDoc
   };
   var blankId = 0;
   this._resetBlanks = function () { blankId = 0; }
-  this.reset = function () {
-    this._prefixes = this._imports = this.valueExprDefns = this.shapes = this.productions = this.start = this.startActs = null; // Reset state.
+  this._reset = function () {
+    this._prefixes = this._imports = this.valueExprDefns = this._shapes = this.productions = this._start = this.startActs = null; // Reset state.
     this._base = this._baseIRI = this._baseIRIPath = this._baseIRIRoot = null;
   }
   var _fileName; // for debugging
@@ -348,7 +348,7 @@ shExDoc
   }
 
   this.error = function (msg) {
-    this.reset();
+    this._reset();
     throw new Error(msg);
   }
 
@@ -363,15 +363,16 @@ shExDoc
   this.addShape = function (label, shape) {
     if (this.productions && label in this.productions)
       this.error("Structural error: "+label+" is a shape");
-    if (!this.shapes)
-      this.shapes = {};
-    if (label in this.shapes) {
-      if (this.options.duplicateShape === "replace")
-        this.shapes[label] = shape;
-      else if (this.options.duplicateShape !== "ignore")
-        this.error("Parse error: "+label+" already defined");
-    } else
-      this.shapes[label] = shape;
+    if (!this._shapes)
+      this._shapes = [];
+    // if (label in this.shapes) {
+    //   if (this.options.duplicateShape === "replace")
+    //     this.shapes[label] = shape;
+    //   else if (this.options.duplicateShape !== "ignore")
+    //     this.error("Parse error: "+label+" already defined");
+    // } else
+    shape.id = label
+      this._shapes.push(shape);
   }
 
   // Add a production to the map
@@ -422,17 +423,17 @@ shExDoc
         }
  		:  directive* ((notStartAction | startActions) statement*)? EOF {
         var valueExprDefns = this.valueExprDefns ? { valueExprDefns: this.valueExprDefns } : {};
-        var startObj = this.start ? { start: this.start } : {};
+        var startObj = this._start ? { start: this._start } : {};
         var startActs = this.startActs ? { startActs: this.startActs } : {};
         var ret = this.extend({ type: "Schema"},
                          Object.keys(this._prefixes).length ? { prefixes: this._prefixes } : {}, // Properties ordered here to
                          Object.keys(this._imports).length ? { imports: this._imports } : {}, // build return object from
                          valueExprDefns, startActs, startObj,                  // components in parser state
-                         this.shapes ? {shapes: this.shapes} : {},         // maintaining intuitve order.
+                         this._shapes ? {shapes: this._shapes} : {},         // maintaining intuitve order.
                          this.productions ? {productions: this.productions} : {});
         if (this._base !== null)
           ret.base = this._base;
-        this.reset();
+        this._reset();
         localctx.$$ = ret;
       };  // leading CODE
 directive       : baseDecl
@@ -447,10 +448,13 @@ prefixDecl		: KW_PREFIX PNAME_NS IRIREF	{ // t: ShExParser-test.js/with pre-defi
         this._prefixes[localctx.children[2 - 1].getText().slice(0, -1)] = this._base === null ||
                     this.absoluteIRI.test(localctx.children[3-1].getText().slice(1, -1)) ? localctx.children[3-1].getText().slice(1, -1) : this._resolveIRI(localctx.children[3-1].getText().slice(1, -1));
       } ;
-importDecl      : KW_IMPORT IRIREF ;
+importDecl      : KW_IMPORT IRIREF	{
+        this._imports.push(this._base === null ||
+                    this.absoluteIRI.test(localctx.children[2-1].getText().slice(1, -1)) ? localctx.children[2-1].getText().slice(1, -1) : this._resolveIRI(localctx.children[2-1].getText().slice(1, -1)));
+      } ;
 notStartAction  : start | shapeExprDecl ;
-start           : KW_START '=' shapeExpression ;
-startActions	: semanticAction+ ;
+start           : KW_START '=' shapeExpression	{ this._start = localctx.children[3-1].$$ } ;
+startActions	: semanticAction+	{ this.startActs = localctx.children.map(c => c.$$); } ;
 statement 		: directive | notStartAction ;
 shapeExprDecl   : /* KW_ABSTRACT? */ shapeExprLabel /* restrictions* */ (shapeExpression | KW_EXTERNAL)	{ // t: 1dot 1val1vsMinusiri3??
         this.addShape(localctx.children[0].$$, localctx.KW_EXTERNAL() ? { type: "ShapeExternal" } : localctx.shapeExpression().$$);
@@ -463,7 +467,7 @@ shapeAnd		: shapeNot (KW_AND shapeNot)*	{ localctx.$$ = localctx.shapeNot().leng
 inlineShapeAnd  : inlineShapeNot (KW_AND inlineShapeNot)*	{ localctx.$$ = localctx.inlineShapeNot().length == 1 ? localctx.inlineShapeNot()[0].$$ : { type: "ShapeAnd", shapeExprs: localctx.inlineShapeNot().map(c => c.$$) }; } ;
 shapeNot	    : KW_NOT? shapeAtom	{ localctx.$$ = localctx.KW_NOT() ? { type: "ShapeNot", "shapeExpr": localctx.shapeAtom().$$ } : localctx.shapeAtom().$$; } ;
 shapeAtom		: nonLitNodeConstraint shapeOrRef?	{
-        localctx.$$ = localctx.children[2-1] ? { type: "ShapeAnd", shapeExprs: [ extend({ type: "NodeConstraint" }, localctx.children[1-1].$$), localctx.children[2-1].$$ ] } : localctx.children[1-1].$$
+        localctx.$$ = localctx.children[2-1] ? { type: "ShapeAnd", shapeExprs: [ this.extend({ type: "NodeConstraint" }, localctx.children[1-1].$$), localctx.children[2-1].$$ ] } : localctx.children[1-1].$$
       }    # shapeAtomNonLitNodeConstraint
                 | litNodeConstraint	{ this.$1(localctx); }             # shapeAtomLitNodeConstraint
 				| shapeOrRef nonLitNodeConstraint?	{
@@ -473,7 +477,7 @@ shapeAtom		: nonLitNodeConstraint shapeOrRef?	{
 				| '.'	{ localctx.$$ = this.EmptyShape; }							# shapeAtomAny			// no constraint
 				;
 inlineShapeAtom : inlineNonLitNodeConstraint inlineShapeOrRef?	{
-        localctx.$$ = localctx.children[2-1] ? { type: "ShapeAnd", shapeExprs: [ extend({ type: "NodeConstraint" }, localctx.children[1-1].$$), localctx.children[2-1].$$ ] } : localctx.children[1-1].$$
+        localctx.$$ = localctx.children[2-1] ? { type: "ShapeAnd", shapeExprs: [ this.extend({ type: "NodeConstraint" }, localctx.children[1-1].$$), localctx.children[2-1].$$ ] } : localctx.children[1-1].$$
       } # inlineShapeAtomNonLitNodeConstraint
                 | inlineLitNodeConstraint	{ this.$1(localctx); }             # inlineShapeAtomLitNodeConstraint
 				| inlineShapeOrRef inlineNonLitNodeConstraint?	{
@@ -492,14 +496,14 @@ shapeRef 		: ATPNAME_LN	{ // t: 1dotRefLNex@@
         let ln = localctx.children[1-1].getText();
         ln = ln.substr(1, ln.length-1);
         var namePos = ln.indexOf(':');
-        localctx.$$ = { type: "ShapeRef", reference: this.expandPrefix(ln.substr(0, namePos)) + ln.substr(namePos + 1) };
+        localctx.$$ = this.expandPrefix(ln.substr(0, namePos)) + ln.substr(namePos + 1);
       }
 				| ATPNAME_NS	{ // t: 1dotRefNS1@@
         let ns = localctx.children[1-1].getText();
         ns = ns.substr(1, ns.length-1);
-        localctx.$$ = { type: "ShapeRef", reference: expandPrefix(ns.substr(0, ns.length - 1)) };
+        localctx.$$ = this.expandPrefix(ns.substr(0, ns.length - 1));
       }
-				| '@' shapeExprLabel	{ localctx.$$ = { type: "ShapeRef", reference: localctx.children[2-1].$$ } } // t: 1dotRef1, 1dotRefSpaceLNex, 1dotRefSpaceNS1
+				| '@' shapeExprLabel	{ localctx.$$ = localctx.children[2-1].$$; } // t: 1dotRef1, 1dotRefSpaceLNex, 1dotRefSpaceNS1
 				;
 inlineLitNodeConstraint : KW_LITERAL xsFacet*	{ localctx.$$ = this.NC({nodeKind: "literal"}, localctx.children.slice(1)); }	# nodeConstraintLiteral
 				| nonLiteralKind stringFacet*	{ localctx.$$ = this.NC(localctx.children[0].$$, localctx.children.slice(1)); }	# nodeConstraintNonLiteral
@@ -516,7 +520,7 @@ inlineNonLitNodeConstraint  : nonLiteralKind stringFacet*	{
         localctx.$$ = localctx.children.slice(1).reduce((acc, p) => Object.assign(acc, p.$$), Object.assign({ type: "NodeConstraint" }, localctx.children[0].$$))
       }	# litNodeConstraintLiteral
                 | stringFacet+	{
-        localctx.$$ = this.extend({ type: "NodeConstraint" }, localctx.children.map(c => c.$$));
+        localctx.$$ = localctx.children.reduce((acc, c) => Object.assign(acc, c.$$), {type: "NodeConstraint"});
       }                  # litNodeConstraintStringFacet
 				;
 nonLitNodeConstraint : inlineNonLitNodeConstraint  annotation* semanticAction*	{ // t: !!
@@ -532,14 +536,14 @@ xsFacet			: stringFacet	{ this.$1(localctx); }
 				| numericFacet	{ this.$1(localctx); }
 				;
 stringFacet     : stringLength INTEGER	{ localctx.$$ = this.keyValObject(localctx.children[0].$$, parseInt(localctx.children[1].getText(), 10)); } // t: 1literalLength
-				| REGEXP REGEXP_FLAGS?	{ localctx.$$ = this.unescapeRegexp(localctx.children[0].getText()); } // t: 1literalPattern
+				| REGEXP REGEXP_FLAGS?	{ localctx.$$ = this.unescapeRegexp(localctx.children[0].getText()); if (localctx.REGEXP_FLAGS()) {localctx.$$.flags = localctx.REGEXP_FLAGS().getText()} } // t: 1literalPattern
 				;
 stringLength	: KW_LENGTH	{ localctx.$$ = "length"; }
 				| KW_MINLENGTH	{ localctx.$$ = "minlength"; }
 				| KW_MAXLENGTH	{ localctx.$$ = "maxlength"; }
                 ;
 numericFacet	: numericRange rawNumeric	{ localctx.$$ = this.keyValObject(localctx.children[0].$$, localctx.children[1].$$); }
-				| numericLength INTEGER	{ localctx.$$ = this.keyValObject(localctx.children[0], parseInt(localctx.children[1].getText(), 10)); }
+				| numericLength INTEGER	{ localctx.$$ = this.keyValObject(localctx.children[0].$$, parseInt(localctx.children[1].getText(), 10)); }
 				;
 numericRange	: KW_MININCLUSIVE	{ localctx.$$ = "mininclusive"; }
 			    | KW_MINEXCLUSIVE	{ localctx.$$ = "minexclusive"; }
@@ -584,8 +588,8 @@ multiElementGroup : unaryTripleExpr (';' unaryTripleExpr)+ ';'?	{ localctx.$$ = 
 unaryTripleExpr : ('$' tripleExprLabel)? (tripleConstraint | bracketedTripleExpr)	{
         let expr = localctx.tripleConstraint() || localctx.bracketedTripleExpr();
         if (localctx.tripleExprLabel()) {
-          localctx.$$ = extend({ id: localctx.tripleExprLabel().$$ }, expr.$$);
-          addProduction(localctx.tripleExprLabel().$$,  localctx.$$);
+          localctx.$$ = this.extend({ id: localctx.tripleExprLabel().$$ }, expr.$$);
+          this.addProduction(localctx.tripleExprLabel().$$,  localctx.$$);
         } else {
           localctx.$$ = expr.$$
         }
@@ -594,7 +598,7 @@ unaryTripleExpr : ('$' tripleExprLabel)? (tripleConstraint | bracketedTripleExpr
 				;
 bracketedTripleExpr : '(' tripleExpression ')' cardinality? /* onShapeExpr? */ annotation* semanticAction*	{
         localctx.$$ = localctx.tripleExpression().$$;
-        let card = localctx.cardinality() || {  };
+        let card = localctx.cardinality() ? localctx.cardinality().$$ : {  };
         if ("min" in card) { localctx.$$.min = card.min; } // t: open3groupdotclosecard23Annot3Code2
         if ("max" in card) { localctx.$$.max = card.max; } // t: open3groupdotclosecard23Annot3Code2
         if (localctx.annotation().length) {
@@ -625,8 +629,10 @@ repeatRange     : '{' INTEGER '}'								{
         let j = parseInt(localctx.children[1].getText());
         if (localctx.UNBOUNDED()) {
             localctx.$$ = { min: j, max: this.UNBOUNDED };
-        } else {
+        } else if (localctx.INTEGER().length > 1) {
             localctx.$$ = { min: j, max: parseInt(localctx.children[3].getText()) };
+        } else {
+            localctx.$$ = { min: j, max: -1 };
         }
       }  # minMaxRange
 				;
@@ -635,29 +641,31 @@ valueSet		: '[' valueSetValue* ']'	{ localctx.$$ = localctx.children.slice(1, lo
 valueSetValue   : iriRange	{ this.$1(localctx); }
 				| literalRange	{ this.$1(localctx); }
 				| languageRange	{ this.$1(localctx); }
-				| '.' (iriExclusion+ | literalExclusion+ | languageExclusion+)	{ this.$2(localctx); }
+				| '.' iriExclusion+	{ localctx.$$ = { type: "IriStemRange", stem: { type: "Wildcard" }, exclusions: localctx.children.slice(1).map(c => c.$$) }; }
+				| '.' literalExclusion+	{ localctx.$$ = { type: "LiteralStemRange", stem: { type: "Wildcard" }, exclusions: localctx.children.slice(1).map(c => c.$$) }; }
+				| '.' languageExclusion+	{ localctx.$$ = { type: "LanguageStemRange", stem: { type: "Wildcard" }, exclusions: localctx.children.slice(1).map(c => c.$$) }; }
 				;
 iriRange        : iri (STEM_MARK iriExclusion*)?	{
             if (localctx.STEM_MARK()) {
                 localctx.$$ = {  // t: 1val1iriStemMinusiriStem3, 1val1iriStem
                     type: localctx.iriExclusion().length ? "IriStemRange" : "IriStem",
-                    stem: localctx.children[1-1].value
+                    stem: localctx.children[1-1].$$
                 };
                 if (localctx.iriExclusion().length)
-                    localctx.$$["exclusions"] = localctx.iriExclusion().map(c => c.$$); // t: 1val1iriStemMinusiri3
+                    localctx.$$.exclusions = localctx.iriExclusion().map(c => c.$$); // t: 1val1iriStemMinusiri3
             } else {
                 localctx.$$ = localctx.children[1-1].$$; // t: 1val1IRI
             }
         } ;
-iriExclusion    : '-' iri STEM_MARK?	{ localctx.$$ = localctx.children[3-1] ? { type: "IriStem", stem: localctx.children[2-1].$$.value } /* t: 1val1iriStemMinusiri3 */ : localctx.children[2-1].$$.value ; } ; // t: 1val1iriStemMinusiriStem3
+iriExclusion    : '-' iri STEM_MARK?	{ localctx.$$ = localctx.children[3-1] ? { type: "IriStem", stem: localctx.children[2-1].$$ } /* t: 1val1iriStemMinusiri3 */ : localctx.children[2-1].$$ ; } ; // t: 1val1iriStemMinusiriStem3
 literalRange    : literal (STEM_MARK literalExclusion*)?	{
             if (localctx.STEM_MARK()) {
                 localctx.$$ = {  // t: 1val1literalStemMinusliteralStem3, 1val1literalStem
                     type: localctx.literalExclusion().length ? "LiteralStemRange" : "LiteralStem",
-                    stem: localctx.children[1-1].value
+                    stem: localctx.children[1-1].$$.value
                 };
                 if (localctx.literalExclusion().length)
-                    localctx.$$["exclusions"] = localctx.literalExclusion().map(c => c.$$); // t: 1val1literalStemMinusliteral3
+                    localctx.$$.exclusions = localctx.literalExclusion().map(c => c.$$); // t: 1val1literalStemMinusliteral3
             } else {
                 localctx.$$ = localctx.children[1-1].$$; // t: 1val1LITERAL
             }
@@ -670,13 +678,13 @@ languageRange   : LANGTAG (STEM_MARK languageExclusion*)?	{
                     stem: localctx.children[1-1].getText().substr(1)
                 };
                 if (localctx.languageExclusion().length)
-                    localctx.$$["exclusions"] = localctx.languageExclusion().map(c => c.$$); // t: 1val1languageStemMinuslanguage3
+                    localctx.$$.exclusions = localctx.languageExclusion().map(c => c.$$); // t: 1val1languageStemMinuslanguage3
             } else {
-                localctx.$$ = localctx.children[1-1].getText(); // t: 1val1LANGUAGE
+                localctx.$$ = { type: "Language", languageTag: localctx.children[1-1].getText().substr(1) }; // t: 1val1LANGUAGE
             }
         } ;
 languageExclusion : '-' LANGTAG STEM_MARK?	{ localctx.$$ = localctx.children[3-1] ? { type: "LanguageStem", stem: localctx.children[2-1].getText().substr(1) } /* t: 1val1languageStemMinuslanguage3 */ : localctx.children[2-1].getText().substr(1) ; } ; // t: 1val1languageStemMinuslanguageStem3
-include			: '&' tripleExprLabel	{ localctx.$$ = { type: "Inclusion", "include": localctx.children[1].$$ }; } ; // t: 2groupInclude1
+include			: '&' tripleExprLabel	{ localctx.$$ = localctx.children[1].$$ } ; // t: 2groupInclude1
 annotation      : '//' predicate (iri | literal)	{ localctx.$$ = { type: "Annotation", predicate: localctx.children[1].$$, object: localctx.children[2].$$ } } ; // t: 1dotAnnotIRIREF
 semanticAction	: '%' iri (CODE | '%')	{
             let i = localctx.children[1].$$;
@@ -707,7 +715,7 @@ rdfLiteral      : string (LANGTAG | '^^' datatype)? {
             localctx.$$ = localctx.LANGTAG()
                 ? this.extend(s, { language: this.lowercase(localctx.LANGTAG().getText().substr(1)) })
                 : localctx.datatype()
-                ? this.extend(s, { type: localctx.datatype().getText() })
+                ? this.extend(s, { type: localctx.datatype().$$ })
                 : s
         };
 booleanLiteral  : KW_TRUE	{ localctx.$$ = { value: "true", type: this.XSD_BOOLEAN }; } // t: 1val1true
@@ -734,7 +742,7 @@ prefixedName    : PNAME_LN	{ // t:1dotPNex, 1dotPNdefault, ShExParser-test.js/wi
         localctx.$$ = this.expandPrefix(localctx.children[0].getText().substr(0, localctx.children[0].getText().length - 1));
       }
 				;
-blankNode       : BLANK_NODE_LABEL ;
+blankNode       : BLANK_NODE_LABEL	{ localctx.$$ = localctx.children[0].getText(); } ;
 /*
 extension       : KW_EXTENDS shapeExprLabel
                 | '&' shapeExprLabel
