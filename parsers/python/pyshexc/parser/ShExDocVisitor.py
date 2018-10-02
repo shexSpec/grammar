@@ -1,4 +1,4 @@
-# Generated from ShExDoc.g4 by ANTLR 4.7.1
+# Generated from ShExDoc.g4 by ANTLR 4.5.3
 from antlr4 import *
 if __name__ is not None and "." in __name__:
     from .ShExDocParser import ShExDocParser
@@ -244,6 +244,11 @@ class ShExDocVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by ShExDocParser#rawNumeric.
+    def visitRawNumeric(self, ctx:ShExDocParser.RawNumericContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by ShExDocParser#shapeDefinition.
     def visitShapeDefinition(self, ctx:ShExDocParser.ShapeDefinitionContext):
         return self.visitChildren(ctx)
@@ -276,11 +281,6 @@ class ShExDocVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by ShExDocParser#multiElementOneOf.
     def visitMultiElementOneOf(self, ctx:ShExDocParser.MultiElementOneOfContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#innerTripleExpr.
-    def visitInnerTripleExpr(self, ctx:ShExDocParser.InnerTripleExprContext):
         return self.visitChildren(ctx)
 
 
@@ -399,13 +399,8 @@ class ShExDocVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ShExDocParser#semanticActions.
-    def visitSemanticActions(self, ctx:ShExDocParser.SemanticActionsContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#codeDecl.
-    def visitCodeDecl(self, ctx:ShExDocParser.CodeDeclContext):
+    # Visit a parse tree produced by ShExDocParser#semanticAction.
+    def visitSemanticAction(self, ctx:ShExDocParser.SemanticActionContext):
         return self.visitChildren(ctx)
 
 
@@ -476,16 +471,6 @@ class ShExDocVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by ShExDocParser#blankNode.
     def visitBlankNode(self, ctx:ShExDocParser.BlankNodeContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#extension.
-    def visitExtension(self, ctx:ShExDocParser.ExtensionContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#restrictions.
-    def visitRestrictions(self, ctx:ShExDocParser.RestrictionsContext):
         return self.visitChildren(ctx)
 
 
