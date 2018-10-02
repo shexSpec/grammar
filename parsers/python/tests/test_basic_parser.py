@@ -1,49 +1,33 @@
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 
 import requests
 from typing import Optional
 from dict_compare import compare_dicts, json_filtr
-from jsonasobj import loads as jao_loads
-from pyjsg.jsglib.jsg import loads as jsg_loads
+from jsonasobj import loads as jao_loads, as_json, as_dict
 from pyjsg.jsglib.logger import Logger
+from pyjsg.jsglib.loader import loads as jsg_loads
+
 from pyshexc.parser_impl.generate_shexj import parse
 from ShExJSG import ShExJ
 
-from tests.build_test_harness import ValidationTestCase
+from tests.utils.build_test_harness import ValidationTestCase
 
 #
-# Starting file name (with or without ".shex" suffix)
+# Starting file name (full URL) (with or without ".shex" suffix)
 START_AT = ""
 
 # False if you want to start somewhere in the middle
 SINGLE_FILE = bool(START_AT)
 
 # Notes:
-#   you can use shexj._as_json_dumps() to print all or part of a ShEx Schema
+#   you can use shexj.as_json() to print all or part of a ShEx Schema
 #   you can use "ctx.getText()" to get the span of any parser context
 
-V2_1_IMPORT = "Uses ShEx 2.1 Import feature"
-INCONSISTENT_STEM_WORK = "Untyped literal stems"
 LONG_UNICODE_LITERALS = "ANTLR does not support unicode literals > 4 hex digits"
 
 skip = {
-    "1dotIMPORT1dot.shex": V2_1_IMPORT,
-    "1valExprRef-IV1.shex": V2_1_IMPORT,
-    "1valExprRefbnode-IV1.shex": V2_1_IMPORT,
-    "2EachInclude1-IS2.shex": V2_1_IMPORT,
-    "2RefS1-IS2.shex": V2_1_IMPORT,
-    "2RefS1-Icirc.shex": V2_1_IMPORT,
-    "2RefS2-IS1.shex": V2_1_IMPORT,
-    "2RefS2-Icirc.shex": V2_1_IMPORT,
-    "3circRefS1-IS2-IS3-IS3.shex": V2_1_IMPORT,
-    "3circRefS1-IS2-IS3.shex": V2_1_IMPORT,
-    "3circRefS1-IS23.shex": V2_1_IMPORT,
-    "3circRefS1-Icirc.shex": V2_1_IMPORT,
-    "3circRefS123-Icirc.shex": V2_1_IMPORT,
-    "3circRefS2-IS3.shex": V2_1_IMPORT,
-    "3circRefS2-Icirc.shex": V2_1_IMPORT,
-    "3circRefS3-IS12.shex": V2_1_IMPORT,
-    "3circRefS3-Icirc.shex": V2_1_IMPORT,
     "1val1STRING_LITERAL1_with_UTF8_boundaries.shex": LONG_UNICODE_LITERALS,
     "1refbnode_with_spanning_PN_CHARS_BASE1.shex": LONG_UNICODE_LITERALS,
     "1literalPattern_with_REGEXP_escapes_bare.shex": LONG_UNICODE_LITERALS,
@@ -94,8 +78,8 @@ def compare_json(shex_url: str, shex_json: str, log: Logger) -> bool:
             json_text = f.read()
     d1 = jao_loads(json_text)
     d2 = jao_loads(shex_json)
-    if not compare_dicts(d1._as_dict, d2._as_dict, d1name="expected", d2name="actual  ", file=log, filtr=json_filtr):
-        print(d2._as_json_dumps())
+    if not compare_dicts(as_dict(d1), as_dict(d2), d1name="expected", d2name="actual  ", file=log, filtr=json_filtr):
+        print(as_json(d2))
         return False
     return True
 
@@ -118,21 +102,21 @@ def validate_shexc(shexc_str: str, input_fname: str) -> bool:
     if has_invalid_chars(shexc_str):
         print("ANTLR does not support unicode literals > 4 hex digits.")
         return False
-    log = MemLogger('\t')
-    logger = Logger(log)
     shexj = parse(shexc_str)
     shexj['@context'] = "http://www.w3.org/ns/shex.jsonld"
     if shexj is None:
         return False
     shex_obj = jsg_loads(shexj._as_json, ShExJ)
-    if not shex_obj._is_valid(logger):
-        print("File: {} - ".format(input_fname))
-        print(log.log)
-        return False
-    elif not compare_json(input_fname, shex_obj._as_json, log):
-        print("File: {} - ".format(input_fname))
-        print(log.log)
-        return False
+    log = StringIO()
+    with redirect_stdout(log):
+        if not shex_obj._is_valid():
+            print("File: {} - ".format(input_fname))
+            print(log.getvalue())
+            return False
+        elif not compare_json(input_fname, as_json(shex_obj), log):
+            print("File: {} - ".format(input_fname))
+            print(log.getvalue())
+            return False
     return True
 
 

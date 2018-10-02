@@ -10,7 +10,7 @@ import requests
 from rdflib import Graph, URIRef, Namespace
 from rdflib.term import Identifier, BNode
 
-from tests.build_test_harness import ValidationTestCase
+from tests.utils.build_test_harness import ValidationTestCase
 
 #
 # Starting file name (with or without ".ttl" suffix)

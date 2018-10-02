@@ -18,7 +18,7 @@ class ShexDocParser(ShExDocVisitor):
 
     def visitShExDoc(self, ctx: ShExDocParser.ShExDocContext):
         """ shExDoc: directive* ((notStartAction | startActions) statement*)? EOF """
-        self.visitChildren(ctx)
+        super().visitShExDoc(ctx)
 
     def visitBaseDecl(self, ctx: ShExDocParser.BaseDeclContext):
         """ baseDecl: KW_BASE IRIREF """
@@ -32,6 +32,13 @@ class ShexDocParser(ShExDocVisitor):
         if iri not in self.context.ld_prefixes:
             self.context.prefixes.setdefault(prefix, iri.val)
 
+    def visitImportDecl(self, ctx: ShExDocParser.ImportDeclContext):
+        """ importDecl : KW_IMPORT IRIREF """
+        if self.context.schema.imports is None:
+            self.context.schema.imports = [self.context.iriref_to_shexj_iriref(ctx.IRIREF())]
+        else:
+            self.context.schema.imports.append(self.context.iriref_to_shexj_iriref(ctx.IRIREF()))
+
     def visitStart(self, ctx: ShExDocParser.StartContext):
         """ start: KW_START '=' shapeExpression """
         shexpr = ShexShapeExpressionParser(self.context, None)
@@ -41,18 +48,21 @@ class ShexDocParser(ShExDocVisitor):
     def visitShapeExprDecl(self, ctx: ShExDocParser.ShapeExprDeclContext):
         """ shapeExprDecl: KW_ABSTRACT? shapeExprLabel restrictions* (shapeExpression | KW_EXTERNAL) """
         label = self.context.shapeexprlabel_to_IRI(ctx.shapeExprLabel())
-        if self.context.schema.shapes is None:
-            self.context.schema.shapes = []
+        # CHANGED
+        # if self.context.schema.shapes is None:
+        #     self.context.schema.shapes = []
         if ctx.KW_ABSTRACT() or ctx.restrictions():
             decl = ShapeDecl(id=label)
             label = None
             if ctx.KW_ABSTRACT():
                 decl.abstract = True
             if ctx.restrictions():
-                decl.restricts = []
-                for lbl in ctx.restrictions():
-                    decl.restricts.append(self.context.shapeexprlabel_to_IRI(lbl.shapeExprLabel()))
-            self.context.schema.shapes.append(decl)
+                decl.restricts = [self.context.shapeexprlabel_to_IRI(lbl.shapeExprLabel()) for
+                                  lbl in ctx.restrictions()]
+            if self.context.schema.shapes is None:
+                self.context.schema.shapes = [decl]
+            else:
+                self.context.schema.shapes.append(decl)
         else:
             decl = None
         if ctx.KW_EXTERNAL():
@@ -62,14 +72,18 @@ class ShexDocParser(ShExDocVisitor):
             shexpr.visit(ctx.shapeExpression())
             shape = shexpr.expr
         if not decl:
-            self.context.schema.shapes.append(shape)
+            if self.context.schema.shapes is None:
+                self.context.schema.shapes = [shape]
+            else:
+                self.context.schema.shapes.append(shape)
         else:
             decl.shapeExpr = shape
 
     def visitStartActions(self, ctx: ShExDocParser.StartActionsContext):
         """ startActions: codeDecl+ """
-        self.context.schema.startActs = []
+        startacts = []
         for cd in ctx.codeDecl():
             cdparser = ShexAnnotationAndSemactsParser(self.context)
             cdparser.visit(cd)
-            self.context.schema.startActs += cdparser.semacts
+            startacts += cdparser.semacts
+        self.context.schema.startActs = startacts

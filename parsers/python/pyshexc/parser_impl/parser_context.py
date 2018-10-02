@@ -1,10 +1,11 @@
 import re
-from typing import Union
+from typing import Union, Dict, Optional
+
+from ShExJSG import ShExJ
+from pyjsg.jsglib import *
 from rdflib import RDF, XSD
 
 from pyshexc.parser.ShExDocParser import ShExDocParser
-from ShExJSG import ShExJ
-from pyjsg.jsglib import jsg
 
 IRIstr = str
 PREFIXstr = str
@@ -23,9 +24,9 @@ class ParserContext:
     """
     def __init__(self):
         self.schema = ShExJ.Schema()
-        self.ld_prefixes = {}       # Dict[PREFIXstr, IRIstr] - prefixes in the JSON-LD module
-        self.prefixes = {}          # Dict[PREFIXstr, IRIstr]
-        self.base = None            # IRIstr
+        self.ld_prefixes: Dict[PREFIXstr, IRIstr] = {}       # prefixes in the JSON-LD module
+        self.prefixes: Dict[PREFIXstr, IRIstr] = {}          # Assigned prefixes
+        self.base: Optional[IRIstr] = None
 
     def _lookup_prefix(self, prefix: PREFIXstr) -> str:
         if len(prefix) == 0:
@@ -111,14 +112,14 @@ class ParserContext:
             return RDF_TYPE
 
     @staticmethod
-    def numeric_literal_to_type(numlit: ShExDocParser.NumericLiteralContext) -> Union[jsg.Integer, jsg.Number]:
+    def numeric_literal_to_type(numlit: ShExDocParser.NumericLiteralContext) -> Union[Integer, Number]:
         """ numericLiteral: INTEGER | DECIMAL | DOUBLE """
         if numlit.INTEGER():
-            rval = jsg.Integer(str(int(numlit.INTEGER().getText())))
+            rval = Integer(str(int(numlit.INTEGER().getText())))
         elif numlit.DECIMAL():
-            rval = jsg.Number(str(float(numlit.DECIMAL().getText())))
+            rval = Number(str(float(numlit.DECIMAL().getText())))
         else:
-            rval = jsg.Number(str(float(numlit.DOUBLE().getText())))
+            rval = Number(str(float(numlit.DOUBLE().getText())))
         return rval
 
     def literal_to_ObjectLiteral(self, literal: ShExDocParser.LiteralContext) -> ShExJ.ObjectLiteral:
@@ -136,7 +137,7 @@ class ParserContext:
                 txt = txt[1:-1]
 
             txt = self.fix_text_escapes(txt, quote_char)
-            rval.value = jsg.String(txt)
+            rval.value = String(txt)
             if rdflit.LANGTAG():
                 rval.language = ShExJ.LANGTAG(rdflit.LANGTAG().getText()[1:].lower())
             if rdflit.datatype():
@@ -144,16 +145,16 @@ class ParserContext:
         elif literal.numericLiteral():
             numlit = literal.numericLiteral()
             if numlit.INTEGER():
-                rval.value = jsg.String(numlit.INTEGER().getText())
+                rval.value = String(numlit.INTEGER().getText())
                 rval.type = RDF_INTEGER_TYPE
             elif numlit.DECIMAL():
-                rval.value = jsg.String(numlit.DECIMAL().getText())
+                rval.value = String(numlit.DECIMAL().getText())
                 rval.type = RDF_DECIMAL_TYPE
             elif numlit.DOUBLE():
-                rval.value = jsg.String(numlit.DOUBLE().getText())
+                rval.value = String(numlit.DOUBLE().getText())
                 rval.type = RDF_DOUBLE_TYPE
         elif literal.booleanLiteral():
-            rval.value = jsg.String(literal.booleanLiteral().getText().lower())
+            rval.value = String(literal.booleanLiteral().getText().lower())
             rval.type = RDF_BOOL_TYPE
         return rval
 

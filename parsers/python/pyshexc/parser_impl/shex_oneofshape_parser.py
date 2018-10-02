@@ -14,20 +14,22 @@ class ShexTripleExpressionParser(ShExDocVisitor):
         self.expression: TripleConstraint = None
 
     def visitMultiElementOneOf(self, ctx: ShExDocParser.MultiElementOneOfContext):
-        """ multiElementOneOf: groupShape ('|' groupShape)+ """
-        self.expression = OneOf(expressions=[])
+        """ multiElementOneOf: groupTripleExpr ('|' groupTripleExpr)+ """
+        expressions = []
         for gs in ctx.groupTripleExpr():
             parser = ShexTripleExpressionParser(self.context)
             parser.visit(gs)
-            self.expression.expressions.append(parser.expression)
+            expressions.append(parser.expression)
+        self.expression = OneOf(expressions=expressions)
 
     def visitMultiElementGroup(self, ctx: ShExDocParser.MultiElementGroupContext):
-        """ multiElementGroup: unaryShape (';' unaryShape)+ ';'? """
-        self.expression = EachOf(expressions=[])
+        """ multiElementGroup: unaryTripleExpr (';' unaryTripleExpr)+ ';'? """
+        expressions = []
         for us in ctx.unaryTripleExpr():
             parser = ShexTripleExpressionParser(self.context)
             parser.visit(us)
-            self.expression.expressions.append(parser.expression)
+            expressions.append(parser.expression)
+        self.expression = EachOf(expressions=expressions)
 
     def visitUnaryTripleExpr(self, ctx: ShExDocParser.UnaryTripleExprContext):
         """ unaryTripleExpr: ('$' tripleExprLabel)? (tripleConstraint | bracketedTripleExpr) | include """
@@ -42,7 +44,7 @@ class ShexTripleExpressionParser(ShExDocVisitor):
                 self.visit(ctx.bracketedTripleExpr())
                 self.expression.id = lbl
 
-    def visitBracketedTripleExpr(self, ctx:ShExDocParser.BracketedTripleExprContext):
+    def visitBracketedTripleExpr(self, ctx: ShExDocParser.BracketedTripleExprContext):
         """ bracketedTripleExpr: '(' innerTripleExpr ')' cardinality? onShapeExpr? annotation* semanticActions """
         enc_shape = ShexTripleExpressionParser(self.context)
         enc_shape.visit(ctx.innerTripleExpr())
@@ -95,11 +97,8 @@ class ShexTripleExpressionParser(ShExDocVisitor):
         self.expression.max = int(ctx.INTEGER(1).getText()) if len(ctx.INTEGER()) > 1 else -1
 
     def visitSenseFlags(self, ctx: ShExDocParser.SenseFlagsContext):
-        """ '!' '^'? | '^' '!'? """
-        if '!' in ctx.getText():
-            self.expression.negated = True
-        if '^' in ctx.getText():
-            self.expression.inverse = True
+        """ senseFlags: '^' """
+        self.expression.inverse = True
 
     def visitPredicate(self, ctx: ShExDocParser.PredicateContext):
         """ predicate: iri | rdfType """

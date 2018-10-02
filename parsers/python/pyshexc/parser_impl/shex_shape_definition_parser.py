@@ -16,15 +16,9 @@ class ShexShapeDefinitionParser(ShExDocVisitor):
         self.shape = Shape(label)
 
     def visitShapeDefinition(self, ctx: ShExDocParser.ShapeDefinitionContext):
-        """ shapeDefinition: qualifier* '{' oneOfShape? '}' annotation* semanticActions """
-        if ctx.qualifier():
-            for q in ctx.qualifier():
-                self.visit(q)
-        if ctx.tripleExpression():
-            oneof_parser = ShexTripleExpressionParser(self.context)
-            oneof_parser.visit(ctx.tripleExpression())
-            self.shape.expression = oneof_parser.expression
-        if ctx.annotation() or ctx.semanticActions():
+        """ shapeDefinition: inlineShapeDefinition annotation* semanticActions """
+        self.visitInlineShapeDefinition(ctx.inlineShapeDefinition())
+        if ctx.annotation() or ctx.semanticActions().codeDecl():
             ansem_parser = ShexAnnotationAndSemactsParser(self.context)
             for annot in ctx.annotation():
                 ansem_parser.visit(annot)
@@ -49,13 +43,16 @@ class ShexShapeDefinitionParser(ShExDocVisitor):
             extensions: KW_EXTENDS shapeExprLabel | '&' shapeExprLabel
         """
         if ctx.extension():
+            ext = self.context.shapeexprlabel_to_IRI(ctx.extension().shapeExprLabel())
             if self.shape.extends is None:
-                self.shape.extends = []
-            self.shape.extends.append(self.context.shapeexprlabel_to_IRI(ctx.extension().shapeExprLabel()))
+                self.shape.extends = [ext]
+            else:
+                self.shape.extends.append(ext)
         elif ctx.extraPropertySet():
             if self.shape.extra is None:
-                self.shape.extra = []
-            self.shape.extra += [self.context.predicate_to_IRI(p) for p in ctx.extraPropertySet().predicate()]
+                self.shape.extra = [self.context.predicate_to_IRI(p) for p in ctx.extraPropertySet().predicate()]
+            else:
+                self.shape.extra += [self.context.predicate_to_IRI(p) for p in ctx.extraPropertySet().predicate()]
 
         elif ctx.KW_CLOSED():
             self.shape.closed = True
