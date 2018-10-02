@@ -42,9 +42,9 @@ prefixDecl		: KW_PREFIX PNAME_NS IRIREF ;
 importDecl      : KW_IMPORT IRIREF ;
 notStartAction  : start | shapeExprDecl ;
 start           : KW_START '=' shapeExpression ;
-startActions	: codeDecl+ ;
+startActions	: semanticAction+ ;
 statement 		: directive | notStartAction ;
-shapeExprDecl   : KW_ABSTRACT? shapeExprLabel restrictions* (shapeExpression | KW_EXTERNAL) ;
+shapeExprDecl   : /* KW_ABSTRACT? */ shapeExprLabel /* restrictions* */ (shapeExpression | KW_EXTERNAL) ;
 shapeExpression : shapeOr ;
 inlineShapeExpression : inlineShapeOr ;
 shapeOr  		: shapeAnd (KW_OR shapeAnd)* ;
@@ -59,9 +59,9 @@ shapeAtom		: nonLitNodeConstraint shapeOrRef?    # shapeAtomNonLitNodeConstraint
 				| '(' shapeExpression ')'		# shapeAtomShapeExpression
 				| '.'							# shapeAtomAny			// no constraint
 				;
-inlineShapeAtom : nonLitNodeConstraint inlineShapeOrRef? # inlineShapeAtomNonLitNodeConstraint
-                | litNodeConstraint             # inlineShapeAtomLitNodeConstraint
-				| inlineShapeOrRef nonLitNodeConstraint? # inlineShapeAtomShapeOrRef
+inlineShapeAtom : inlineNonLitNodeConstraint inlineShapeOrRef? # inlineShapeAtomNonLitNodeConstraint
+                | inlineLitNodeConstraint             # inlineShapeAtomLitNodeConstraint
+				| inlineShapeOrRef inlineNonLitNodeConstraint? # inlineShapeAtomShapeOrRef
 				| '(' shapeExpression ')'		# inlineShapeAtomShapeExpression
 				| '.'							# inlineShapeAtomAny   // no constraint
 				;
@@ -81,11 +81,11 @@ inlineLitNodeConstraint : KW_LITERAL xsFacet*	# nodeConstraintLiteral
 				| valueSet xsFacet*				# nodeConstraintValueSet
 				| numericFacet+					# nodeConstraintNumericFacet
 				;
-litNodeConstraint : inlineLitNodeConstraint  annotation* semanticActions ;
+litNodeConstraint : inlineLitNodeConstraint  annotation* semanticAction* ;
 inlineNonLitNodeConstraint  : nonLiteralKind stringFacet*	# litNodeConstraintLiteral
                 | stringFacet+                  # litNodeConstraintStringFacet
 				;
-nonLitNodeConstraint : inlineNonLitNodeConstraint  annotation* semanticActions ;
+nonLitNodeConstraint : inlineNonLitNodeConstraint  annotation* semanticAction* ;
 nonLiteralKind  : KW_IRI
 				| KW_BNODE
 				| KW_NONLITERAL
@@ -100,7 +100,7 @@ stringLength	: KW_LENGTH
 				| KW_MINLENGTH
 				| KW_MAXLENGTH
 				;
-numericFacet	: numericRange numericLiteral
+numericFacet	: numericRange rawNumeric
 				| numericLength INTEGER
 				;
 numericRange	: KW_MININCLUSIVE
@@ -111,18 +111,20 @@ numericRange	: KW_MININCLUSIVE
 numericLength   : KW_TOTALDIGITS
 				| KW_FRACTIONDIGITS
 				;
-shapeDefinition : inlineShapeDefinition annotation* semanticActions ;
+// rawNumeric is like numericLiteral but returns a JSON integer or float
+rawNumeric		: INTEGER
+				| DECIMAL
+				| DOUBLE
+				;
+shapeDefinition : inlineShapeDefinition annotation* semanticAction* ;
 inlineShapeDefinition : qualifier* '{' tripleExpression? '}' ;
-qualifier       : extension | extraPropertySet | KW_CLOSED ;
+qualifier       : /* extension | */ extraPropertySet | KW_CLOSED ;
 extraPropertySet : KW_EXTRA predicate+ ;
 tripleExpression : oneOfTripleExpr ;
 oneOfTripleExpr : groupTripleExpr
 				| multiElementOneOf
 				;
 multiElementOneOf : groupTripleExpr ( '|' groupTripleExpr )+ ;
-innerTripleExpr : multiElementGroup
-				| multiElementOneOf
-				;
 groupTripleExpr : singleElementGroup
 				| multiElementGroup
 				;
@@ -131,8 +133,8 @@ multiElementGroup : unaryTripleExpr (';' unaryTripleExpr)+ ';'? ;
 unaryTripleExpr : ('$' tripleExprLabel)? (tripleConstraint | bracketedTripleExpr)
 				| include
 				;
-bracketedTripleExpr : '(' innerTripleExpr ')' cardinality? onShapeExpr? annotation* semanticActions ;
-tripleConstraint : senseFlags? predicate inlineShapeExpression cardinality? onShapeExpr? annotation* semanticActions ;
+bracketedTripleExpr : '(' tripleExpression ')' cardinality? /* onShapeExpr? */ annotation* semanticAction* ;
+tripleConstraint : senseFlags? predicate inlineShapeExpression cardinality? /* onShapeExpr? */ annotation* semanticAction* ;
 cardinality     :  '*'         # starCardinality
 				| '+'          # plusCardinality
 				| '?'          # optionalCardinality
@@ -157,8 +159,7 @@ languageRange   : LANGTAG (STEM_MARK languageExclusion*)? ;
 languageExclusion : '-' LANGTAG STEM_MARK? ;
 include			: '&' tripleExprLabel ;
 annotation      : '//' predicate (iri | literal) ;
-semanticActions	: codeDecl* ;
-codeDecl		: '%' iri (CODE | '%') ;
+semanticAction	: '%' iri (CODE | '%') ;
 literal         : rdfLiteral
 				| numericLiteral
 				| booleanLiteral
@@ -196,19 +197,21 @@ prefixedName    : PNAME_LN
 				| PNAME_NS
 				;
 blankNode       : BLANK_NODE_LABEL ;
+/*
 extension       : KW_EXTENDS shapeExprLabel
                 | '&' shapeExprLabel
                 ;
 restrictions    : KW_RESTRICTS shapeExprLabel
                 | '-' shapeExprLabel
                 ;
+*/
 
 // Keywords
-KW_ABSTRACT         : A B S T R A C T ;
+/* KW_ABSTRACT         : A B S T R A C T ; */
 KW_BASE 			: B A S E ;
-KW_EXTENDS          : E X T E N D S ;
+/* KW_EXTENDS          : E X T E N D S ; */
 KW_IMPORT           : I M P O R T ;
-KW_RESTRICTS        : R E S T R I C T S ;
+/* KW_RESTRICTS        : R E S T R I C T S ; */
 KW_EXTERNAL			: E X T E R N A L ;
 KW_PREFIX       	: P R E F I X ;
 KW_START        	: S T A R T ;
@@ -269,7 +272,7 @@ STRING_LITERAL_LONG2  : '"""' (('"' | '""')? (~["\\] | ECHAR | UCHAR))* '"""' ;
 fragment UCHAR                 : '\\u' HEX HEX HEX HEX | '\\U' HEX HEX HEX HEX HEX HEX HEX HEX ;
 fragment ECHAR                 : '\\' [tbnrf\\"'] ;
 
-fragment PN_CHARS_BASE 		   : [A-Z] | [a-z] | [\u00C0-\u00D6] | [\u00D8-\u00F6] | [\u00F8-\u02FF] | [\u0370-\u037D]
+fragment PN_CHARS_BASE 		   : [A-Z] | [a-z] | [\u00C0-\u00D6] | [\u00D8-\u00F6] | [\u00F8-\u02FF] | [\u0370-\u037D] | [\uD800-\uDB7F][\uDC00-\uDFFF]
 					   		   | [\u037F-\u1FFF] | [\u200C-\u200D] | [\u2070-\u218F] | [\u2C00-\u2FEF] | [\u3001-\uD7FF]
 					           | [\uF900-\uFDCF] | [\uFDF0-\uFFFD]
 					   		   ;

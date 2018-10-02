@@ -4,3 +4,6 @@ javascript/browser/n3*
 javascript/node_modules
 .idea/
 *.iml
+/**/node_modules/
+/parsers/javascript-antlr/semacts/lib/ShExDoc.tokens
+/parsers/javascript-antlr/semacts/lib/ShExDocLexer.tokens
