@@ -10,6 +10,7 @@ import requests
 from rdflib import Graph, URIRef, Namespace
 from rdflib.term import Identifier, BNode
 
+from tests import schemas_base
 from tests.utils.build_test_harness import ValidationTestCase
 
 #
@@ -36,7 +37,7 @@ class ShexJToShexRTestCase(ValidationTestCase):
     pass
 
 # ShexJToShexRTestCase.repo_url = "~/Development/git/shexSpec/shexTest/schemas"
-ShexJToShexRTestCase.repo_url = "https://api.github.com/repos/shexSpec/shexTest/contents/schemas"
+ShexJToShexRTestCase.repo_url = schemas_base
 ShexJToShexRTestCase.file_suffix = ".ttl"
 ShexJToShexRTestCase.skip = ['coverage.ttl', 'manifest.ttl', 'meta.ttl']
 ShexJToShexRTestCase.start_at = START_AT if not START_AT or START_AT.endswith('.ttl') else START_AT + '.ttl'

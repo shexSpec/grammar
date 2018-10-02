@@ -15,11 +15,13 @@ from pyjsg.jsglib.loader import is_valid
 from pyshexc.ShExC import ShExC
 
 # Repository to validate against
-shexTestRepository = "https://api.github.com/repos/shexSpec/shexTest/contents/schemas"
-#shexTestRepository = os.path.abspath(os.path.expanduser("~/git/shexSpec/shexTest/schemas/"))
+from tests import schemas_base
+
+shexTestRepository = schemas_base
 
 # If not empty, validate this single file
-testShexFile: str = "1dotCodeWithEscapes1.json"
+# testShexFile: str = "1dotCodeWithEscapes1.json"
+testShexFile: str = ""
 
 STOP_ON_ERROR = False       # True means go until you hit the first error
 

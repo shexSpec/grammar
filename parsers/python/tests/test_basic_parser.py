@@ -12,6 +12,7 @@ from pyjsg.jsglib.loader import loads as jsg_loads
 from pyshexc.parser_impl.generate_shexj import parse
 from ShExJSG import ShExJ
 
+from tests import schemas_base
 from tests.utils.build_test_harness import ValidationTestCase
 
 #
@@ -41,8 +42,7 @@ class BasicParserTestCase(ValidationTestCase):
     pass
 
 
-BasicParserTestCase.repo_url = "https://api.github.com/repos/shexSpec/shexTest/contents/schemas"
-# BasicParserTestCase.repo_url = "(path to git)/shexSpec/shexTest/schemas"
+BasicParserTestCase.repo_url = schemas_base
 BasicParserTestCase.file_suffix = ".shex"
 BasicParserTestCase.start_at = START_AT if not START_AT or START_AT.endswith('.shex') else START_AT + '.shex'
 BasicParserTestCase.single_file = SINGLE_FILE

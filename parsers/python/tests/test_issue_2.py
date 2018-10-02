@@ -5,8 +5,9 @@ from rdflib import Namespace
 from ShExJSG import ShExJ
 
 from pyshexc.parser_impl.generate_shexj import parse
+from tests import git_branch
 
-BASE = Namespace("https://raw.githubusercontent.com/shexSpec/shexTest/master/validation/")
+BASE = Namespace(f"https://raw.githubusercontent.com/shexSpec/shexTest/{git_branch}/validation/")
 FOO = Namespace("/some/location/file/")
 EX = Namespace("http://example.org/")
 
