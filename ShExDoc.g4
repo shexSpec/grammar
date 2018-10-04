@@ -191,7 +191,9 @@ string          : STRING_LITERAL_LONG1
                 | STRING_LITERAL1
 				| STRING_LITERAL2
 				;
+/*
 onShapeExpr     : KW_ON (KW_SHAPE KW_EXPRESSION)? inlineShapeExpression ;
+*/
 iri             : IRIREF
 				| prefixedName
 				;
@@ -226,9 +228,9 @@ KW_NONLITERAL   	: N O N L I T E R A L ;
 KW_BNODE        	: B N O D E ;
 KW_AND          	: A N D ;
 KW_OR           	: O R ;
-KW_ON               : O N ;
+/* KW_ON               : O N ;
 KW_SHAPE            : S H A P E ;
-KW_EXPRESSION       : E X P R E S S I O N ;
+KW_EXPRESSION       : E X P R E S S I O N ; */
 KW_MININCLUSIVE 	: M I N I N C L U S I V E ;
 KW_MINEXCLUSIVE 	: M I N E X C L U S I V E ;
 KW_MAXINCLUSIVE 	: M A X I N C L U S I V E ;
