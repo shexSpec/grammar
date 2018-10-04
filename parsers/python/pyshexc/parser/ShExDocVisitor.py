@@ -1,4 +1,4 @@
-# Generated from ShExDoc.g4 by ANTLR 4.5.3
+# Generated from ShExDoc.g4 by ANTLR 4.7.1
 from antlr4 import *
 if __name__ is not None and "." in __name__:
     from .ShExDocParser import ShExDocParser
@@ -379,8 +379,13 @@ class ShExDocVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ShExDocParser#languageRange.
-    def visitLanguageRange(self, ctx:ShExDocParser.LanguageRangeContext):
+    # Visit a parse tree produced by ShExDocParser#languageRangeFull.
+    def visitLanguageRangeFull(self, ctx:ShExDocParser.LanguageRangeFullContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#languageRangeAt.
+    def visitLanguageRangeAt(self, ctx:ShExDocParser.LanguageRangeAtContext):
         return self.visitChildren(ctx)
 
 
@@ -451,11 +456,6 @@ class ShExDocVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by ShExDocParser#string.
     def visitString(self, ctx:ShExDocParser.StringContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#onShapeExpr.
-    def visitOnShapeExpr(self, ctx:ShExDocParser.OnShapeExprContext):
         return self.visitChildren(ctx)
 
 

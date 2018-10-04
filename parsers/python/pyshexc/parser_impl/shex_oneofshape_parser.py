@@ -45,30 +45,30 @@ class ShexTripleExpressionParser(ShExDocVisitor):
                 self.expression.id = lbl
 
     def visitBracketedTripleExpr(self, ctx: ShExDocParser.BracketedTripleExprContext):
-        """ bracketedTripleExpr: '(' innerTripleExpr ')' cardinality? onShapeExpr? annotation* semanticActions """
+        """ bracketedTripleExpr: '(' tripleExpression ')' cardinality? /* onShapeExpr?*/ annotation* semanticAction* """
         enc_shape = ShexTripleExpressionParser(self.context)
-        enc_shape.visit(ctx.innerTripleExpr())
+        enc_shape.visit(ctx.tripleExpression())
         self.expression = enc_shape.expression
-        if ctx.onShapeExpr():
-            self.expression.onShapeExpression = self._onShapeExpr(ctx.onShapeExpr())
+        # if ctx.onShapeExpr():
+        #     self.expression.onShapeExpression = self._onShapeExpr(ctx.onShapeExpr())
         self._card_annotations_and_semacts(ctx)
 
-    def _onShapeExpr(self, ctx: ShExDocParser.OnShapeExprContext) -> TripleConstraint:
-        """ onShapeExpr : KW_ON (KW_SHAPE KW_EXPRESSION)? inlineShapeExpression """
-        expr_parser = ShexShapeExpressionParser(self.context)
-        expr_parser.visit(ctx.inlineShapeExpression())
-        return expr_parser.expr
+    # def _onShapeExpr(self, ctx: ShExDocParser.OnShapeExprContext) -> TripleConstraint:
+    #     """ onShapeExpr : KW_ON (KW_SHAPE KW_EXPRESSION)? inlineShapeExpression """
+    #     expr_parser = ShexShapeExpressionParser(self.context)
+    #     expr_parser.visit(ctx.inlineShapeExpression())
+    #     return expr_parser.expr
 
     def visitTripleConstraint(self, ctx: ShExDocParser.TripleConstraintContext):
-        """ tripleConstraint: senseFlags? predicate inlineShapeExpression cardinality? annotation* semanticActions """
+        """ tripleConstraint: senseFlags? predicate inlineShapeExpression cardinality? annotation* semanticAction """
         # This exists because of the predicate within annotation - if we default to visitchildren, we intercept both
         # predicates
         if ctx.senseFlags():
             self.visit(ctx.senseFlags())
         self.visit(ctx.predicate())
         self.visit(ctx.inlineShapeExpression())
-        if ctx.onShapeExpr():
-            self.expression.onShapeExpression = self._onShapeExpr(ctx.onShapeExpr())
+        # if ctx.onShapeExpr():
+        #     self.expression.onShapeExpression = self._onShapeExpr(ctx.onShapeExpr())
         self._card_annotations_and_semacts(ctx)
 
     def visitStarCardinality(self, ctx: ShExDocParser.StarCardinalityContext):
@@ -117,7 +117,8 @@ class ShexTripleExpressionParser(ShExDocVisitor):
         if ctx.annotation():
             for annot in ctx.annotation():
                 annot_parser.visit(annot)
-        annot_parser.visit(ctx.semanticActions())
+        for act in ctx.semanticAction():
+            annot_parser.visit(act)
         if annot_parser.annotations:
             self.expression.annotations = annot_parser.annotations
         if annot_parser.semacts:

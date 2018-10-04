@@ -1,3 +1,4 @@
+import sys
 import unittest
 from contextlib import redirect_stdout
 from io import StringIO
@@ -29,12 +30,8 @@ SINGLE_FILE = bool(START_AT)
 LONG_UNICODE_LITERALS = "ANTLR does not support unicode literals > 4 hex digits"
 
 skip = {
-    "1val1STRING_LITERAL1_with_UTF8_boundaries.shex": LONG_UNICODE_LITERALS,
-    "1refbnode_with_spanning_PN_CHARS_BASE1.shex": LONG_UNICODE_LITERALS,
-    "1literalPattern_with_REGEXP_escapes_bare.shex": LONG_UNICODE_LITERALS,
-    "1val1STRING_LITERAL1_with_ECHAR_escapes.shex": LONG_UNICODE_LITERALS,
-    "1literalPattern_with_REGEXP_escapes.shex": LONG_UNICODE_LITERALS,
-    "1literalPattern_with_UTF8_boundaries.shex": LONG_UNICODE_LITERALS,
+    "1dotCodeWithEscapes1.shex": "rdflib quote issue",
+    # "_all.shex": "total madness"
 }
 
 
@@ -47,7 +44,7 @@ BasicParserTestCase.file_suffix = ".shex"
 BasicParserTestCase.start_at = START_AT if not START_AT or START_AT.endswith('.shex') else START_AT + '.shex'
 BasicParserTestCase.single_file = SINGLE_FILE
 
-BasicParserTestCase.skip = list(skip.keys())
+BasicParserTestCase.skip = skip
 
 
 class MemLogger:
@@ -74,8 +71,12 @@ def compare_json(shex_url: str, shex_json: str, log: Logger) -> bool:
             return False
         json_text = resp.text
     else:
-        with open(json_url) as f:
-            json_text = f.read()
+        try:
+            with open(json_url) as f:
+                json_text = f.read()
+        except FileNotFoundError:
+            print(f"****> {json_url} not found. Comparison not done ***")
+            return True
     d1 = jao_loads(json_text)
     d2 = jao_loads(shex_json)
     if not compare_dicts(as_dict(d1), as_dict(d2), d1name="expected", d2name="actual  ", file=log, filtr=json_filtr):
@@ -99,25 +100,22 @@ def validate_shexc(shexc_str: str, input_fname: str) -> bool:
     :param input_fname: Name of source file for error reporting
     :return: True if pass
     """
-    if has_invalid_chars(shexc_str):
-        print("ANTLR does not support unicode literals > 4 hex digits.")
-        return False
     shexj = parse(shexc_str)
-    shexj['@context'] = "http://www.w3.org/ns/shex.jsonld"
     if shexj is None:
         return False
+    shexj['@context'] = "http://www.w3.org/ns/shex.jsonld"
     shex_obj = jsg_loads(shexj._as_json, ShExJ)
     log = StringIO()
+    rval = True
     with redirect_stdout(log):
         if not shex_obj._is_valid():
-            print("File: {} - ".format(input_fname))
-            print(log.getvalue())
-            return False
+            rval = False
         elif not compare_json(input_fname, as_json(shex_obj), log):
-            print("File: {} - ".format(input_fname))
-            print(log.getvalue())
-            return False
-    return True
+            rval = False
+    if not rval:
+        print("File: {} - ".format(input_fname))
+        print(log.getvalue())
+    return rval
 
 
 def validate_file(download_url: str) -> bool:

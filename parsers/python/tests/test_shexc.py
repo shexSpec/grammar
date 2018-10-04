@@ -37,10 +37,11 @@ INSANE_BNODE = "Insane BNODE Identifiers"
 # Files to skip until we reintroduce a manifest reader
 skip = {'coverage.json': NOT_SHEX_FILE,
         'manifest.json': NOT_SHEX_FILE,
-        "1refbnode_with_spanning_PN_CHARS1": INSANE_BNODE,
-        "1val1STRING_LITERAL1_with_all_punctuation": LITERAL_CHARS,
-        "1literalPattern_with_all_punctiation": LITERAL_CHARS,
-        "1val1STRING_LITERAL1_with_ECHAR_escapes": LITERAL_CHARS,
+        "1dotCodeWithEscapes1": "RDF Quote Issue",
+        # "1refbnode_with_spanning_PN_CHARS1": INSANE_BNODE,
+        # "1val1STRING_LITERAL1_with_all_punctuation": LITERAL_CHARS,
+        # "1literalPattern_with_all_punctiation": LITERAL_CHARS,
+        # "1val1STRING_LITERAL1_with_ECHAR_escapes": LITERAL_CHARS,
         # "1val1STRING_LITERAL1_with_NO_ECHAR_escapes": LITERAL_CHARS,
         # "1valExprRef-IV1": USES_IMPORTS,
         # "1valExprRefbnode-IV1": USES_IMPORTS,
@@ -58,8 +59,8 @@ skip = {'coverage.json': NOT_SHEX_FILE,
         # "3circRefS2-IS3": USES_IMPORTS,
         # "3circRefS3-IS12": USES_IMPORTS,
         # "3circRefS3-Icirc": USES_IMPORTS,
-        "_all": "Just insane",
-        "kitchenSink": "Just insane",
+        # "_all": "Just insane",
+        # "kitchenSink": "Just insane",
         # "NOT1dotOR2dotX3": "Nesting issue",
         # "NOT1dotOR2dotX3AND1": "Nesting issue"
         }
@@ -147,7 +148,7 @@ def validate_file(file: TestFile, stats: Stats) -> bool:
     """
     stats.total += 1
     if file.filename not in skip:
-        print(f"Testing {file.fullpath}")
+        # print(f"Testing {file.fullpath}")
         if ':' in file.fullpath:
             resp = requests.get(file.fullpath)
             if resp.ok:

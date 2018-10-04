@@ -13,7 +13,7 @@ from pyjsg.jsglib import Integer, String
 
 class ShexNodeExpressionParser(ShExDocVisitor):
 
-    def _nonLiteralKind(self, kind: ShExDocParser.NonLiteralKindContext):
+    def _non_literal_kind(self, kind: ShExDocParser.NonLiteralKindContext):
         """ Parser for nodeConstraint productions """
         self.nodeconstraint.nodeKind = 'iri' if kind.KW_IRI() \
             else 'bnode' if kind.KW_BNODE() \
@@ -33,7 +33,7 @@ class ShexNodeExpressionParser(ShExDocVisitor):
 
     def visitNodeConstraintNonLiteral(self, ctx: ShExDocParser.NodeConstraintNonLiteralContext):
         """ inlineLitNodeConstraint: nonLiteralKind stringFacet*  # nodeConstraintNonLiteral """
-        self._nonLiteralKind(ctx.nonLiteralKind())
+        self._non_literal_kind(ctx.nonLiteralKind())
         self.visitChildren(ctx)
 
     def visitNodeConstraintDatatype(self, ctx: ShExDocParser.NodeConstraintDatatypeContext):
@@ -49,7 +49,7 @@ class ShexNodeExpressionParser(ShExDocVisitor):
 
     def visitLitNodeConstraintLiteral(self, ctx: ShExDocParser.LitNodeConstraintLiteralContext):
         """ inlineNonLitNodeConstraint  : nonLiteralKind stringFacet*	# litNodeConstraintLiteral """
-        self._nonLiteralKind(ctx.nonLiteralKind())
+        self._non_literal_kind(ctx.nonLiteralKind())
         self.visitChildren(ctx)
 
     def visitValueSetValue(self, ctx: ShExDocParser.ValueSetValueContext):
@@ -115,20 +115,31 @@ class ShexNodeExpressionParser(ShExDocVisitor):
             rval.append(LiteralStem(excl_literal_v) if excl.STEM_MARK() else excl_literal_v)
         return rval
 
-    def visitLanguageRange(self, ctx: ShExDocParser.LanguageRangeContext):
-        """ ShExC: languageRange : LANGTAG (STEM_MARK languagExclusion*)? 
+    def _visit_language_range(self,  ctx: Union[ShExDocParser.LanguageRangeFullContext,
+                                                ShExDocParser.LanguageRangeAtContext]):
+        """ ShExC: languageRange : LANGTAG (STEM_MARK languagExclusion*)?  # languageRangeFull
+                                 | '@' STEM_MARK languageExclusion*        # languageRangeAt
             ShExJ: valueSetValue = objectValue | LanguageStem | LanguageStemRange """
-        baselang = ctx.LANGTAG().getText()
+        baselang = ctx.LANGTAG().getText()[1:] if isinstance(ctx, ShExDocParser.LanguageRangeFullContext) else ""
         if not ctx.STEM_MARK():                 # valueSetValue = objectValue / objectValue = ObjectLiteral
             vsvalue = Language()
-            vsvalue.languageTag = baselang[1:]
+            vsvalue.languageTag = baselang
         else:
             if ctx.languageExclusion():
-                vsvalue = LanguageStemRange(LANGTAG(baselang[1:]),
+                vsvalue = LanguageStemRange(baselang,
                                             exclusions=self._language_exclusions(ctx.languageExclusion()))
             else:
-                vsvalue = LanguageStem(LANGTAG(baselang[1:]))
+                vsvalue = LanguageStem(LANGTAG(baselang))
         self._nc_values.append(vsvalue)
+
+    def visitLanguageRangeFull(self, ctx: ShExDocParser.LanguageRangeFullContext):
+        self._visit_language_range(ctx)
+
+    def visitLanguageRangeAt(self, ctx: ShExDocParser.LanguageRangeAtContext):
+        if not self._nc_values and not ctx.languageExclusion():
+            self._nc_values.append(LanguageStem(""))
+        else:
+            self._visit_language_range(ctx)
 
     @staticmethod
     def _language_exclusions(exclusions: List[ShExDocParser.LanguageExclusionContext]) \
@@ -158,11 +169,11 @@ class ShexNodeExpressionParser(ShExDocVisitor):
                 self.nodeconstraint.flags = String(ctx.REGEXP_FLAGS().getText())
 
     def visitNumericFacet(self, ctx: ShExDocParser.NumericFacetContext):
-        """ numericFacet: numericRange numericLiteral | numericLength INTEGER
+        """ numericFacet: numericRange rawNumeric | numericLength INTEGER
             numericRange: KW_MINEXCLUSIVE | KW_MININCLUSIVE | KW_MAXEXCLUSIVE | KW_MAXINCLUSIVE 
             numericLength: KW_TOTALDIGITS | KW_FRACTIONDIGITS """
         if ctx.numericRange():
-            numlit = self.context.numeric_literal_to_type(ctx.numericLiteral())
+            numlit = self.context.numeric_literal_to_type(ctx.rawNumeric())
             if ctx.numericRange().KW_MINEXCLUSIVE():
                 self.nodeconstraint.minexclusive = numlit
             elif ctx.numericRange().KW_MAXEXCLUSIVE():
@@ -179,13 +190,13 @@ class ShexNodeExpressionParser(ShExDocVisitor):
                 self.nodeconstraint.fractiondigits = nlen
 
     def visitLitNodeConstraint(self, ctx: ShExDocParser.LitNodeConstraintContext):
-        """ litNodeConstraint : inlineLitNodeConstraint  annotation* semanticActions  """
+        """ litNodeConstraint : inlineLitNodeConstraint  annotation* semanticAction*  """
         self.visitChildren(ctx)
-        if ctx.annotation() or ctx.semanticActions().codeDecl():
+        if ctx.annotation() or ctx.semanticAction():
             ansem_parser = ShexAnnotationAndSemactsParser(self.context)
             for annot in ctx.annotation():
                 ansem_parser.visit(annot)
-            ansem_parser.visit(ctx.semanticActions())
+            ansem_parser.visit(ctx.semanticAction())
             if ansem_parser.semacts:
                 self.nodeconstraint.semActs = ansem_parser.semacts
             if ansem_parser.annotations:
