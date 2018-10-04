@@ -19,7 +19,7 @@ class ShexShapeExpressionParser(ShExDocVisitor):
     # ------------------
     # shapeOr
     # ------------------
-    def _shapeOr(self, ands: Union[List[ShExDocParser.ShapeAndContext], List[ShExDocParser.InlineShapeAndContext]]):
+    def _shape_or(self, ands: Union[List[ShExDocParser.ShapeAndContext], List[ShExDocParser.InlineShapeAndContext]]):
         if len(ands) > 1:
             exprs = []
             for sa in ands:
@@ -32,24 +32,24 @@ class ShexShapeExpressionParser(ShExDocVisitor):
 
     def visitShapeOr(self, ctx: ShExDocParser.ShapeOrContext):
         """ shapeOr: shapeAnd (KW_OR shapeAnd)* """
-        self._shapeOr(ctx.shapeAnd())
+        self._shape_or(ctx.shapeAnd())
 
     def visitInlineShapeOr(self, ctx: ShExDocParser.InlineShapeOrContext):
         """ inlineShapeOr: inlineShapeAnd (KW_OR inlineShapeAnd)* """
-        self._shapeOr(ctx.inlineShapeAnd())
+        self._shape_or(ctx.inlineShapeAnd())
 
     # ------------------
     # shapeAnd
     # ------------------
-    def _shapeAnd(self,
-                  nots: Union[List[ShExDocParser.ShapeNotContext], List[ShExDocParser.InlineShapeNotContext]],
-                  isInline: bool):
+    def _shape_and(self,
+                   nots: Union[List[ShExDocParser.ShapeNotContext], List[ShExDocParser.InlineShapeNotContext]],
+                   is_inline: bool):
         if len(nots) > 1:
             exprs = []
             for sa in nots:
                 sep = ShexShapeExpressionParser(self.context)
                 sep.visit(sa)
-                if isInline:
+                if is_inline:
                     self._collapse_ands(exprs, sep.expr)
                 else:
                     exprs.append(sep.expr)
@@ -70,100 +70,103 @@ class ShexShapeExpressionParser(ShExDocVisitor):
 
     def visitShapeAnd(self, ctx: ShExDocParser.ShapeAndContext):
         """ shapeAnd: shapeNot (KW_AND shapeNot)* """
-        self._shapeAnd(ctx.shapeNot(), False)
+        self._shape_and(ctx.shapeNot(), False)
 
     def visitInlineShapeAnd(self, ctx: ShExDocParser.InlineShapeAndContext):
         """ inlineShapeAnd: inlineShapeNot (KW_AND inlineShapeNot)* """
-        self._shapeAnd(ctx.inlineShapeNot(), True)
+        self._shape_and(ctx.inlineShapeNot(), True)
 
     # ------------------
     # shapeNot
     # ------------------
-    def _shapeNot(self,
-                  ctx: Union[ShExDocParser.ShapeNotContext, ShExDocParser.InlineShapeNotContext],
-                  isInline: bool) -> None:
+    def _shape_not(self,
+                   ctx: Union[ShExDocParser.ShapeNotContext, ShExDocParser.InlineShapeNotContext],
+                   is_inline: bool) -> None:
         if ctx.KW_NOT():
             self.expr = ShapeNot(id=self.label)
             sn = ShexShapeExpressionParser(self.context)
-            sn.visit(ctx.shapeAtom() if not isInline else ctx.inlineShapeAtom())
+            sn.visit(ctx.shapeAtom() if not is_inline else ctx.inlineShapeAtom())
             self.expr.shapeExpr = sn.expr if sn.expr is not None else Shape()
         else:
             self.visitChildren(ctx)
 
     def visitShapeNot(self, ctx: ShExDocParser.ShapeNotContext):
         """ shapeNot: KW_NOT? shapeAtom """
-        self._shapeNot(ctx, False)
+        self._shape_not(ctx, False)
 
     def visitInlineShapeNot(self, ctx: ShExDocParser.InlineShapeNotContext):
         """ inlineShapeNot: KW_NOT? inlineShapeAtom """
-        self._shapeNot(ctx, True)
+        self._shape_not(ctx, True)
 
     # ------------------
     # shapeAtom
     # ------------------
-    def _shapeAtom(self, ctx: Union[ShExDocParser.ShapeAtomNonLitNodeConstraintContext,
-                                    ShExDocParser.ShapeAtomLitNodeConstraintContext,
-                                    ShExDocParser.InlineShapeAtomNonLitNodeConstraintContext,
-                                    ShExDocParser.InlineShapeAtomLitNodeConstraintContext],
-                   isInline: bool, isLit: bool):
+    def _shape_atom(self, ctx: Union[ShExDocParser.ShapeAtomNonLitNodeConstraintContext,
+                                     ShExDocParser.ShapeAtomLitNodeConstraintContext,
+                                     ShExDocParser.InlineShapeAtomNonLitNodeConstraintContext,
+                                     ShExDocParser.InlineShapeAtomLitNodeConstraintContext],
+                    is_inline: bool, is_lit: bool):
         """ One of nonLitNodeConstraint shapeOrRef?  or shapeOrRef nonLitNodeConstraint? """
 
         # Process the node constraint if it exists
-        nodeConstraint = ctx.litNodeConstraint() if isLit else ctx.nonLitNodeConstraint()
-        if nodeConstraint:
-            nc = ShexNodeExpressionParser(self.context, self.label if isInline else None)
-            nc.visit(nodeConstraint)
+        if is_inline:
+            node_constraint = ctx.inlineLitNodeConstraint() if is_lit else ctx.inlineNonLitNodeConstraint()
+        else:
+            node_constraint = ctx.litNodeConstraint() if is_lit else ctx.nonLitNodeConstraint()
+        if node_constraint:
+            nc = ShexNodeExpressionParser(self.context, self.label if is_inline else None)
+            nc.visit(node_constraint)
             exprs = [nc.nodeconstraint]
         else:
             exprs = []
 
         # Process the shape or ref if it exists
-        if not isLit:
-            shapeOrRef = ctx.inlineShapeOrRef() if isInline else ctx.shapeOrRef()
+        if not is_lit:
+            shape_or_ref = ctx.inlineShapeOrRef() if is_inline else ctx.shapeOrRef()
         else:
-            shapeOrRef = None
-        if shapeOrRef:
+            shape_or_ref = None
+        if shape_or_ref:
             sorref_parser = ShexShapeExpressionParser(self.context)
-            sorref_parser.visit(shapeOrRef)
+            sorref_parser.visit(shape_or_ref)
             exprs.append(sorref_parser.expr)
 
         if len(exprs) > 1:
-            self.expr = ShapeAnd(id=self.label if not isInline else None, shapeExprs=exprs)
+            self.expr = ShapeAnd(id=self.label if not is_inline else None, shapeExprs=exprs)
         else:
             self.expr = exprs[0]
-        if not isInline:
+        if not is_inline:
             self.expr.id = self.label
 
     def visitShapeAtomNonLitNodeConstraint(self, ctx: ShExDocParser.ShapeAtomNonLitNodeConstraintContext):
         """ shapeAtom : nonLitNodeConstraint shapeOrRef?             # shapeAtomNonLitNodeConstraint """
-        self._shapeAtom(ctx, False, False)
+        self._shape_atom(ctx, False, False)
 
     def visitShapeAtomLitNodeConstraint(self, ctx: ShExDocParser.ShapeAtomLitNodeConstraintContext):
         """ shapeAtom : litNodeConstraint             # shapeAtomLitNodeConstraint"""
-        self._shapeAtom(ctx, False, True)
+        self._shape_atom(ctx, False, True)
 
     def visitInlineShapeAtomNonLitNodeConstraint(self, ctx: ShExDocParser.InlineShapeAtomNonLitNodeConstraintContext):
-        """ inlineShapeAtom : nonLitNodeConstraint inlineShapeOrRef? # inlineShapeAtomNonLitNodeConstraint """
-        self._shapeAtom(ctx, True, False)
+        """ inlineShapeAtom : inlineNonLitNodeConstraint inlineShapeOrRef? # inlineShapeAtomNonLitNodeConstraint """
+        self._shape_atom(ctx, True, False)
 
     def visitInlineShapeAtomLitNodeConstraint(self, ctx: ShExDocParser.InlineShapeAtomLitNodeConstraintContext):
-        """ inlineShapeAtom : | litNodeConstraint             # inlineShapeAtomLitNodeConstraint """
-        self._shapeAtom(ctx, True, True)
+        """ inlineShapeAtom : inlineLitNodeConstraint  # inlineShapeAtomLitNodeConstraint """
+        self._shape_atom(ctx, True, True)
 
     def visitShapeAtomShapeOrRef(self, ctx: ShExDocParser.ShapeAtomShapeOrRefContext):
         """ shapeAtom :  shapeOrRef nonLitNodeConstraint?            # shapeAtomShapeOrRef """
-        self._shapeAtom(ctx, False, False)
+        self._shape_atom(ctx, False, False)
 
     def visitInlineShapeAtomShapeOrRef(self, ctx: ShExDocParser.InlineShapeAtomShapeOrRefContext):
-        """ inlineShapeAtom : inlineShapeOrRef nonLitNodeConstraint? # inlineShapeAtomShapeOrRef """
-        self._shapeAtom(ctx, True, False)
+        """ inlineShapeAtom : inlineShapeOrRef inlineNonLitNodeConstraint? # inlineShapeAtomShapeOrRef """
+        self._shape_atom(ctx, True, False)
 
     # ------------------
     # shapeOrRef
     # ------------------
-    def _shapeOrRef(self, ctx: Union[ShExDocParser.ShapeOrRefContext, ShExDocParser.InlineShapeOrRefContext],
-                    isInline: bool):
-        defn = ctx.inlineShapeDefinition() if isInline else ctx.shapeDefinition()
+    def _shape_or_ref(self, ctx: Union[ShExDocParser.ShapeOrRefContext, ShExDocParser.InlineShapeOrRefContext],
+                      is_inline: bool):
+        defn = ctx.inlineShapeDefinition() if is_inline else ctx.shapeDefinition()
         if defn:
             from pyshexc.parser_impl.shex_shape_definition_parser import ShexShapeDefinitionParser
             shdef_parser = ShexShapeDefinitionParser(self.context, self.label)
@@ -174,8 +177,8 @@ class ShexShapeExpressionParser(ShExDocVisitor):
 
     def visitShapeOrRef(self, ctx: ShExDocParser.ShapeOrRefContext):
         """ shapeOrRef: shapeDefinition | shapeRef """
-        self._shapeOrRef(ctx, False)
+        self._shape_or_ref(ctx, False)
 
     def visitInlineShapeOrRef(self, ctx: ShExDocParser.InlineShapeOrRefContext):
         """ inlineShapeOrRef: inlineShapeDefinition | shapeRef """
-        self._shapeOrRef(ctx, True)
+        self._shape_or_ref(ctx, True)

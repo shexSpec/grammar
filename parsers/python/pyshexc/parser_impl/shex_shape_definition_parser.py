@@ -16,13 +16,11 @@ class ShexShapeDefinitionParser(ShExDocVisitor):
         self.shape = Shape(label)
 
     def visitShapeDefinition(self, ctx: ShExDocParser.ShapeDefinitionContext):
-        """ shapeDefinition: inlineShapeDefinition annotation* semanticActions """
+        """ shapeDefinition: inlineShapeDefinition annotation* semanticAction* """
         self.visitInlineShapeDefinition(ctx.inlineShapeDefinition())
-        if ctx.annotation() or ctx.semanticActions().codeDecl():
+        if ctx.annotation() or ctx.semanticAction():
             ansem_parser = ShexAnnotationAndSemactsParser(self.context)
-            for annot in ctx.annotation():
-                ansem_parser.visit(annot)
-            ansem_parser.visit(ctx.semanticActions())
+            ansem_parser.visit(ctx)
             if ansem_parser.semacts:
                 self.shape.semActs = ansem_parser.semacts
             if ansem_parser.annotations:
@@ -39,16 +37,16 @@ class ShexShapeDefinitionParser(ShExDocVisitor):
             self.shape.expression = oneof_parser.expression
 
     def visitQualifier(self, ctx: ShExDocParser.QualifierContext):
-        """ qualifier: extensions | extraPropertySet | KW_CLOSED
+        """ qualifier: /* extension */ | extraPropertySet | KW_CLOSED
             extensions: KW_EXTENDS shapeExprLabel | '&' shapeExprLabel
         """
-        if ctx.extension():
-            ext = self.context.shapeexprlabel_to_IRI(ctx.extension().shapeExprLabel())
-            if self.shape.extends is None:
-                self.shape.extends = [ext]
-            else:
-                self.shape.extends.append(ext)
-        elif ctx.extraPropertySet():
+        # if ctx.extension():
+        #     ext = self.context.shapeexprlabel_to_IRI(ctx.extension().shapeExprLabel())
+        #     if self.shape.extends is None:
+        #         self.shape.extends = [ext]
+        #     else:
+        #         self.shape.extends.append(ext)
+        if ctx.extraPropertySet():
             if self.shape.extra is None:
                 self.shape.extra = [self.context.predicate_to_IRI(p) for p in ctx.extraPropertySet().predicate()]
             else:

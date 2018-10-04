@@ -1,6 +1,6 @@
 import unittest
 import sys
-from typing import Tuple
+from typing import Tuple, Optional, Dict, Callable
 
 import os
 import requests
@@ -9,12 +9,12 @@ import requests
 class ValidationTestCase(unittest.TestCase):
     longMessage = True
 
-    repo_url = None                 # str
-    file_suffix = None              # file suffix (e.g. ".shex")
-    start_at = ""                   # Optional[str]
-    skip = []                       # List[str]
-    validation_function = None      # Callable[[str, str], bool]
-    single_file = False             # bool
+    repo_url: str = None            #
+    file_suffix: str = None         # file suffix (e.g. ".shex")
+    start_at: Optional[str] = ""    # Start at or after this
+    skip: Dict[str, str] = dict()   # Filename / reason array
+    validation_function: Callable[[str, str], bool] = None      #
+    single_file: bool = False       # True means process exactly one file
 
     @classmethod
     def make_test_function(cls, url):
@@ -29,12 +29,15 @@ class ValidationTestCase(unittest.TestCase):
                 (cls.enumerate_http_files(cls.repo_url) if ':' in cls.repo_url else
                     cls.enumerate_directory(cls.repo_url)):
             if fname.endswith(cls.file_suffix):
-                if fname not in cls.skip and (started or fname == cls.start_at):
-                    started = True
-                    test_func = cls.make_test_function(fpath)
-                    setattr(cls, 'test_{0}'.format(fname.rsplit('.', 1)[0]), test_func)
-                    if cls.single_file:
-                        break
+                if started or fname.startswith(cls.start_at):
+                    if fname not in cls.skip:
+                        started = True
+                        test_func = cls.make_test_function(fpath)
+                        setattr(cls, 'test_{0}'.format(fname.rsplit('.', 1)[0]), test_func)
+                        if cls.single_file:
+                            break
+                    else:
+                        print(f"***** Skipped: {fname} - {cls.skip[fname]}")
 
     @staticmethod
     def enumerate_http_files(url) -> Tuple[str, str]:

@@ -960,6 +960,7 @@ shexj = """{
 
 
 class OnShapeExpressionTestCase(SimpleShexTestCase):
+    @unittest.skipIf(True, "Not in 2.1 release")
     def test_erics_example(self):
         self.shex_test(shexc, shexj,
                        base="https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/")

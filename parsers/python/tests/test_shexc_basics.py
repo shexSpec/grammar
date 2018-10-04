@@ -11,6 +11,7 @@ shexc = """abstract <A>      /sA.........$/
 
 
 class ShExCTestCase(SimpleShexTestCase):
+    @unittest.skipIf(True, "Not 2.1 function")
     def test_shexc(self):
         base = 'http://example.org/'
         shex = self.shexc_to_shexj(shexc, base)

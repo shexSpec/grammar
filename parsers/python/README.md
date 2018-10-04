@@ -5,6 +5,9 @@ This package converts the Shape Expression Compact (ShExC) into Python JSON Sche
 * Produce equivalent ShEx definitions in ShEx RDF (ShExR) notation
 * Implement a Python ShEx interpreter
 
+## History
+* 0.4.0 -- Almost ready for 2.1 release.  9 test errors remain, all involving unicode
+
 ## Installation
 ```bash
 > pip install PyShExC

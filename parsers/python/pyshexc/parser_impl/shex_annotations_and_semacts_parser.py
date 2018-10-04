@@ -22,8 +22,8 @@ class ShexAnnotationAndSemactsParser(ShExDocVisitor):
             annot.object = self.context.literal_to_ObjectLiteral(ctx.literal())
         self.annotations.append(annot)
 
-    def visitCodeDecl(self, ctx: ShExDocParser.CodeDeclContext):
-        """ codeDecl: '%' iri (CODE | '%') 
+    def visitSemanticAction(self, ctx: ShExDocParser.SemanticActionContext):
+        """ semanticAction: '%' iri (CODE | '%') 
             CODE: : '{' (~[%\\] | '\\' [%\\] | UCHAR)* '%' '}' """
         semact = SemAct()
         semact.name = self.context.iri_to_iriref(ctx.iri())

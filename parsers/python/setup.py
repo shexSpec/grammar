@@ -8,11 +8,11 @@ except ImportError:
 # NOTE: the antlr4-python3-runtime must be the same version that was used to create the parser library
 requires = ['antlr4-python3-runtime>=4.7.1',
             'jsonasobj>=1.2.1',
-            'ShExJSG',
+            'ShExJSG==0.5.0',
             'requests>=2.18',
             'rdflib>=4.2.2',
             'rdflib-jsonld>=0.4.0',
-            'PyJSG>=0.8b1']
+            'PyJSG>=0.9.0']
 
 setup(
     name='PyShExC',
