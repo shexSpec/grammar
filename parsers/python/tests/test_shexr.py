@@ -15,6 +15,9 @@ from rdflib.term import Identifier, BNode
 from tests import schemas_base
 from tests.utils.build_test_harness import ValidationTestCase
 
+# Comment this line out if you don't want context caching
+from pyshexc.rdflib import contextcache
+
 #
 # Starting file name (with or without ".ttl" suffix)
 START_AT = ""
