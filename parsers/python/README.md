@@ -8,6 +8,7 @@ This package converts the Shape Expression Compact (ShExC) into Python JSON Sche
 ## History
 * 0.4.0 -- Almost ready for 2.1 release.  9 test errors remain, all involving unicode
 * 0.4.1 -- Added contextcache. See test_shexr for how to use
+* 0.4.2 -- Tweaks in 4 and 8 byte unicode parsing
 
 ## Installation
 ```bash
