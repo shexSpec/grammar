@@ -172,6 +172,8 @@ class ParserContext:
             return matchobj.group(0).translate(self.re_trans_table)
         if quote_char:
             txt = re.sub(r'\\'+quote_char, quote_char, txt)
+
+        txt = txt.encode().decode('unicode-escape')
         return re.sub(r'\\.', _subf, txt, flags=re.MULTILINE + re.DOTALL + re.UNICODE)
 
     def fix_re_escapes(self, txt: str) -> str:
@@ -183,9 +185,29 @@ class ParserContext:
         def _subf(matchobj):
             # o = self.fix_text_escapes(matchobj.group(0))
             o = matchobj.group(0).translate(self.re_trans_table)
-            if o[1] in '\b\f\n\t\r':
-                return o[0] + 'bfntr'['\b\f\n\t\r'.index(o[1])]
+            if o[1] in '\b\f\n\t\r\\':
+                return o[0] + 'bfntr\\'['\b\f\n\t\r\\'.index(o[1])]
             else:
-                return o if o[1] in '\\.?*+^$()[]{|}' else o[1]
+                return o if o[1] in '\\.?*+^$()[]{|}-' else o[1]
 
+        def _subf2(matchobj):
+            if len(matchobj.group(1)) % 2 == 0:
+                return matchobj.group(1) + matchobj.group(2).encode().decode('unicode-escape')
+            else:
+                return matchobj.group(1) + matchobj.group(2)
+
+        # match rule -- zero or more pairs of backslashes w/ an odd number in front of the 'u' or 'U'
+        txt = re.sub(r'(\\*)(\\u[a-fA-F0-9]{4})', _subf2, txt, re.MULTILINE + re.DOTALL + re.UNICODE)
+        txt = re.sub(r'(\\*)(\\U[a-fA-F0-9]{8})', _subf2, txt, re.MULTILINE + re.DOTALL + re.UNICODE)
         return re.sub(r'\\.', _subf, txt, flags=re.MULTILINE + re.DOTALL + re.UNICODE)
+
+# var stringEscapeReplacements = { '\\': '\\', "'": "'", '"': '"',
+#                                    't': '\t', 'b': '\b', 'n': '\n', 'r': '\r', 'f': '\f' },
+#       semactEscapeReplacements = { '\\': '\\', '%': '%' },
+#       pnameEscapeReplacements = {
+#         '\\': '\\', "'": "'", '"': '"',
+#         'n': '\n', 'r': '\r', 't': '\t', 'f': '\f', 'b': '\b',
+#         '_': '_', '~': '~', '.': '.', '-': '-', '!': '!', '$': '$', '&': '&',
+#         '(': '(', ')': ')', '*': '*', '+': '+', ',': ',', ';': ';', '=': '=',
+#         '/': '/', '?': '?', '#': '#', '@': '@', '%': '%',
+#       };

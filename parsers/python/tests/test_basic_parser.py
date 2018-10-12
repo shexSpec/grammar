@@ -23,15 +23,17 @@ START_AT = ""
 # False if you want to start somewhere in the middle
 SINGLE_FILE = bool(START_AT)
 
+
 # Notes:
 #   you can use shexj.as_json() to print all or part of a ShEx Schema
 #   you can use "ctx.getText()" to get the span of any parser context
 
-LONG_UNICODE_LITERALS = "ANTLR does not support unicode literals > 4 hex digits"
+LONG_UNICODE_LITERALS = "ANTLR Parsing issue"
 
 skip = {
     "1dotCodeWithEscapes1.shex": "rdflib quote issue",
-    # "_all.shex": "total madness"
+    # "1refbnode_with_spanning_PN_CHARS_BASE1.shex": LONG_UNICODE_LITERALS,
+    "_all.shex": LONG_UNICODE_LITERALS
 }
 
 
@@ -41,7 +43,7 @@ class BasicParserTestCase(ValidationTestCase):
 
 BasicParserTestCase.repo_url = schemas_base
 BasicParserTestCase.file_suffix = ".shex"
-BasicParserTestCase.start_at = START_AT if not START_AT or START_AT.endswith('.shex') else START_AT + '.shex'
+BasicParserTestCase.start_at = START_AT
 BasicParserTestCase.single_file = SINGLE_FILE
 
 BasicParserTestCase.skip = skip

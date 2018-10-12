@@ -16,7 +16,7 @@ requires = ['antlr4-python3-runtime>=4.7.1',
 
 setup(
     name='PyShExC',
-    version='0.4.1',
+    version='0.4.2',
     packages=['pyshexc.parser', 'pyshexc.parser_impl'],
     url="http://github.com/shexSpec/grammar/parsers/python",
     license='Apache 2.0',
@@ -32,7 +32,7 @@ setup(
         'Environment :: Console',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Compilers',
-        'Programming Language :: Python :: 3 :: Only'
+        'Programming Language :: Python :: 3 :: Only',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7'],
 )

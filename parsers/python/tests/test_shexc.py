@@ -1,6 +1,7 @@
 import os
 import sys
 import unittest
+from contextlib import redirect_stdout
 from io import StringIO
 from typing import NamedTuple, List, TextIO, Dict
 
@@ -160,11 +161,17 @@ def validate_file(file: TestFile, stats: Stats) -> bool:
         else:
             with open(file.fullpath) as f:
                 file_text = f.read()
-        if validate_shexc_json(file_text, file.fullpath):
-            stats.passed += 1
-            return True
-        else:
-            stats.failed += 1
+        log = StringIO()
+        rval = True
+        with redirect_stdout(log):
+            if validate_shexc_json(file_text, file.fullpath):
+                stats.passed += 1
+            else:
+                stats.failed += 1
+                rval = False
+        if not rval:
+            print(f"\nLoading: '{file.filename}'")
+            print(log.getvalue())
             return False
     else:
         print("Skipping {}".format(file.fullpath))

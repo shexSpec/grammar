@@ -22,7 +22,6 @@ class ShexDocParser(ShExDocVisitor):
 
     def visitBaseDecl(self, ctx: ShExDocParser.BaseDeclContext):
         """ baseDecl: KW_BASE IRIREF """
-        self.context.base = None
         self.context.base = self.context.iriref_to_shexj_iriref(ctx.IRIREF())
 
     def visitPrefixDecl(self, ctx: ShExDocParser.PrefixDeclContext):
