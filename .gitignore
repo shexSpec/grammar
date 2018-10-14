@@ -7,4 +7,4 @@ javascript/node_modules
 /**/node_modules/
 /parsers/javascript-antlr/semacts/lib/ShExDoc.tokens
 /parsers/javascript-antlr/semacts/lib/ShExDocLexer.tokens
-grammar/gen/
+gen/
