@@ -12,7 +12,7 @@ import requests
 from rdflib import Graph, URIRef, Namespace
 from rdflib.term import Identifier, BNode
 
-from tests import schemas_base
+from tests import schemas_base, RDFLIB_PARSING_ISSUE_FIXED
 from tests.utils.build_test_harness import ValidationTestCase
 
 # Comment this line out if you don't want context caching
@@ -47,7 +47,13 @@ ShexJToShexRTestCase.file_suffix = ".ttl"
 ShexJToShexRTestCase.skip = {'coverage.ttl': 'Not ShEx',
                              'manifest.ttl': 'Not ShEx',
                              'meta.ttl': 'Not ShEx',
-                             "1dotCodeWithEscapes1.ttl": "rdflib quote issue"}
+                             }
+if not RDFLIB_PARSING_ISSUE_FIXED:
+    issue_text = 'RDFLIB quote parsing issue not fixed'
+    ShexJToShexRTestCase.skip['1literalPattern_with_all_punctuation.ttl'] = issue_text
+    ShexJToShexRTestCase.skip['1val1STRING_LITERAL1_with_ECHAR_escapes.ttl'] = issue_text
+    ShexJToShexRTestCase.skip['1val1STRING_LITERAL1_with_all_punctuation.ttl'] = issue_text
+
 ShexJToShexRTestCase.start_at = START_AT if not START_AT or START_AT.endswith('.ttl') else START_AT + '.ttl'
 ShexJToShexRTestCase.single_file = SINGLE_FILE
 
@@ -99,7 +105,7 @@ def compare_rdf(ttl_text: str, shex_ttl_url: str) -> bool:
 
     if USE_LOCAL_CONTEXT:
         resp_obj = json.loads(resp_json)
-        resp_obj['@context'] = "shex.jsonld"
+        resp_obj['@context'] = "jsonld/shex.jsonld"
         g2 = Graph().parse(data=json.dumps(resp_obj), format="json-ld")
     else:
         g2 = Graph().parse(data=resp_json, format="json-ld")

@@ -26,44 +26,11 @@ testShexFile: str = ""
 
 STOP_ON_ERROR = False       # True means go until you hit the first error
 
-
 NOT_SHEX_FILE = "Not a ShExJ file"
-NESTED_AND = "e1 AND (e2 AND e3) vs. e1 AND e2 AND e3"
-SEMACT_CHARS = "semAct escapes still need doing"
-PATTERN_CHARS = "pattern escapes still need doing"
-LITERAL_CHARS = "literal escapes need doing"
-USES_IMPORTS = "Imports is a 2.1 feature"
-INSANE_BNODE = "Insane BNODE Identifiers"
 
 # Files to skip until we reintroduce a manifest reader
 skip = {'coverage.json': NOT_SHEX_FILE,
         'manifest.json': NOT_SHEX_FILE,
-        "1dotCodeWithEscapes1": "RDF Quote Issue",
-        # "1refbnode_with_spanning_PN_CHARS1": INSANE_BNODE,
-        # "1val1STRING_LITERAL1_with_all_punctuation": LITERAL_CHARS,
-        # "1literalPattern_with_all_punctiation": LITERAL_CHARS,
-        # "1val1STRING_LITERAL1_with_ECHAR_escapes": LITERAL_CHARS,
-        # "1val1STRING_LITERAL1_with_NO_ECHAR_escapes": LITERAL_CHARS,
-        # "1valExprRef-IV1": USES_IMPORTS,
-        # "1valExprRefbnode-IV1": USES_IMPORTS,
-        # "2EachInclude1-IS2": USES_IMPORTS,
-        # "2RefS1-Icirc": USES_IMPORTS,
-        # "2RefS1-IS2": USES_IMPORTS,
-        # "2RefS2-Icirc": USES_IMPORTS,
-        # "2RefS2-IS1": USES_IMPORTS,
-        # "3circRefS1-Icirc": USES_IMPORTS,
-        # "3circRefS1-IS2-IS3-IS3": USES_IMPORTS,
-        # "3circRefS1-IS2-IS3": USES_IMPORTS,
-        # "3circRefS1-IS23": USES_IMPORTS,
-        # "3circRefS123-Icirc": USES_IMPORTS,
-        # "3circRefS2-Icirc": USES_IMPORTS,
-        # "3circRefS2-IS3": USES_IMPORTS,
-        # "3circRefS3-IS12": USES_IMPORTS,
-        # "3circRefS3-Icirc": USES_IMPORTS,
-        # "_all": "Just insane",
-        # "kitchenSink": "Just insane",
-        # "NOT1dotOR2dotX3": "Nesting issue",
-        # "NOT1dotOR2dotX3AND1": "Nesting issue"
         }
 
 
@@ -103,7 +70,7 @@ def validate_shexc_json(json_str: str, input_fname: str) -> bool:
     """
     logger = StringIO()
 
-    # Load the JSON image of the good object and make sure it is valud
+    # Load the JSON image of the good object and make sure it is valid
     shex_json: ShExJ.Schema = jsg_loads(json_str, ShExJ)
     if not is_valid(shex_json, logger):
         print("File: {} - ".format(input_fname))
@@ -159,8 +126,8 @@ def validate_file(file: TestFile, stats: Stats) -> bool:
                 stats.failed += 1
                 return False
         else:
-            with open(file.fullpath) as f:
-                file_text = f.read()
+            with open(file.fullpath, 'rb') as f:
+                file_text = f.read().decode()
         log = StringIO()
         rval = True
         with redirect_stdout(log):
@@ -173,6 +140,7 @@ def validate_file(file: TestFile, stats: Stats) -> bool:
             print(f"\nLoading: '{file.filename}'")
             print(log.getvalue())
             return False
+        return True
     else:
         print("Skipping {}".format(file.fullpath))
         stats.skipped += 1
