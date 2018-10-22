@@ -1,6 +1,6 @@
 antlr4-python3-runtime>=4.7.1
 jsonasobj>=1.2.1
-ShExJSG>=0.5.0
+ShExJSG>=0.5.1
 requests>=2.18
 yadict-compare>=1.2.0
 rdflib>=4.2.2

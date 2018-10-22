@@ -1,5 +1,5 @@
 import re
-from typing import Union, Dict, Optional
+from typing import Optional
 
 from ShExJSG import ShExJ
 from pyjsg.jsglib import *
@@ -38,7 +38,7 @@ class ParserContext:
 
     def iriref_to_str(self, ref: ShExDocParser.IRIREF) -> str:
         """ IRIREF: '<' (~[\u0000-\u0020=<>\"{}|^`\\] | UCHAR)* '>' """
-        rval = ref.getText()[1:-1].encode('utf-8').decode('unicode-escape')
+        rval = self._fix_unicode_escapes(ref.getText()[1:-1])
         return rval if ':' in rval or not self.base else self.base.val + rval
 
     def iriref_to_shexj_iriref(self, ref: ShExDocParser.IRIREF) -> ShExJ.IRIREF:
@@ -164,15 +164,31 @@ class ParserContext:
         return sh.closed is None and sh.expression is None and sh.extra is None and \
             sh.semActs is None
 
-    re_trans_table = str.maketrans('bfnrt', '\b\f\n\r\t')
+    @staticmethod
+    def _fix_unicode_escapes(txt: str) -> str:
+        def _subf2(matchobj):
+            if len(matchobj.group(1)) % 2 == 0:
+                return matchobj.group(1) + matchobj.group(2).encode().decode('unicode-escape')
+            else:
+                return matchobj.group(1) + matchobj.group(2)
+
+        # match rule -- zero or more pairs of backslashes w/ an odd number in front of the 'u' or 'U'
+        txt1 = re.sub(r'(\\*)(\\u[a-fA-F0-9]{4})', _subf2, txt, re.MULTILINE + re.DOTALL + re.UNICODE)
+        return re.sub(r'(\\*)(\\U[a-fA-F0-9]{8})', _subf2, txt1, re.MULTILINE + re.DOTALL + re.UNICODE)
 
     def fix_text_escapes(self, txt: str, quote_char: str) -> str:
         """ Fix the various text escapes """
         def _subf(matchobj):
-            return matchobj.group(0).translate(self.re_trans_table)
+            o = matchobj.group(0)
+            if o[1] in 'bfntr':
+                return '\b\f\n\t\r'['bfntr'.index(o[1])]
+            return o[1]
+
         if quote_char:
             txt = re.sub(r'\\'+quote_char, quote_char, txt)
-        return re.sub(r'\\.', _subf, txt, flags=re.MULTILINE + re.DOTALL + re.UNICODE)
+        return re.sub(r'\\.', _subf, self._fix_unicode_escapes(txt), flags=re.MULTILINE + re.DOTALL + re.UNICODE)
+
+    re_trans_table = str.maketrans('bfnrt', '\b\f\n\r\t')
 
     def fix_re_escapes(self, txt: str) -> str:
         """ The ShEx RE engine allows escaping any character.  We have to remove that escape for everything except those
@@ -183,9 +199,20 @@ class ParserContext:
         def _subf(matchobj):
             # o = self.fix_text_escapes(matchobj.group(0))
             o = matchobj.group(0).translate(self.re_trans_table)
-            if o[1] in '\b\f\n\t\r':
-                return o[0] + 'bfntr'['\b\f\n\t\r'.index(o[1])]
+            if o[1] in '\b\f\n\t\r\\':
+                return o[0] + 'bfntr\\'['\b\f\n\t\r\\'.index(o[1])]
             else:
-                return o if o[1] in '\\.?*+^$()[]{|}' else o[1]
+                return o if o[1] in '\\.?*+^$()[]{|}-' else o[1]
 
-        return re.sub(r'\\.', _subf, txt, flags=re.MULTILINE + re.DOTALL + re.UNICODE)
+        return re.sub(r'\\.', _subf, self._fix_unicode_escapes(txt), flags=re.MULTILINE + re.DOTALL + re.UNICODE)
+
+# var stringEscapeReplacements = { '\\': '\\', "'": "'", '"': '"',
+#                                    't': '\t', 'b': '\b', 'n': '\n', 'r': '\r', 'f': '\f' },
+#       semactEscapeReplacements = { '\\': '\\', '%': '%' },
+#       pnameEscapeReplacements = {
+#         '\\': '\\', "'": "'", '"': '"',
+#         'n': '\n', 'r': '\r', 't': '\t', 'f': '\f', 'b': '\b',
+#         '_': '_', '~': '~', '.': '.', '-': '-', '!': '!', '$': '$', '&': '&',
+#         '(': '(', ')': ')', '*': '*', '+': '+', ',': ',', ';': ';', '=': '=',
+#         '/': '/', '?': '?', '#': '#', '@': '@', '%': '%',
+#       };

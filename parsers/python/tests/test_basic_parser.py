@@ -1,18 +1,16 @@
-import sys
 import unittest
 from contextlib import redirect_stdout
 from io import StringIO
+from typing import Optional
 
 import requests
-from typing import Optional
+from ShExJSG import ShExJ
 from dict_compare import compare_dicts, json_filtr
 from jsonasobj import loads as jao_loads, as_json, as_dict
-from pyjsg.jsglib.logger import Logger
 from pyjsg.jsglib.loader import loads as jsg_loads
+from pyjsg.jsglib.logger import Logger
 
 from pyshexc.parser_impl.generate_shexj import parse
-from ShExJSG import ShExJ
-
 from tests import schemas_base
 from tests.utils.build_test_harness import ValidationTestCase
 
@@ -23,15 +21,16 @@ START_AT = ""
 # False if you want to start somewhere in the middle
 SINGLE_FILE = bool(START_AT)
 
+
 # Notes:
 #   you can use shexj.as_json() to print all or part of a ShEx Schema
 #   you can use "ctx.getText()" to get the span of any parser context
 
-LONG_UNICODE_LITERALS = "ANTLR does not support unicode literals > 4 hex digits"
+LONG_UNICODE_LITERALS = "ANTLR Parsing issue"
 
 skip = {
-    "1dotCodeWithEscapes1.shex": "rdflib quote issue",
-    # "_all.shex": "total madness"
+    # "1dotCodeWithEscapes1.shex": "rdflib quote issue",
+    # "1refbnode_with_spanning_PN_CHARS_BASE1.shex": LONG_UNICODE_LITERALS,
 }
 
 
@@ -41,7 +40,7 @@ class BasicParserTestCase(ValidationTestCase):
 
 BasicParserTestCase.repo_url = schemas_base
 BasicParserTestCase.file_suffix = ".shex"
-BasicParserTestCase.start_at = START_AT if not START_AT or START_AT.endswith('.shex') else START_AT + '.shex'
+BasicParserTestCase.start_at = START_AT
 BasicParserTestCase.single_file = SINGLE_FILE
 
 BasicParserTestCase.skip = skip
@@ -85,14 +84,6 @@ def compare_json(shex_url: str, shex_json: str, log: Logger) -> bool:
     return True
 
 
-def has_invalid_chars(text: str) -> bool:
-    """ The ANTLR4 parser does not deal with utf characters > 4 digits.
-        See: http://stackoverflow.com/questions/35938284/how-do-i-specify-a-unicode-literal-that-requires-more-than-four-hex-digits-in-an#35939479
-        Also look at getCharValueFromCharInGrammarLiteral routine in tool/src/org/antlr4/v4/misc/CharSupport.java
-    """
-    return not all(ord(c) <= 0xFFFF for c in text)
-
-
 def validate_shexc(shexc_str: str, input_fname: str) -> bool:
     """
     Validate json_str against ShEx Schema
@@ -104,7 +95,7 @@ def validate_shexc(shexc_str: str, input_fname: str) -> bool:
     if shexj is None:
         return False
     shexj['@context'] = "http://www.w3.org/ns/shex.jsonld"
-    shex_obj = jsg_loads(shexj._as_json, ShExJ)
+    shex_obj = jsg_loads(as_json(shexj), ShExJ)
     log = StringIO()
     rval = True
     with redirect_stdout(log):
@@ -132,8 +123,8 @@ def validate_file(download_url: str) -> bool:
             print("Error {}: {}".format(resp.status_code, resp.reason))
             return False
     else:
-        with open(download_url) as f:
-            return validate_shexc(f.read(), download_url)
+        with open(download_url, 'rb') as f:
+            return validate_shexc(f.read().decode(), download_url)
 
 
 BasicParserTestCase.validation_function = validate_file

@@ -22,7 +22,7 @@ class ShexDocParser(ShExDocVisitor):
 
     def visitBaseDecl(self, ctx: ShExDocParser.BaseDeclContext):
         """ baseDecl: KW_BASE IRIREF """
-        self.context.base = None
+        self.context.base = ''
         self.context.base = self.context.iriref_to_shexj_iriref(ctx.IRIREF())
 
     def visitPrefixDecl(self, ctx: ShExDocParser.PrefixDeclContext):
@@ -30,7 +30,7 @@ class ShexDocParser(ShExDocVisitor):
         iri = self.context.iriref_to_shexj_iriref(ctx.IRIREF())
         prefix = ctx.PNAME_NS().getText()
         if iri not in self.context.ld_prefixes:
-            self.context.prefixes.setdefault(prefix, iri.val)
+            self.context.prefixes[prefix] = iri.val
 
     def visitImportDecl(self, ctx: ShExDocParser.ImportDeclContext):
         """ importDecl : KW_IMPORT IRIREF """
