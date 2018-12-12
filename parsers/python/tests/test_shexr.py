@@ -5,12 +5,18 @@ import json
 from typing import Optional
 
 import os
+
+import rdflib
 import requests
 
 from rdflib import Graph, URIRef, Namespace
 from rdflib.term import Identifier, BNode
 
-from tests.build_test_harness import ValidationTestCase
+from tests import schemas_base, RDFLIB_PARSING_ISSUE_FIXED
+from tests.utils.build_test_harness import ValidationTestCase
+
+# Comment this line out if you don't want context caching
+from pyshexc.rdflib import contextcache
 
 #
 # Starting file name (with or without ".ttl" suffix)
@@ -36,9 +42,18 @@ class ShexJToShexRTestCase(ValidationTestCase):
     pass
 
 # ShexJToShexRTestCase.repo_url = "~/Development/git/shexSpec/shexTest/schemas"
-ShexJToShexRTestCase.repo_url = "https://api.github.com/repos/shexSpec/shexTest/contents/schemas"
+ShexJToShexRTestCase.repo_url = schemas_base
 ShexJToShexRTestCase.file_suffix = ".ttl"
-ShexJToShexRTestCase.skip = ['coverage.ttl', 'manifest.ttl', 'meta.ttl']
+ShexJToShexRTestCase.skip = {'coverage.ttl': 'Not ShEx',
+                             'manifest.ttl': 'Not ShEx',
+                             'meta.ttl': 'Not ShEx',
+                             }
+if not RDFLIB_PARSING_ISSUE_FIXED:
+    issue_text = 'RDFLIB quote parsing issue not fixed'
+    ShexJToShexRTestCase.skip['1literalPattern_with_all_punctuation.ttl'] = issue_text
+    ShexJToShexRTestCase.skip['1val1STRING_LITERAL1_with_ECHAR_escapes.ttl'] = issue_text
+    ShexJToShexRTestCase.skip['1val1STRING_LITERAL1_with_all_punctuation.ttl'] = issue_text
+
 ShexJToShexRTestCase.start_at = START_AT if not START_AT or START_AT.endswith('.ttl') else START_AT + '.ttl'
 ShexJToShexRTestCase.single_file = SINGLE_FILE
 
@@ -74,7 +89,11 @@ def bare_bnode(n: BNode, g: Graph) -> bool:
 
 def compare_rdf(ttl_text: str, shex_ttl_url: str) -> bool:
     shex_json_url = shex_ttl_url.rsplit(".", 1)[0] + ".json"
-    g1 = Graph().parse(data=ttl_text, format="turtle")
+    try:
+        g1 = Graph().parse(data=ttl_text, format="turtle")
+    except rdflib.plugins.parsers.notation3.BadSyntax as e:
+        print(f"*****> RDFLIB Parsing Failure: {e}")
+        return False
     if ':' in shex_json_url:
         resp = requests.get(shex_json_url)
         if not resp.ok:
@@ -86,7 +105,7 @@ def compare_rdf(ttl_text: str, shex_ttl_url: str) -> bool:
 
     if USE_LOCAL_CONTEXT:
         resp_obj = json.loads(resp_json)
-        resp_obj['@context'] = "shex.jsonld"
+        resp_obj['@context'] = "jsonld/shex.jsonld"
         g2 = Graph().parse(data=json.dumps(resp_obj), format="json-ld")
     else:
         g2 = Graph().parse(data=resp_json, format="json-ld")

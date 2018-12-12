@@ -1,13 +1,7 @@
 
 import unittest
-from contextlib import redirect_stdout
-from io import StringIO
 
-from ShExJSG import ShExJ
-from dict_compare import compare_dicts, json_filtr
-from jsonasobj import as_json, loads
-
-from pyshexc.parser_impl.generate_shexj import parse
+from tests.utils.simple_shex_test import SimpleShexTestCase
 
 shexc = """abstract <A>           /sA..........$/
                    and { <p> [0 1 2 3 4 5 6 7 8 9]+}
@@ -522,21 +516,11 @@ shexj = """{
 }"""
 
 
-class RestrictExtendTestCase(unittest.TestCase):
+class RestrictExtendTestCase(SimpleShexTestCase):
+    @unittest.skipIf(True, "Not in 2.1")
     def test_erics_example(self):
-        shex: ShExJ.Schema = \
-            parse(shexc, default_base="https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/")
-        shex['@context'] = "http://www.w3.org/ns/shex.jsonld"
-        d1 = loads(shexj)
-        d2 = loads(as_json(shex))
-
-        log = StringIO()
-        with redirect_stdout(log):
-            rval = compare_dicts(d1._as_dict, d2._as_dict, d1name="expected", d2name="actual  ", filtr=json_filtr)
-        if not rval:
-            print(log.getvalue())
-            print(as_json(d2, indent="  "))
-        self.assertTrue(rval)
+        self.shex_test(shexc, shexj,
+                       base="https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/")
 
 
 if __name__ == '__main__':

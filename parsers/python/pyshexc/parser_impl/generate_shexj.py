@@ -6,6 +6,7 @@ from typing import Optional, Union, List
 from antlr4 import CommonTokenStream
 from antlr4 import FileStream, InputStream
 from antlr4.error.ErrorListener import ErrorListener
+from jsonasobj import as_json
 from rdflib import Graph
 from rdflib.plugin import plugins as rdflib_plugins, Serializer as rdflib_Serializer
 from rdflib.util import SUFFIX_FORMAT_MAP
@@ -44,9 +45,9 @@ def do_parse(infilename: str, jsonfilename: Optional[str], rdffilename: Optional
         shexj['@context'] = context if context else "http://www.w3.org/ns/shex.jsonld"
         if jsonfilename:
             with open(jsonfilename, 'w') as outfile:
-                outfile.write(shexj._as_json_dumps())
+                outfile.write(as_json(shexj))
         if rdffilename:
-            g = Graph().parse(data=shexj._as_json, format="json-ld")
+            g = Graph().parse(data=as_json(shexj, indent=None), format="json-ld")
             g.serialize(open(rdffilename, "wb"), format=rdffmt)
         return True
     return False
@@ -56,7 +57,7 @@ def parse(input_: Union[str, FileStream], default_base: Optional[str]=None) -> O
     """
     Parse the text in infile and return the resulting schema
     :param input_: text or input stream to parse
-    :param default_base_: base URI for relative URI's in schema
+    :param default_base: base URI for relative URI's in schema
     :return: ShExJ Schema object.  None if error.
     """
 

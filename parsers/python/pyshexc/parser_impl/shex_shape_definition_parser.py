@@ -16,19 +16,11 @@ class ShexShapeDefinitionParser(ShExDocVisitor):
         self.shape = Shape(label)
 
     def visitShapeDefinition(self, ctx: ShExDocParser.ShapeDefinitionContext):
-        """ shapeDefinition: qualifier* '{' oneOfShape? '}' annotation* semanticActions """
-        if ctx.qualifier():
-            for q in ctx.qualifier():
-                self.visit(q)
-        if ctx.tripleExpression():
-            oneof_parser = ShexTripleExpressionParser(self.context)
-            oneof_parser.visit(ctx.tripleExpression())
-            self.shape.expression = oneof_parser.expression
-        if ctx.annotation() or ctx.semanticActions():
+        """ shapeDefinition: inlineShapeDefinition annotation* semanticAction* """
+        self.visitInlineShapeDefinition(ctx.inlineShapeDefinition())
+        if ctx.annotation() or ctx.semanticAction():
             ansem_parser = ShexAnnotationAndSemactsParser(self.context)
-            for annot in ctx.annotation():
-                ansem_parser.visit(annot)
-            ansem_parser.visit(ctx.semanticActions())
+            ansem_parser.visit(ctx)
             if ansem_parser.semacts:
                 self.shape.semActs = ansem_parser.semacts
             if ansem_parser.annotations:
@@ -45,17 +37,20 @@ class ShexShapeDefinitionParser(ShExDocVisitor):
             self.shape.expression = oneof_parser.expression
 
     def visitQualifier(self, ctx: ShExDocParser.QualifierContext):
-        """ qualifier: extensions | extraPropertySet | KW_CLOSED
+        """ qualifier: /* extension */ | extraPropertySet | KW_CLOSED
             extensions: KW_EXTENDS shapeExprLabel | '&' shapeExprLabel
         """
-        if ctx.extension():
-            if self.shape.extends is None:
-                self.shape.extends = []
-            self.shape.extends.append(self.context.shapeexprlabel_to_IRI(ctx.extension().shapeExprLabel()))
-        elif ctx.extraPropertySet():
+        # if ctx.extension():
+        #     ext = self.context.shapeexprlabel_to_IRI(ctx.extension().shapeExprLabel())
+        #     if self.shape.extends is None:
+        #         self.shape.extends = [ext]
+        #     else:
+        #         self.shape.extends.append(ext)
+        if ctx.extraPropertySet():
             if self.shape.extra is None:
-                self.shape.extra = []
-            self.shape.extra += [self.context.predicate_to_IRI(p) for p in ctx.extraPropertySet().predicate()]
+                self.shape.extra = [self.context.predicate_to_IRI(p) for p in ctx.extraPropertySet().predicate()]
+            else:
+                self.shape.extra += [self.context.predicate_to_IRI(p) for p in ctx.extraPropertySet().predicate()]
 
         elif ctx.KW_CLOSED():
             self.shape.closed = True

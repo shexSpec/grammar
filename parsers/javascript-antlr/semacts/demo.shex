@@ -1,0 +1,10 @@
+BASE <http://a.example/>
+BASE <foo/bar>
+PREFIX x: <ns/p#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+x:a {}
+x:p CLOSED EXTRA a <p0> EXTRA <p1> {
+   <p0> [x:a 1 @en~ - @en-fr~] Length 1 /^a$/ // x:se1 "a" %x:se{one%};
+   (<p1> xsd:float MinInclusive 1.0 // x:se2 "b" %x:se{two%}) // x:se3 "c" %x:se{thr%};
+} IRI /^http:/

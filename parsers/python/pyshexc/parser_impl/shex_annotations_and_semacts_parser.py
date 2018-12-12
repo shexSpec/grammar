@@ -22,11 +22,15 @@ class ShexAnnotationAndSemactsParser(ShExDocVisitor):
             annot.object = self.context.literal_to_ObjectLiteral(ctx.literal())
         self.annotations.append(annot)
 
-    def visitCodeDecl(self, ctx: ShExDocParser.CodeDeclContext):
-        """ codeDecl: '%' iri (CODE | '%') 
+    def visitSemanticAction(self, ctx: ShExDocParser.SemanticActionContext):
+        """ semanticAction: '%' iri (CODE | '%') 
             CODE: : '{' (~[%\\] | '\\' [%\\] | UCHAR)* '%' '}' """
         semact = SemAct()
         semact.name = self.context.iri_to_iriref(ctx.iri())
         if ctx.CODE():
-            semact.code = ctx.CODE().getText()[1:-2].replace('\\%', '%').encode('utf-8').decode('unicode-escape')
+            semact.code = self.context.\
+                _fix_unicode_escapes(ctx.CODE().getText()[1:-2].
+                                     replace('\\%', '%').
+                                     replace(r'\\n', '\\n').
+                                     replace(r'\\', '\\'))
         self.semacts.append(semact)

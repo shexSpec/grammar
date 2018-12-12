@@ -6,7 +6,7 @@ from pyshexc.parser.ShExDocVisitor import ShExDocVisitor
 from pyshexc.parser_impl.parser_context import ParserContext
 from pyshexc.parser_impl.shex_annotations_and_semacts_parser import ShexAnnotationAndSemactsParser
 from pyshexc.parser_impl.shex_shape_expression_parser import ShexShapeExpressionParser
-from ShExJSG.ShExJ import ShapeExternal, IRIREF, ShapeDecl
+from ShExJSG.ShExJ import ShapeExternal, IRIREF
 
 
 class ShexDocParser(ShExDocVisitor):
@@ -18,11 +18,11 @@ class ShexDocParser(ShExDocVisitor):
 
     def visitShExDoc(self, ctx: ShExDocParser.ShExDocContext):
         """ shExDoc: directive* ((notStartAction | startActions) statement*)? EOF """
-        self.visitChildren(ctx)
+        super().visitShExDoc(ctx)
 
     def visitBaseDecl(self, ctx: ShExDocParser.BaseDeclContext):
         """ baseDecl: KW_BASE IRIREF """
-        self.context.base = None
+        self.context.base = ''
         self.context.base = self.context.iriref_to_shexj_iriref(ctx.IRIREF())
 
     def visitPrefixDecl(self, ctx: ShExDocParser.PrefixDeclContext):
@@ -30,7 +30,14 @@ class ShexDocParser(ShExDocVisitor):
         iri = self.context.iriref_to_shexj_iriref(ctx.IRIREF())
         prefix = ctx.PNAME_NS().getText()
         if iri not in self.context.ld_prefixes:
-            self.context.prefixes.setdefault(prefix, iri.val)
+            self.context.prefixes[prefix] = iri.val
+
+    def visitImportDecl(self, ctx: ShExDocParser.ImportDeclContext):
+        """ importDecl : KW_IMPORT IRIREF """
+        if self.context.schema.imports is None:
+            self.context.schema.imports = [self.context.iriref_to_shexj_iriref(ctx.IRIREF())]
+        else:
+            self.context.schema.imports.append(self.context.iriref_to_shexj_iriref(ctx.IRIREF()))
 
     def visitStart(self, ctx: ShExDocParser.StartContext):
         """ start: KW_START '=' shapeExpression """
@@ -39,22 +46,10 @@ class ShexDocParser(ShExDocVisitor):
         self.context.schema.start = shexpr.expr
 
     def visitShapeExprDecl(self, ctx: ShExDocParser.ShapeExprDeclContext):
-        """ shapeExprDecl: KW_ABSTRACT? shapeExprLabel restrictions* (shapeExpression | KW_EXTERNAL) """
+        """ shapeExprDecl: /* KW_ABSTRACT? */ shapeExprLabel /* restrictions* */ (shapeExpression | KW_EXTERNAL) ;"""
         label = self.context.shapeexprlabel_to_IRI(ctx.shapeExprLabel())
-        if self.context.schema.shapes is None:
-            self.context.schema.shapes = []
-        if ctx.KW_ABSTRACT() or ctx.restrictions():
-            decl = ShapeDecl(id=label)
-            label = None
-            if ctx.KW_ABSTRACT():
-                decl.abstract = True
-            if ctx.restrictions():
-                decl.restricts = []
-                for lbl in ctx.restrictions():
-                    decl.restricts.append(self.context.shapeexprlabel_to_IRI(lbl.shapeExprLabel()))
-            self.context.schema.shapes.append(decl)
-        else:
-            decl = None
+
+        decl = None
         if ctx.KW_EXTERNAL():
             shape = ShapeExternal(id=label)
         else:
@@ -62,14 +57,18 @@ class ShexDocParser(ShExDocVisitor):
             shexpr.visit(ctx.shapeExpression())
             shape = shexpr.expr
         if not decl:
-            self.context.schema.shapes.append(shape)
+            if self.context.schema.shapes is None:
+                self.context.schema.shapes = [shape]
+            else:
+                self.context.schema.shapes.append(shape)
         else:
             decl.shapeExpr = shape
 
     def visitStartActions(self, ctx: ShExDocParser.StartActionsContext):
-        """ startActions: codeDecl+ """
-        self.context.schema.startActs = []
-        for cd in ctx.codeDecl():
+        """ startActions: semanticAction+ ; """
+        startacts = []
+        for cd in ctx.semanticAction():
             cdparser = ShexAnnotationAndSemactsParser(self.context)
             cdparser.visit(cd)
-            self.context.schema.startActs += cdparser.semacts
+            startacts += cdparser.semacts
+        self.context.schema.startActs = startacts

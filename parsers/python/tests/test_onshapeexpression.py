@@ -1,13 +1,7 @@
 
 import unittest
-from contextlib import redirect_stdout
-from io import StringIO
 
-from ShExJSG import ShExJ
-from dict_compare import compare_dicts, json_filtr
-from jsonasobj import as_json, loads
-
-from pyshexc.parser_impl.generate_shexj import parse
+from tests.utils.simple_shex_test import SimpleShexTestCase
 
 shexc = """
 <J>
@@ -15,31 +9,31 @@ shexc = """
       {
         <p> [0 1 2 3 5 6 7 8 9]+ ON SHAPE EXPRESSION
           (
-            ( /sA..........$/ 
+            ( /sA..........$/
               {
-                <p> [ 0 1 2 3 4 5 6 7 8 9 ] + 
+                <p> [ 0 1 2 3 4 5 6 7 8 9 ] +
               }
             )
-            AND ( /s.B.........$/ 
+            AND ( /s.B.........$/
                   {
-                    <p> [ 0 1 3 4 5 6 7 8 9 ] + 
+                    <p> [ 0 1 3 4 5 6 7 8 9 ] +
                   }
                 )
           ) AND (
-            /s..C........$/ 
+            /s..C........$/
             {
-              <p> [ 0 1 2 4 5 6 7 8 9 ] + 
+              <p> [ 0 1 2 4 5 6 7 8 9 ] +
             }
           ) AND (
-            /s...D.......$/ 
+            /s...D.......$/
             { }
           );
         <p> [2] ON SHAPE EXPRESSION
-          /s....E......$/ 
+          /s....E......$/
           {
           };
         <p> [3] ON SHAPE EXPRESSION
-          /s.....F.....$/ 
+          /s.....F.....$/
           {
           };
         <p> [4]
@@ -55,7 +49,7 @@ shexc = """
     /s.........J.$/
     {
       <q> [5] ON SHAPE EXPRESSION
-        /s........I..$/ 
+        /s........I..$/
         {
         };
       <q> [6]
@@ -63,12 +57,468 @@ shexc = """
   )
 """
 
-shexj = """
-{
+# The ShExJ below is what the shex.js software emits -- it does no "and" optimization
+# shexj = """
+# {
+#   "type": "Schema",
+#   "shapes": [
+#     {
+#       "id": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/J",
+#       "type": "ShapeAnd",
+#       "shapeExprs": [
+#         {
+#           "type": "ShapeAnd",
+#           "shapeExprs": [
+#             {
+#               "type": "ShapeAnd",
+#               "shapeExprs": [
+#                 {
+#                   "type": "NodeConstraint",
+#                   "pattern": "s......G....$"
+#                 },
+#                 {
+#                   "type": "Shape",
+#                   "expression": {
+#                     "type": "EachOf",
+#                     "expressions": [
+#                       {
+#                         "type": "TripleConstraint",
+#                         "predicate": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/p",
+#                         "valueExpr": {
+#                           "type": "NodeConstraint",
+#                           "values": [
+#                             {
+#                               "value": "0",
+#                               "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                             },
+#                             {
+#                               "value": "1",
+#                               "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                             },
+#                             {
+#                               "value": "2",
+#                               "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                             },
+#                             {
+#                               "value": "3",
+#                               "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                             },
+#                             {
+#                               "value": "5",
+#                               "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                             },
+#                             {
+#                               "value": "6",
+#                               "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                             },
+#                             {
+#                               "value": "7",
+#                               "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                             },
+#                             {
+#                               "value": "8",
+#                               "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                             },
+#                             {
+#                               "value": "9",
+#                               "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                             }
+#                           ]
+#                         },
+#                         "min": 1,
+#                         "max": -1,
+#                         "onShapeExpression": {
+#                           "type": "ShapeAnd",
+#                           "shapeExprs": [
+#                             {
+#                               "type": "ShapeAnd",
+#                               "shapeExprs": [
+#                                 {
+#                                   "type": "NodeConstraint",
+#                                   "pattern": "sA..........$"
+#                                 },
+#                                 {
+#                                   "type": "Shape",
+#                                   "expression": {
+#                                     "type": "TripleConstraint",
+#                                     "predicate": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/p",
+#                                     "valueExpr": {
+#                                       "type": "NodeConstraint",
+#                                       "values": [
+#                                         {
+#                                           "value": "0",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "1",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "2",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "3",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "4",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "5",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "6",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "7",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "8",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "9",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         }
+#                                       ]
+#                                     },
+#                                     "min": 1,
+#                                     "max": -1
+#                                   }
+#                                 }
+#                               ]
+#                             },
+#                             {
+#                               "type": "ShapeAnd",
+#                               "shapeExprs": [
+#                                 {
+#                                   "type": "NodeConstraint",
+#                                   "pattern": "s.B.........$"
+#                                 },
+#                                 {
+#                                   "type": "Shape",
+#                                   "expression": {
+#                                     "type": "TripleConstraint",
+#                                     "predicate": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/p",
+#                                     "valueExpr": {
+#                                       "type": "NodeConstraint",
+#                                       "values": [
+#                                         {
+#                                           "value": "0",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "1",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "3",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "4",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "5",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "6",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "7",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "8",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "9",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         }
+#                                       ]
+#                                     },
+#                                     "min": 1,
+#                                     "max": -1
+#                                   }
+#                                 }
+#                               ]
+#                             },
+#                             {
+#                               "type": "ShapeAnd",
+#                               "shapeExprs": [
+#                                 {
+#                                   "type": "NodeConstraint",
+#                                   "pattern": "s..C........$"
+#                                 },
+#                                 {
+#                                   "type": "Shape",
+#                                   "expression": {
+#                                     "type": "TripleConstraint",
+#                                     "predicate": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/p",
+#                                     "valueExpr": {
+#                                       "type": "NodeConstraint",
+#                                       "values": [
+#                                         {
+#                                           "value": "0",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "1",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "2",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "4",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "5",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "6",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "7",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "8",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         },
+#                                         {
+#                                           "value": "9",
+#                                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                                         }
+#                                       ]
+#                                     },
+#                                     "min": 1,
+#                                     "max": -1
+#                                   }
+#                                 }
+#                               ]
+#                             },
+#                             {
+#                               "type": "ShapeAnd",
+#                               "shapeExprs": [
+#                                 {
+#                                   "type": "NodeConstraint",
+#                                   "pattern": "s...D.......$"
+#                                 },
+#                                 {
+#                                   "type": "Shape"
+#                                 }
+#                               ]
+#                             }
+#                           ]
+#                         }
+#                       },
+#                       {
+#                         "type": "TripleConstraint",
+#                         "predicate": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/p",
+#                         "valueExpr": {
+#                           "type": "NodeConstraint",
+#                           "values": [
+#                             {
+#                               "value": "2",
+#                               "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                             }
+#                           ]
+#                         },
+#                         "onShapeExpression": {
+#                           "type": "ShapeAnd",
+#                           "shapeExprs": [
+#                             {
+#                               "type": "NodeConstraint",
+#                               "pattern": "s....E......$"
+#                             },
+#                             {
+#                               "type": "Shape"
+#                             }
+#                           ]
+#                         }
+#                       },
+#                       {
+#                         "type": "TripleConstraint",
+#                         "predicate": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/p",
+#                         "valueExpr": {
+#                           "type": "NodeConstraint",
+#                           "values": [
+#                             {
+#                               "value": "3",
+#                               "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                             }
+#                           ]
+#                         },
+#                         "onShapeExpression": {
+#                           "type": "ShapeAnd",
+#                           "shapeExprs": [
+#                             {
+#                               "type": "NodeConstraint",
+#                               "pattern": "s.....F.....$"
+#                             },
+#                             {
+#                               "type": "Shape"
+#                             }
+#                           ]
+#                         }
+#                       },
+#                       {
+#                         "type": "TripleConstraint",
+#                         "predicate": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/p",
+#                         "valueExpr": {
+#                           "type": "NodeConstraint",
+#                           "values": [
+#                             {
+#                               "value": "4",
+#                               "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                             }
+#                           ]
+#                         }
+#                       }
+#                     ]
+#                   }
+#                 }
+#               ]
+#             },
+#             {
+#               "type": "ShapeAnd",
+#               "shapeExprs": [
+#                 {
+#                   "type": "NodeConstraint",
+#                   "pattern": "s.......H...$"
+#                 },
+#                 {
+#                   "type": "Shape",
+#                   "expression": {
+#                     "type": "TripleConstraint",
+#                     "predicate": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/p",
+#                     "valueExpr": {
+#                       "type": "NodeConstraint",
+#                       "values": [
+#                         {
+#                           "value": "0",
+#                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                         },
+#                         {
+#                           "value": "1",
+#                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                         },
+#                         {
+#                           "value": "2",
+#                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                         },
+#                         {
+#                           "value": "3",
+#                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                         },
+#                         {
+#                           "value": "4",
+#                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                         },
+#                         {
+#                           "value": "5",
+#                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                         },
+#                         {
+#                           "value": "8",
+#                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                         },
+#                         {
+#                           "value": "9",
+#                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                         }
+#                       ]
+#                     },
+#                     "min": 0,
+#                     "max": -1
+#                   }
+#                 }
+#               ]
+#             }
+#           ]
+#         },
+#         {
+#           "type": "ShapeAnd",
+#           "shapeExprs": [
+#             {
+#               "type": "NodeConstraint",
+#               "pattern": "s.........J.$"
+#             },
+#             {
+#               "type": "Shape",
+#               "expression": {
+#                 "type": "EachOf",
+#                 "expressions": [
+#                   {
+#                     "type": "TripleConstraint",
+#                     "predicate": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/q",
+#                     "valueExpr": {
+#                       "type": "NodeConstraint",
+#                       "values": [
+#                         {
+#                           "value": "5",
+#                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                         }
+#                       ]
+#                     },
+#                     "onShapeExpression": {
+#                       "type": "ShapeAnd",
+#                       "shapeExprs": [
+#                         {
+#                           "type": "NodeConstraint",
+#                           "pattern": "s........I..$"
+#                         },
+#                         {
+#                           "type": "Shape"
+#                         }
+#                       ]
+#                     }
+#                   },
+#                   {
+#                     "type": "TripleConstraint",
+#                     "predicate": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/q",
+#                     "valueExpr": {
+#                       "type": "NodeConstraint",
+#                       "values": [
+#                         {
+#                           "value": "6",
+#                           "type": "http://www.w3.org/2001/XMLSchema#integer"
+#                         }
+#                       ]
+#                     }
+#                   }
+#                 ]
+#               }
+#             }
+#           ]
+#         }
+#       ]
+#     }
+#   ],
+#   "@context": "http://www.w3.org/ns/shex.jsonld"
+# }
+# """
+
+# This is the flattened equivalent of the above
+shexj = """{
   "@context": "http://www.w3.org/ns/shex.jsonld",
   "shapes": [
     {
-      "id": "http://localhost/shexSpec/shex.js/examples/inheritance/J",
+      "id": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/J",
       "shapeExprs": [
         {
           "shapeExprs": [
@@ -82,7 +532,7 @@ shexj = """
                   "expression": {
                     "expressions": [
                       {
-                        "predicate": "http://localhost/shexSpec/shex.js/examples/inheritance/p",
+                        "predicate": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/p",
                         "valueExpr": {
                           "values": [
                             {
@@ -136,7 +586,7 @@ shexj = """
                                 },
                                 {
                                   "expression": {
-                                    "predicate": "http://localhost/shexSpec/shex.js/examples/inheritance/p",
+                                    "predicate": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/p",
                                     "valueExpr": {
                                       "values": [
                                         {
@@ -199,7 +649,7 @@ shexj = """
                                 },
                                 {
                                   "expression": {
-                                    "predicate": "http://localhost/shexSpec/shex.js/examples/inheritance/p",
+                                    "predicate": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/p",
                                     "valueExpr": {
                                       "values": [
                                         {
@@ -256,7 +706,7 @@ shexj = """
                             },
                             {
                               "expression": {
-                                "predicate": "http://localhost/shexSpec/shex.js/examples/inheritance/p",
+                                "predicate": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/p",
                                 "valueExpr": {
                                   "values": [
                                     {
@@ -317,7 +767,7 @@ shexj = """
                         "type": "TripleConstraint"
                       },
                       {
-                        "predicate": "http://localhost/shexSpec/shex.js/examples/inheritance/p",
+                        "predicate": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/p",
                         "valueExpr": {
                           "values": [
                             {
@@ -342,7 +792,7 @@ shexj = """
                         "type": "TripleConstraint"
                       },
                       {
-                        "predicate": "http://localhost/shexSpec/shex.js/examples/inheritance/p",
+                        "predicate": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/p",
                         "valueExpr": {
                           "values": [
                             {
@@ -367,7 +817,7 @@ shexj = """
                         "type": "TripleConstraint"
                       },
                       {
-                        "predicate": "http://localhost/shexSpec/shex.js/examples/inheritance/p",
+                        "predicate": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/p",
                         "valueExpr": {
                           "values": [
                             {
@@ -395,7 +845,7 @@ shexj = """
                 },
                 {
                   "expression": {
-                    "predicate": "http://localhost/shexSpec/shex.js/examples/inheritance/p",
+                    "predicate": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/p",
                     "valueExpr": {
                       "values": [
                         {
@@ -455,7 +905,7 @@ shexj = """
               "expression": {
                 "expressions": [
                   {
-                    "predicate": "http://localhost/shexSpec/shex.js/examples/inheritance/q",
+                    "predicate": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/q",
                     "valueExpr": {
                       "values": [
                         {
@@ -480,7 +930,7 @@ shexj = """
                     "type": "TripleConstraint"
                   },
                   {
-                    "predicate": "http://localhost/shexSpec/shex.js/examples/inheritance/q",
+                    "predicate": "https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/q",
                     "valueExpr": {
                       "values": [
                         {
@@ -505,26 +955,16 @@ shexj = """
     }
   ],
   "type": "Schema"
-}"""
+}
+"""
 
 
-class OnShapeExpressionTestCase(unittest.TestCase):
+class OnShapeExpressionTestCase(SimpleShexTestCase):
+    @unittest.skipIf(True, "Not in 2.1 release")
     def test_erics_example(self):
-        shex: ShExJ.Schema = \
-            parse(shexc, default_base="http://localhost/shexSpec/shex.js/examples/inheritance/")
-        shex['@context'] = "http://www.w3.org/ns/shex.jsonld"
-        d1 = loads(shexj)
-        d2 = loads(as_json(shex))
-
-        log = StringIO()
-        with redirect_stdout(log):
-            rval = compare_dicts(d1._as_dict, d2._as_dict, d1name="expected", d2name="actual  ", filtr=json_filtr)
-        if not rval:
-            print(log.getvalue())
-            print(as_json(d2, indent="  "))
-        self.assertTrue(rval)
+        self.shex_test(shexc, shexj,
+                       base="https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/")
 
 
 if __name__ == '__main__':
     unittest.main()
-
