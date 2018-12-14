@@ -1,20 +1,24 @@
+import codecs
 import os
 import sys
 from argparse import ArgumentParser
 from typing import Optional, Union, List
+from urllib import request
+from urllib.parse import urlparse
 
+import chardet
+from ShExJSG.ShExJ import Schema
 from antlr4 import CommonTokenStream
-from antlr4 import FileStream, InputStream
+from antlr4 import InputStream
 from antlr4.error.ErrorListener import ErrorListener
 from jsonasobj import as_json
 from rdflib import Graph
 from rdflib.plugin import plugins as rdflib_plugins, Serializer as rdflib_Serializer
 from rdflib.util import SUFFIX_FORMAT_MAP
 
-from pyshexc.parser_impl.shex_doc_parser import ShexDocParser
 from pyshexc.parser.ShExDocLexer import ShExDocLexer
 from pyshexc.parser.ShExDocParser import ShExDocParser
-from ShExJSG.ShExJ import Schema
+from pyshexc.parser_impl.shex_doc_parser import ShexDocParser
 
 
 class ParseErrorListener(ErrorListener):
@@ -40,7 +44,22 @@ def do_parse(infilename: str, jsonfilename: Optional[str], rdffilename: Optional
     :param context: @context to use for rdf generation. If None use what is in the file
     :return: true if success
     """
-    shexj = parse(FileStream(infilename, encoding="utf-8"))
+    if '://' in infilename:
+        with request.urlopen(infilename) as response:
+            data = response.read()
+    else:
+        with open(infilename, 'rb') as inf:
+            data = inf.read()
+
+    if data.startswith(codecs.BOM_UTF8):
+        encoding = 'utf-8-sig'
+    else:
+        result = chardet.detect(data)
+        encoding = result['encoding']
+
+    inp = InputStream(data.decode(encoding))
+
+    shexj = parse(inp)
     if shexj is not None:
         shexj['@context'] = context if context else "http://www.w3.org/ns/shex.jsonld"
         if jsonfilename:
@@ -53,7 +72,7 @@ def do_parse(infilename: str, jsonfilename: Optional[str], rdffilename: Optional
     return False
 
 
-def parse(input_: Union[str, FileStream], default_base: Optional[str]=None) -> Optional[Schema]:
+def parse(input_: Union[str, InputStream], default_base: Optional[str]=None) -> Optional[Schema]:
     """
     Parse the text in infile and return the resulting schema
     :param input_: text or input stream to parse
@@ -63,7 +82,7 @@ def parse(input_: Union[str, FileStream], default_base: Optional[str]=None) -> O
 
     # Step 1: Tokenize the input stream
     error_listener = ParseErrorListener()
-    if not isinstance(input_, FileStream):
+    if not isinstance(input_, InputStream):
         input_ = InputStream(input_)
     lexer = ShExDocLexer(input_)
     lexer.addErrorListener(error_listener)
@@ -114,14 +133,20 @@ def genargs() -> ArgumentParser:
     return parser
 
 
-def generate(argv: List[str]) -> bool:
-    """ 
+def generate(argv: Union[str, List[str]]) -> bool:
+    """
     Transform ShExC to ShExJ
     :param argv: Command line arguments
     :return: True if successful
     """
+    if isinstance(argv, str):
+        argv = argv.split()
     opts = genargs().parse_args(argv)
-    filebase = os.path.dirname(opts.infile) + str(os.path.basename(opts.infile).rsplit('.', 1)[0])
+    if "://" in opts.infile:
+        filebase = urlparse(opts.infile).path.split('/')[-1]
+    else:
+        filebase = os.path.dirname(opts.infile) + str(os.path.basename(opts.infile))
+    filebase = filebase.rsplit('.', 1)[0]
     if opts.nojson:
         opts.jsonfile = None
     elif not opts.jsonfile:
