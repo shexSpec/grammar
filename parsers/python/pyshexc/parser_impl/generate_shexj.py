@@ -33,6 +33,29 @@ class ParseErrorListener(ErrorListener):
         self.errors.append("line " + str(line) + ":" + str(column) + " " + msg)
 
 
+def load_shex_file(shexfilename: str) -> str:
+    """
+    Read a ShEx input file, processing BOM encodings if necessary
+
+    :param shexfilename: file or URL to open
+    :return:
+    """
+    if '://' in shexfilename:
+        with request.urlopen(shexfilename) as response:
+            data = response.read()
+    else:
+        with open(shexfilename, 'rb') as inf:
+            data = inf.read()
+
+    if data.startswith(codecs.BOM_UTF8):
+        encoding = 'utf-8-sig'
+    else:
+        result = chardet.detect(data)
+        encoding = result['encoding']
+
+    return data.decode(encoding)
+
+
 def do_parse(infilename: str, jsonfilename: Optional[str], rdffilename: Optional[str], rdffmt: str,
              context: Optional[str] = None) -> bool:
     """
@@ -44,20 +67,8 @@ def do_parse(infilename: str, jsonfilename: Optional[str], rdffilename: Optional
     :param context: @context to use for rdf generation. If None use what is in the file
     :return: true if success
     """
-    if '://' in infilename:
-        with request.urlopen(infilename) as response:
-            data = response.read()
-    else:
-        with open(infilename, 'rb') as inf:
-            data = inf.read()
 
-    if data.startswith(codecs.BOM_UTF8):
-        encoding = 'utf-8-sig'
-    else:
-        result = chardet.detect(data)
-        encoding = result['encoding']
-
-    inp = InputStream(data.decode(encoding))
+    inp = InputStream(load_shex_file(infilename))
 
     shexj = parse(inp)
     if shexj is not None:
