@@ -21,7 +21,7 @@ setup(
     url="http://github.com/shexSpec/grammar/parsers/python",
     license='Apache 2.0',
     author='Harold Solbrig',
-    author_email='solbrig.harold@mayo.edu',
+    author_email='solbrig@jhu.edu',
     description='"PyShExC - a Python ShExC parser',
     long_description='PyShExC - a ShExC to PyJSG, ShExJ and ShExR parser',
     install_requires=requires,
