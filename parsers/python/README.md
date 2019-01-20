@@ -13,6 +13,7 @@ This package converts the Shape Expression Compact (ShExC) into Python JSON Sche
 * 0.5.1 -- Fix requirements
 * 0.5.2 -- Add URL fetch ability and fix UTF8-BOM issue
 * 0.5.3 -- Factor out fetch ability for re-use in other packages
+* 0.5.4 -- Fix to 0.5.2 -- low probability type matches have to be ignored
 
 ## Installation
 ```bash

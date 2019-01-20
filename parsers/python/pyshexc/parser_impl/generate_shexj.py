@@ -51,9 +51,10 @@ def load_shex_file(shexfilename: str) -> str:
         encoding = 'utf-8-sig'
     else:
         result = chardet.detect(data)
-        encoding = result['encoding']
+        encoding = result['encoding'] if float(result['confidence']) > 0.9 else 'UTF-8'
 
     return data.decode(encoding)
+
 
 
 def do_parse(infilename: str, jsonfilename: Optional[str], rdffilename: Optional[str], rdffmt: str,
