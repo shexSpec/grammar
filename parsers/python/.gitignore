@@ -96,3 +96,6 @@ ENV/
 .ropeproject
 
 .idea/
+
+# Do not submit Pipfile.lock (https://pypi.org/project/pipenv-to-requirements/)
+Pipfile.lock

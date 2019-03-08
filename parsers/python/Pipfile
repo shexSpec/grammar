@@ -8,7 +8,7 @@ verify_ssl = true
 [packages]
 antlr4-python3-runtime = ">=4.7"
 jsonasobj = ">=1.2.1"
-requests = ">=2.21"
+requests = "*"
 rdflib = ">=4.2.2"
 rdflib-jsonld = ">=0.4.0"
 ShExJSG = ">=0.5.6"
