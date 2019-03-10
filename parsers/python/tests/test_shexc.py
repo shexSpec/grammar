@@ -31,6 +31,7 @@ NOT_SHEX_FILE = "Not a ShExJ file"
 # Files to skip until we reintroduce a manifest reader
 skip = {'coverage.json': NOT_SHEX_FILE,
         'manifest.json': NOT_SHEX_FILE,
+        'representationTests.json': NOT_SHEX_FILE
         }
 
 
