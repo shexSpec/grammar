@@ -37,15 +37,15 @@ class ShexShapeDefinitionParser(ShExDocVisitor):
             self.shape.expression = oneof_parser.expression
 
     def visitQualifier(self, ctx: ShExDocParser.QualifierContext):
-        """ qualifier: /* extension */ | extraPropertySet | KW_CLOSED
+        """ qualifier: extension | extraPropertySet | KW_CLOSED
             extensions: KW_EXTENDS shapeExprLabel | '&' shapeExprLabel
         """
-        # if ctx.extension():
-        #     ext = self.context.shapeexprlabel_to_IRI(ctx.extension().shapeExprLabel())
-        #     if self.shape.extends is None:
-        #         self.shape.extends = [ext]
-        #     else:
-        #         self.shape.extends.append(ext)
+        if ctx.extension():
+            ext = self.context.shapeexprlabel_to_IRI(ctx.extension().shapeExprLabel())
+            if self.shape.extends is None:
+                self.shape.extends = [ext]
+            else:
+                self.shape.extends.append(ext)
         if ctx.extraPropertySet():
             if self.shape.extra is None:
                 self.shape.extra = [self.context.predicate_to_IRI(p) for p in ctx.extraPropertySet().predicate()]

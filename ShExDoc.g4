@@ -44,7 +44,7 @@ notStartAction  : start | shapeExprDecl ;
 start           : KW_START '=' shapeExpression ;
 startActions	: semanticAction+ ;
 statement 		: directive | notStartAction ;
-shapeExprDecl   : /* KW_ABSTRACT? */ shapeExprLabel /* restrictions* */ (shapeExpression | KW_EXTERNAL) ;
+shapeExprDecl   : KW_ABSTRACT? shapeExprLabel restrictions*  (shapeExpression | KW_EXTERNAL) ;
 shapeExpression : shapeOr ;
 inlineShapeExpression : inlineShapeOr ;
 shapeOr  		: shapeAnd (KW_OR shapeAnd)* ;
@@ -118,7 +118,7 @@ rawNumeric		: INTEGER
 				;
 shapeDefinition : inlineShapeDefinition annotation* semanticAction* ;
 inlineShapeDefinition : qualifier* '{' tripleExpression? '}' ;
-qualifier       : /* extension | */ extraPropertySet | KW_CLOSED ;
+qualifier       : extension | extraPropertySet | KW_CLOSED ;
 extraPropertySet : KW_EXTRA predicate+ ;
 tripleExpression : oneOfTripleExpr ;
 oneOfTripleExpr : groupTripleExpr
@@ -133,8 +133,8 @@ multiElementGroup : unaryTripleExpr (';' unaryTripleExpr)+ ';'? ;
 unaryTripleExpr : ('$' tripleExprLabel)? (tripleConstraint | bracketedTripleExpr)
 				| include
 				;
-bracketedTripleExpr : '(' tripleExpression ')' cardinality? /* onShapeExpr? */ annotation* semanticAction* ;
-tripleConstraint : senseFlags? predicate inlineShapeExpression cardinality? /* onShapeExpr? */ annotation* semanticAction* ;
+bracketedTripleExpr : '(' tripleExpression ')' cardinality? annotation* semanticAction* ;
+tripleConstraint : senseFlags? predicate inlineShapeExpression cardinality? annotation* semanticAction* ;
 cardinality     :  '*'         # starCardinality
 				| '+'          # plusCardinality
 				| '?'          # optionalCardinality
@@ -191,9 +191,6 @@ string          : STRING_LITERAL_LONG1
                 | STRING_LITERAL1
 				| STRING_LITERAL2
 				;
-/*
-onShapeExpr     : KW_ON (KW_SHAPE KW_EXPRESSION)? inlineShapeExpression ;
-*/
 iri             : IRIREF
 				| prefixedName
 				;
@@ -201,21 +198,21 @@ prefixedName    : PNAME_LN
 				| PNAME_NS
 				;
 blankNode       : BLANK_NODE_LABEL ;
-/*
 extension       : KW_EXTENDS shapeExprLabel
                 | '&' shapeExprLabel
                 ;
+
+/* Not implemented yet, but reserved for future enhancement */
 restrictions    : KW_RESTRICTS shapeExprLabel
                 | '-' shapeExprLabel
                 ;
-*/
 
 // Keywords
-/* KW_ABSTRACT         : A B S T R A C T ; */
+KW_ABSTRACT         : A B S T R A C T ;
 KW_BASE 			: B A S E ;
-/* KW_EXTENDS          : E X T E N D S ; */
+KW_EXTENDS          : E X T E N D S ;
 KW_IMPORT           : I M P O R T ;
-/* KW_RESTRICTS        : R E S T R I C T S ; */
+KW_RESTRICTS        : R E S T R I C T S ;
 KW_EXTERNAL			: E X T E R N A L ;
 KW_PREFIX       	: P R E F I X ;
 KW_START        	: S T A R T ;
@@ -228,9 +225,6 @@ KW_NONLITERAL   	: N O N L I T E R A L ;
 KW_BNODE        	: B N O D E ;
 KW_AND          	: A N D ;
 KW_OR           	: O R ;
-/* KW_ON               : O N ;
-KW_SHAPE            : S H A P E ;
-KW_EXPRESSION       : E X P R E S S I O N ; */
 KW_MININCLUSIVE 	: M I N I N C L U S I V E ;
 KW_MINEXCLUSIVE 	: M I N E X C L U S I V E ;
 KW_MAXINCLUSIVE 	: M A X I N C L U S I V E ;

@@ -474,5 +474,15 @@ class ShExDocVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by ShExDocParser#extension.
+    def visitExtension(self, ctx:ShExDocParser.ExtensionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#restrictions.
+    def visitRestrictions(self, ctx:ShExDocParser.RestrictionsContext):
+        return self.visitChildren(ctx)
+
+
 
 del ShExDocParser

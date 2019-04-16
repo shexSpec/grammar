@@ -6,7 +6,7 @@ from pyshexc.parser.ShExDocVisitor import ShExDocVisitor
 from pyshexc.parser_impl.parser_context import ParserContext
 from pyshexc.parser_impl.shex_annotations_and_semacts_parser import ShexAnnotationAndSemactsParser
 from pyshexc.parser_impl.shex_shape_expression_parser import ShexShapeExpressionParser
-from ShExJSG.ShExJ import ShapeExternal, IRIREF
+from ShExJSG.ShExJ import ShapeExternal, IRIREF, ShapeDecl
 
 
 class ShexDocParser(ShExDocVisitor):
@@ -46,23 +46,30 @@ class ShexDocParser(ShExDocVisitor):
         self.context.schema.start = shexpr.expr
 
     def visitShapeExprDecl(self, ctx: ShExDocParser.ShapeExprDeclContext):
-        """ shapeExprDecl: /* KW_ABSTRACT? */ shapeExprLabel /* restrictions* */ (shapeExpression | KW_EXTERNAL) ;"""
+        """ shapeExprDecl: KW_ABSTRACT? shapeExprLabel restrictions*  (shapeExpression | KW_EXTERNAL) ;"""
         label = self.context.shapeexprlabel_to_IRI(ctx.shapeExprLabel())
 
-        decl = None
         if ctx.KW_EXTERNAL():
-            shape = ShapeExternal(id=label)
+            shape = ShapeExternal()
         else:
-            shexpr = ShexShapeExpressionParser(self.context, label)
+            shexpr = ShexShapeExpressionParser(self.context)
             shexpr.visit(ctx.shapeExpression())
             shape = shexpr.expr
-        if not decl:
-            if self.context.schema.shapes is None:
-                self.context.schema.shapes = [shape]
-            else:
-                self.context.schema.shapes.append(shape)
+
+        if ctx.KW_ABSTRACT() or ctx.restrictions():
+            shape = ShapeDecl(shapeExpr=shape)
+            if ctx.KW_ABSTRACT():
+                shape.abstract = True
+            if ctx.restrictions():
+                shape.restricts = [self.context.shapeexprlabel_to_IRI(r.shapeExprLabel()) for r in ctx.restrictions()]
+
+        if label:
+            shape.id = label
+
+        if self.context.schema.shapes is None:
+            self.context.schema.shapes = [shape]
         else:
-            decl.shapeExpr = shape
+            self.context.schema.shapes.append(shape)
 
     def visitStartActions(self, ctx: ShExDocParser.StartActionsContext):
         """ startActions: semanticAction+ ; """

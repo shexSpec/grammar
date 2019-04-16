@@ -1,9 +1,10 @@
 CHANGES
 =======
 
-v0.6.0
+v0.7.0
 ------
 
+* Clean up dependencies, fix representationTests.json build error
 * Remove pipfile.lock and update requirements
 * Update mailto entry in setup
 * Take confidence into account when detecting encoding

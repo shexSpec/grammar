@@ -517,7 +517,6 @@ shexj = """{
 
 
 class RestrictExtendTestCase(SimpleShexTestCase):
-    @unittest.skipIf(True, "Not in 2.1")
     def test_erics_example(self):
         self.shex_test(shexc, shexj,
                        base="https://rawgit.com/shexSpec/shex.js/on-shape-expression/examples/inheritance/")
