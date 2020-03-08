@@ -9,3 +9,12 @@ javascript/node_modules
 /parsers/javascript-antlr/semacts/lib/ShExDocLexer.tokens
 gen/
 .DS_STORE
+parsers/cpp-yacc-toXML/location.hh
+parsers/cpp-yacc-toXML/position.hh
+parsers/cpp-yacc-toXML/shex-parse-to-XML
+parsers/cpp-yacc-toXML/shex-parse-to-XMLParser.cc
+parsers/cpp-yacc-toXML/shex-parse-to-XMLParser.hh
+parsers/cpp-yacc-toXML/shex-parse-to-XMLParser.o
+parsers/cpp-yacc-toXML/shex-parse-to-XMLScanner.cc
+parsers/cpp-yacc-toXML/shex-parse-to-XMLScanner.o
+parsers/cpp-yacc-toXML/stack.hh
