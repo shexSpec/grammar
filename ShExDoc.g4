@@ -182,11 +182,11 @@ numericLiteral  : INTEGER
 				| DECIMAL
 				| DOUBLE
 				;
-rdfLiteral      : string (LANGTAG | '^^' datatype)? ;
+rdfLiteral      : rdfString (LANGTAG | '^^' datatype)? ;
 booleanLiteral  : KW_TRUE
 				| KW_FALSE
 				;
-string          : STRING_LITERAL_LONG1
+rdfString       : STRING_LITERAL_LONG1
                 | STRING_LITERAL_LONG2
                 | STRING_LITERAL1
 				| STRING_LITERAL2
