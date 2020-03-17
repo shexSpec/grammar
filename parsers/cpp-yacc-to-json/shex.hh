@@ -51,7 +51,7 @@ struct ShExTerminal;
   using shapeExpr = boost::variant< ShapeOr&, ShapeAnd&, ShapeNot&, NodeConstraint&, Shape&, ShapeExternal&, shapeExprRef& >;
   using tripleExprLabel = boost::variant< IRIREF, BNODE >;
   using tripleExprRef = tripleExprLabel;
-  using tripleExpr = boost::variant< EachOf&, OneOf&, TripleConstraint&, tripleExprRef& >;
+  using tripleExpr = boost::variant< EachOf, OneOf, TripleConstraint, tripleExprRef >;
   using objectValue = boost::variant< IRIREF, ObjectLiteral >;
 
   struct ObjectLiteral {
@@ -231,24 +231,43 @@ struct ShExTerminal;
     std::vector< shapeExpr > shapeExprs;
   };
 
+  struct labeledShapeExpr {
+    shapeExprLabel label;
+    shapeExpr shapeExpr;
+    labeledShapeExpr (std::string label, ::shex::shapeExpr shapeExpr)
+      : label(IRIREF(label)), shapeExpr(shapeExpr)
+    {
+      if (label.rfind("_:") == 0)
+        this->label = BNODE(label);
+    }
+
+    std::ostream& toJSON (std::ostream& os) const {
+      return shapeExpr.toJSON(label);
+    }
+  };
+
   struct Schema {
     // boost::optional< std::string("http://www.w3.org/ns/shex.jsonld") > context;
     std::vector< IRIREF > imports;
     std::vector< SemAct > startActs;
     boost::optional< shapeExpr > start;
-    std::vector< std::pair< const char*, shapeExpr > > shapes;
+    std::vector< labeledShapeExpr > shapes;
     struct {
-      std::map< const char*, shapeExpr& > shapeExprs;
-      std::map< const char*, tripleExpr& > tripleExprs;
+      std::map< shapeExprLabel, shapeExpr& > shapeExprs;
+      std::map< shapeExprLabel, tripleExpr& > tripleExprs;
     } _index;
 
-    friend std::ostream& operator<<(std::ostream&, const Schema&);
+    std::ostream& toJSON (std::ostream& os) const {
+      os << "{\"type\":\"Schema\"";
+      for (auto &sh : shapes)
+        sh.toJSON(os);
+      os << "}";
+      return os;
+    }
   };
-  // std::ostream& operator<< (std::ostream &os, const Schema &s) {
-  //   for (auto &sh : s.shapes)
-  //     ;
-  //   return os;
-  // }
+  std::ostream& operator<< (std::ostream &os, const Schema &s) {
+    return s.toJSON(os);
+  }
 
 } // namespace shex
 
