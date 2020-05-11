@@ -1,0 +1,9 @@
+[submodule "parsers/python-antlr"]
+	path = parsers/python-antlr
+	url = https://github.com/shexSpec/grammar-python-antlr
+[submodule "parsers/javascript-antlr"]
+	path = parsers/javascript-antlr
+	url = https://github.com/shexSpec/grammar-javascript-antlr
+[submodule "parsers/cpp-yacc"]
+	path = parsers/cpp-yacc
+	url = https://github.com/shexSpec/grammar-cpp-yacc
