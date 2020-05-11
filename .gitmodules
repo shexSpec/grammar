@@ -7,3 +7,6 @@
 [submodule "parsers/cpp-yacc"]
 	path = parsers/cpp-yacc
 	url = https://github.com/shexSpec/grammar-cpp-yacc
+[submodule "shexTest"]
+	path = shexTest
+	url = https://github.com/shexSpec/shexTest
