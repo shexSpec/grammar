@@ -27,10 +27,6 @@ struct ShExTerminal;
   TT(BNODE, "^((_:((([A-Z]|[a-z]|[\\u00C0-\\u00D6]|[\\u00D8-\\u00F6]|[\\u00F8-\\u02FF]|[\\u0370-\\u037D]|[\\u037F-\\u1FFF]|[\\u200C-\\u200D]|[\\u2070-\\u218F]|[\\u2C00-\\u2FEF]|[\\u3001-\\uD7FF]|[\\uF900-\\uFDCF]|[\\uFDF0-\\uFFFD]|[\\u10000-\\uEFFFF])|_)|[0-9])((((((([A-Z]|[a-z]|[\\u00C0-\\u00D6]|[\\u00D8-\\u00F6]|[\\u00F8-\\u02FF]|[\\u0370-\\u037D]|[\\u037F-\\u1FFF]|[\\u200C-\\u200D]|[\\u2070-\\u218F]|[\\u2C00-\\u2FEF]|[\\u3001-\\uD7FF]|[\\uF900-\\uFDCF]|[\\uFDF0-\\uFFFD]|[\\u10000-\\uEFFFF])|_)|-|[0-9]|\\\\u00B7|[\\u0300-\\u036F]|[\\u203F-\\u2040])|.))*((([A-Z]|[a-z]|[\\u00C0-\\u00D6]|[\\u00D8-\\u00F6]|[\\u00F8-\\u02FF]|[\\u0370-\\u037D]|[\\u037F-\\u1FFF]|[\\u200C-\\u200D]|[\\u2070-\\u218F]|[\\u2C00-\\u2FEF]|[\\u3001-\\uD7FF]|[\\uF900-\\uFDCF]|[\\uFDF0-\\uFFFD]|[\\u10000-\\uEFFFF])|_)|-|[0-9]|\\\\u00B7|[\\u0300-\\u036F]|[\\u203F-\\u2040])))?))$");
   TT(IRIREF, "^(((((([A-Z]|[a-z]|[\\u00C0-\\u00D6]|[\\u00D8-\\u00F6]|[\\u00F8-\\u02FF]|[\\u0370-\\u037D]|[\\u037F-\\u1FFF]|[\\u200C-\\u200D]|[\\u2070-\\u218F]|[\\u2C00-\\u2FEF]|[\\u3001-\\uD7FF]|[\\uF900-\\uFDCF]|[\\uFDF0-\\uFFFD]|[\\u10000-\\uEFFFF])|_)|-|[0-9]|\\\\u00B7|[\\u0300-\\u036F]|[\\u203F-\\u2040])|.|:|\\/|\\\\\\\\|#|@|%|&|((\\\\\\\\u([0-9]|[A-F]|[a-f])([0-9]|[A-F]|[a-f])([0-9]|[A-F]|[a-f])([0-9]|[A-F]|[a-f]))|(\\\\\\\\U([0-9]|[A-F]|[a-f])([0-9]|[A-F]|[a-f])([0-9]|[A-F]|[a-f])([0-9]|[A-F]|[a-f])([0-9]|[A-F]|[a-f])([0-9]|[A-F]|[a-f])([0-9]|[A-F]|[a-f])([0-9]|[A-F]|[a-f])))))*)$");
 
-  struct TripleConstraint ;
-  struct OneOf ;
-  struct EachOf ;
-  struct Shape ;
   struct Wildcard ;
   struct LanguageStemRange ;
   struct LanguageStem ;
@@ -39,16 +35,28 @@ struct ShExTerminal;
   struct LiteralStem ;
   struct IriStemRange ;
   struct IriStem ;
+  using shapeExprLabel = boost::variant< IRIREF, BNODE > ;
+
+  struct TripleConstraint ;
+  struct OneOf ;
+  struct EachOf ;
+
+  struct shapeExpr {
+    virtual std::ostream& toJSON (std::ostream& os, const shapeExprLabel* label = NULL) const { // = delete;
+      return os << "shapeExpr";
+    }
+  };
+  struct Shape ;
   struct NodeConstraint ;
   struct ShapeExternal ;
   struct ShapeNot ;
   struct ShapeAnd ;
   struct ShapeOr ;
+
   struct Schema ;
   struct ObjectLiteral ;
-  using shapeExprLabel = boost::variant< IRIREF, BNODE > ;
   using shapeExprRef = shapeExprLabel;
-  using shapeExpr = boost::variant< ShapeOr&, ShapeAnd&, ShapeNot&, NodeConstraint&, Shape&, ShapeExternal&, shapeExprRef& >;
+  // using shapeExpr = boost::variant< ShapeOr&, ShapeAnd&, ShapeNot&, NodeConstraint&, Shape&, ShapeExternal&, shapeExprRef& >;
   using tripleExprLabel = boost::variant< IRIREF, BNODE >;
   using tripleExprRef = tripleExprLabel;
   using tripleExpr = boost::variant< EachOf, OneOf, TripleConstraint, tripleExprRef >;
@@ -130,7 +138,7 @@ struct ShExTerminal;
     std::vector< Annotation > annotations;
   };
 
-  struct Shape {
+  struct Shape : shapeExpr {
     Shape (bool closed = false,
            std::vector< IRIREF > extra = std::vector< IRIREF >(),
            boost::optional< tripleExpr > expression = boost::none,
@@ -146,6 +154,10 @@ struct ShExTerminal;
     boost::optional< tripleExpr > expression;
     std::vector< SemAct > semActs;
     std::vector< Annotation > annotations;
+
+    virtual std::ostream& toJSON (std::ostream& os, const shapeExprLabel* label) const { // = delete;
+      return os << "Shape";
+    }
   };
 
   struct Wildcard {
@@ -209,32 +221,32 @@ struct ShExTerminal;
   using stringFacet = boost::variant< struct lengthFacet, struct regexFacet >;
   using xsFacet = boost::variant< stringFacet, numericFacet >;
   enum e_nodeKind { iri, bnode, nonliteral, literal };
-  struct NodeConstraint {
+  struct NodeConstraint : shapeExpr {
     boost::optional< enum e_nodeKind > nodeKind;
     boost::optional< IRIREF > datatype;
     std::vector< xsFacet > facet;
     std::vector< valueSetValue > values;
   };
 
-  struct ShapeExternal {
+  struct ShapeExternal : shapeExpr {
   };
 
-  struct ShapeNot {
+  struct ShapeNot : shapeExpr {
     shapeExpr shapeExpr;
   };
 
-  struct ShapeAnd {
+  struct ShapeAnd : shapeExpr {
     std::vector< shapeExpr > shapeExprs;
   };
 
-  struct ShapeOr {
+  struct ShapeOr : shapeExpr {
     std::vector< shapeExpr > shapeExprs;
   };
 
   struct labeledShapeExpr {
     shapeExprLabel label;
-    shapeExpr shapeExpr;
-    labeledShapeExpr (std::string label, ::shex::shapeExpr shapeExpr)
+    shapeExpr& shapeExpr;
+    labeledShapeExpr (std::string label, ::shex::shapeExpr& shapeExpr)
       : label(IRIREF(label)), shapeExpr(shapeExpr)
     {
       if (label.rfind("_:") == 0)
@@ -242,7 +254,7 @@ struct ShExTerminal;
     }
 
     std::ostream& toJSON (std::ostream& os) const {
-      return shapeExpr.toJSON(label);
+      return shapeExpr.toJSON(os, &label);
     }
   };
 
@@ -265,9 +277,9 @@ struct ShExTerminal;
       return os;
     }
   };
-  std::ostream& operator<< (std::ostream &os, const Schema &s) {
-    return s.toJSON(os);
-  }
+  // std::ostream& operator<< (std::ostream &os, const Schema &s) {
+  //   return s.toJSON(os);
+  // }
 
 } // namespace shex
 
