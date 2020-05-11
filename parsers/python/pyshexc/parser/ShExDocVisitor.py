@@ -29,6 +29,11 @@ class ShExDocVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by ShExDocParser#importDecl.
+    def visitImportDecl(self, ctx:ShExDocParser.ImportDeclContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by ShExDocParser#notStartAction.
     def visitNotStartAction(self, ctx:ShExDocParser.NotStartActionContext):
         return self.visitChildren(ctx)
@@ -59,28 +64,13 @@ class ShExDocVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ShExDocParser#shapeOr.
-    def visitShapeOr(self, ctx:ShExDocParser.ShapeOrContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#shapeAnd.
-    def visitShapeAnd(self, ctx:ShExDocParser.ShapeAndContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#shapeNot.
-    def visitShapeNot(self, ctx:ShExDocParser.ShapeNotContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#negation.
-    def visitNegation(self, ctx:ShExDocParser.NegationContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by ShExDocParser#inlineShapeExpression.
     def visitInlineShapeExpression(self, ctx:ShExDocParser.InlineShapeExpressionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#shapeOr.
+    def visitShapeOr(self, ctx:ShExDocParser.ShapeOrContext):
         return self.visitChildren(ctx)
 
 
@@ -89,8 +79,18 @@ class ShExDocVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by ShExDocParser#shapeAnd.
+    def visitShapeAnd(self, ctx:ShExDocParser.ShapeAndContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by ShExDocParser#inlineShapeAnd.
     def visitInlineShapeAnd(self, ctx:ShExDocParser.InlineShapeAndContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#shapeNot.
+    def visitShapeNot(self, ctx:ShExDocParser.ShapeNotContext):
         return self.visitChildren(ctx)
 
 
@@ -99,68 +99,13 @@ class ShExDocVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ShExDocParser#inlineShapeDefinition.
-    def visitInlineShapeDefinition(self, ctx:ShExDocParser.InlineShapeDefinitionContext):
+    # Visit a parse tree produced by ShExDocParser#shapeAtomNonLitNodeConstraint.
+    def visitShapeAtomNonLitNodeConstraint(self, ctx:ShExDocParser.ShapeAtomNonLitNodeConstraintContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ShExDocParser#shapeDefinition.
-    def visitShapeDefinition(self, ctx:ShExDocParser.ShapeDefinitionContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#qualifier.
-    def visitQualifier(self, ctx:ShExDocParser.QualifierContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#extraPropertySet.
-    def visitExtraPropertySet(self, ctx:ShExDocParser.ExtraPropertySetContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#oneOfShape.
-    def visitOneOfShape(self, ctx:ShExDocParser.OneOfShapeContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#multiElementOneOf.
-    def visitMultiElementOneOf(self, ctx:ShExDocParser.MultiElementOneOfContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#innerShape.
-    def visitInnerShape(self, ctx:ShExDocParser.InnerShapeContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#groupShape.
-    def visitGroupShape(self, ctx:ShExDocParser.GroupShapeContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#singleElementGroup.
-    def visitSingleElementGroup(self, ctx:ShExDocParser.SingleElementGroupContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#multiElementGroup.
-    def visitMultiElementGroup(self, ctx:ShExDocParser.MultiElementGroupContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#unaryShape.
-    def visitUnaryShape(self, ctx:ShExDocParser.UnaryShapeContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#encapsulatedShape.
-    def visitEncapsulatedShape(self, ctx:ShExDocParser.EncapsulatedShapeContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#shapeAtomNodeConstraint.
-    def visitShapeAtomNodeConstraint(self, ctx:ShExDocParser.ShapeAtomNodeConstraintContext):
+    # Visit a parse tree produced by ShExDocParser#shapeAtomLitNodeConstraint.
+    def visitShapeAtomLitNodeConstraint(self, ctx:ShExDocParser.ShapeAtomLitNodeConstraintContext):
         return self.visitChildren(ctx)
 
 
@@ -179,8 +124,13 @@ class ShExDocVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ShExDocParser#inlineShapeAtomNodeConstraint.
-    def visitInlineShapeAtomNodeConstraint(self, ctx:ShExDocParser.InlineShapeAtomNodeConstraintContext):
+    # Visit a parse tree produced by ShExDocParser#inlineShapeAtomNonLitNodeConstraint.
+    def visitInlineShapeAtomNonLitNodeConstraint(self, ctx:ShExDocParser.InlineShapeAtomNonLitNodeConstraintContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#inlineShapeAtomLitNodeConstraint.
+    def visitInlineShapeAtomLitNodeConstraint(self, ctx:ShExDocParser.InlineShapeAtomLitNodeConstraintContext):
         return self.visitChildren(ctx)
 
 
@@ -196,6 +146,21 @@ class ShExDocVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by ShExDocParser#inlineShapeAtomAny.
     def visitInlineShapeAtomAny(self, ctx:ShExDocParser.InlineShapeAtomAnyContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#shapeOrRef.
+    def visitShapeOrRef(self, ctx:ShExDocParser.ShapeOrRefContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#inlineShapeOrRef.
+    def visitInlineShapeOrRef(self, ctx:ShExDocParser.InlineShapeOrRefContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#shapeRef.
+    def visitShapeRef(self, ctx:ShExDocParser.ShapeRefContext):
         return self.visitChildren(ctx)
 
 
@@ -219,8 +184,28 @@ class ShExDocVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ShExDocParser#nodeConstraintFacet.
-    def visitNodeConstraintFacet(self, ctx:ShExDocParser.NodeConstraintFacetContext):
+    # Visit a parse tree produced by ShExDocParser#nodeConstraintNumericFacet.
+    def visitNodeConstraintNumericFacet(self, ctx:ShExDocParser.NodeConstraintNumericFacetContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#litNodeConstraint.
+    def visitLitNodeConstraint(self, ctx:ShExDocParser.LitNodeConstraintContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#litNodeConstraintLiteral.
+    def visitLitNodeConstraintLiteral(self, ctx:ShExDocParser.LitNodeConstraintLiteralContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#litNodeConstraintStringFacet.
+    def visitLitNodeConstraintStringFacet(self, ctx:ShExDocParser.LitNodeConstraintStringFacetContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#nonLitNodeConstraint.
+    def visitNonLitNodeConstraint(self, ctx:ShExDocParser.NonLitNodeConstraintContext):
         return self.visitChildren(ctx)
 
 
@@ -259,8 +244,103 @@ class ShExDocVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by ShExDocParser#rawNumeric.
+    def visitRawNumeric(self, ctx:ShExDocParser.RawNumericContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#shapeDefinition.
+    def visitShapeDefinition(self, ctx:ShExDocParser.ShapeDefinitionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#inlineShapeDefinition.
+    def visitInlineShapeDefinition(self, ctx:ShExDocParser.InlineShapeDefinitionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#qualifier.
+    def visitQualifier(self, ctx:ShExDocParser.QualifierContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#extraPropertySet.
+    def visitExtraPropertySet(self, ctx:ShExDocParser.ExtraPropertySetContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#tripleExpression.
+    def visitTripleExpression(self, ctx:ShExDocParser.TripleExpressionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#oneOfTripleExpr.
+    def visitOneOfTripleExpr(self, ctx:ShExDocParser.OneOfTripleExprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#multiElementOneOf.
+    def visitMultiElementOneOf(self, ctx:ShExDocParser.MultiElementOneOfContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#groupTripleExpr.
+    def visitGroupTripleExpr(self, ctx:ShExDocParser.GroupTripleExprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#singleElementGroup.
+    def visitSingleElementGroup(self, ctx:ShExDocParser.SingleElementGroupContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#multiElementGroup.
+    def visitMultiElementGroup(self, ctx:ShExDocParser.MultiElementGroupContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#unaryTripleExpr.
+    def visitUnaryTripleExpr(self, ctx:ShExDocParser.UnaryTripleExprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#bracketedTripleExpr.
+    def visitBracketedTripleExpr(self, ctx:ShExDocParser.BracketedTripleExprContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by ShExDocParser#tripleConstraint.
     def visitTripleConstraint(self, ctx:ShExDocParser.TripleConstraintContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#starCardinality.
+    def visitStarCardinality(self, ctx:ShExDocParser.StarCardinalityContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#plusCardinality.
+    def visitPlusCardinality(self, ctx:ShExDocParser.PlusCardinalityContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#optionalCardinality.
+    def visitOptionalCardinality(self, ctx:ShExDocParser.OptionalCardinalityContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#repeatCardinality.
+    def visitRepeatCardinality(self, ctx:ShExDocParser.RepeatCardinalityContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#exactRange.
+    def visitExactRange(self, ctx:ShExDocParser.ExactRangeContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#minMaxRange.
+    def visitMinMaxRange(self, ctx:ShExDocParser.MinMaxRangeContext):
         return self.visitChildren(ctx)
 
 
@@ -299,8 +379,13 @@ class ShExDocVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ShExDocParser#languageRange.
-    def visitLanguageRange(self, ctx:ShExDocParser.LanguageRangeContext):
+    # Visit a parse tree produced by ShExDocParser#languageRangeFull.
+    def visitLanguageRangeFull(self, ctx:ShExDocParser.LanguageRangeFullContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#languageRangeAt.
+    def visitLanguageRangeAt(self, ctx:ShExDocParser.LanguageRangeAtContext):
         return self.visitChildren(ctx)
 
 
@@ -309,38 +394,23 @@ class ShExDocVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ShExDocParser#literal.
-    def visitLiteral(self, ctx:ShExDocParser.LiteralContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#shapeOrRef.
-    def visitShapeOrRef(self, ctx:ShExDocParser.ShapeOrRefContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#inlineShapeOrRef.
-    def visitInlineShapeOrRef(self, ctx:ShExDocParser.InlineShapeOrRefContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#shapeRef.
-    def visitShapeRef(self, ctx:ShExDocParser.ShapeRefContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by ShExDocParser#include.
     def visitInclude(self, ctx:ShExDocParser.IncludeContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ShExDocParser#semanticActions.
-    def visitSemanticActions(self, ctx:ShExDocParser.SemanticActionsContext):
+    # Visit a parse tree produced by ShExDocParser#annotation.
+    def visitAnnotation(self, ctx:ShExDocParser.AnnotationContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ShExDocParser#annotation.
-    def visitAnnotation(self, ctx:ShExDocParser.AnnotationContext):
+    # Visit a parse tree produced by ShExDocParser#semanticAction.
+    def visitSemanticAction(self, ctx:ShExDocParser.SemanticActionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by ShExDocParser#literal.
+    def visitLiteral(self, ctx:ShExDocParser.LiteralContext):
         return self.visitChildren(ctx)
 
 
@@ -356,36 +426,6 @@ class ShExDocVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by ShExDocParser#datatype.
     def visitDatatype(self, ctx:ShExDocParser.DatatypeContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#starCardinality.
-    def visitStarCardinality(self, ctx:ShExDocParser.StarCardinalityContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#plusCardinality.
-    def visitPlusCardinality(self, ctx:ShExDocParser.PlusCardinalityContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#optionalCardinality.
-    def visitOptionalCardinality(self, ctx:ShExDocParser.OptionalCardinalityContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#repeatCardinality.
-    def visitRepeatCardinality(self, ctx:ShExDocParser.RepeatCardinalityContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#exactRange.
-    def visitExactRange(self, ctx:ShExDocParser.ExactRangeContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by ShExDocParser#minMaxRange.
-    def visitMinMaxRange(self, ctx:ShExDocParser.MinMaxRangeContext):
         return self.visitChildren(ctx)
 
 
@@ -434,13 +474,13 @@ class ShExDocVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ShExDocParser#codeDecl.
-    def visitCodeDecl(self, ctx:ShExDocParser.CodeDeclContext):
+    # Visit a parse tree produced by ShExDocParser#extension.
+    def visitExtension(self, ctx:ShExDocParser.ExtensionContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by ShExDocParser#includeSet.
-    def visitIncludeSet(self, ctx:ShExDocParser.IncludeSetContext):
+    # Visit a parse tree produced by ShExDocParser#restrictions.
+    def visitRestrictions(self, ctx:ShExDocParser.RestrictionsContext):
         return self.visitChildren(ctx)
 
 

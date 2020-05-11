@@ -1,73 +1,24 @@
-# Copyright (c) 2017, Mayo Clinic
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-# Redistributions of source code must retain the above copyright notice, this
-#     list of conditions and the following disclaimer.
-#
-#     Redistributions in binary form must reproduce the above copyright notice,
-#     this list of conditions and the following disclaimer in the documentation
-#     and/or other materials provided with the distribution.
-#
-#     Neither the name of the Mayo Clinic nor the names of its contributors
-#     may be used to endorse or promote products derived from this software
-#     without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-# OF THE POSSIBILITY OF SUCH DAMAGE.
-# Copyright (c) 2017, Mayo Clinic
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-# Redistributions of source code must retain the above copyright notice, this
-#     list of conditions and the following disclaimer.
-#
-#     Redistributions in binary form must reproduce the above copyright notice,
-#     this list of conditions and the following disclaimer in the documentation
-#     and/or other materials provided with the distribution.
-#
-#     Neither the name of the Mayo Clinic nor the names of its contributors
-#     may be used to endorse or promote products derived from this software
-#     without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-# OF THE POSSIBILITY OF SUCH DAMAGE.
+import codecs
 import os
 import sys
 from argparse import ArgumentParser
 from typing import Optional, Union, List
+from urllib import request
+from urllib.parse import urlparse
 
+import chardet
+from ShExJSG.ShExJ import Schema
 from antlr4 import CommonTokenStream
-from antlr4 import FileStream, InputStream
+from antlr4 import InputStream
 from antlr4.error.ErrorListener import ErrorListener
+from jsonasobj import as_json
 from rdflib import Graph
 from rdflib.plugin import plugins as rdflib_plugins, Serializer as rdflib_Serializer
 from rdflib.util import SUFFIX_FORMAT_MAP
 
-from pyshexc.parser_impl.shex_doc_parser import ShexDocParser
 from pyshexc.parser.ShExDocLexer import ShExDocLexer
 from pyshexc.parser.ShExDocParser import ShExDocParser
-from ShExJSG.ShExJ import Schema
+from pyshexc.parser_impl.shex_doc_parser import ShexDocParser
 
 
 class ParseErrorListener(ErrorListener):
@@ -82,6 +33,30 @@ class ParseErrorListener(ErrorListener):
         self.errors.append("line " + str(line) + ":" + str(column) + " " + msg)
 
 
+def load_shex_file(shexfilename: str) -> str:
+    """
+    Read a ShEx input file, processing BOM encodings if necessary
+
+    :param shexfilename: file or URL to open
+    :return:
+    """
+    if '://' in shexfilename:
+        with request.urlopen(shexfilename) as response:
+            data = response.read()
+    else:
+        with open(shexfilename, 'rb') as inf:
+            data = inf.read()
+
+    if data.startswith(codecs.BOM_UTF8):
+        encoding = 'utf-8-sig'
+    else:
+        result = chardet.detect(data)
+        encoding = result['encoding'] if float(result['confidence']) > 0.9 else 'UTF-8'
+
+    return data.decode(encoding)
+
+
+
 def do_parse(infilename: str, jsonfilename: Optional[str], rdffilename: Optional[str], rdffmt: str,
              context: Optional[str] = None) -> bool:
     """
@@ -93,30 +68,33 @@ def do_parse(infilename: str, jsonfilename: Optional[str], rdffilename: Optional
     :param context: @context to use for rdf generation. If None use what is in the file
     :return: true if success
     """
-    shexj = parse(FileStream(infilename, encoding="utf-8"))
+
+    inp = InputStream(load_shex_file(infilename))
+
+    shexj = parse(inp)
     if shexj is not None:
         shexj['@context'] = context if context else "http://www.w3.org/ns/shex.jsonld"
         if jsonfilename:
             with open(jsonfilename, 'w') as outfile:
-                outfile.write(shexj._as_json_dumps())
+                outfile.write(as_json(shexj))
         if rdffilename:
-            g = Graph().parse(data=shexj._as_json, format="json-ld")
+            g = Graph().parse(data=as_json(shexj, indent=None), format="json-ld")
             g.serialize(open(rdffilename, "wb"), format=rdffmt)
         return True
     return False
 
 
-def parse(input_: Union[str, FileStream], default_base: Optional[str]=None) -> Optional[Schema]:
+def parse(input_: Union[str, InputStream], default_base: Optional[str]=None) -> Optional[Schema]:
     """
     Parse the text in infile and return the resulting schema
     :param input_: text or input stream to parse
-    :param default_base_: base URI for relative URI's in schema
+    :param default_base: base URI for relative URI's in schema
     :return: ShExJ Schema object.  None if error.
     """
 
     # Step 1: Tokenize the input stream
     error_listener = ParseErrorListener()
-    if not isinstance(input_, FileStream):
+    if not isinstance(input_, InputStream):
         input_ = InputStream(input_)
     lexer = ShExDocLexer(input_)
     lexer.addErrorListener(error_listener)
@@ -167,14 +145,20 @@ def genargs() -> ArgumentParser:
     return parser
 
 
-def generate(argv: List[str]) -> bool:
-    """ 
+def generate(argv: Union[str, List[str]]) -> bool:
+    """
     Transform ShExC to ShExJ
     :param argv: Command line arguments
     :return: True if successful
     """
+    if isinstance(argv, str):
+        argv = argv.split()
     opts = genargs().parse_args(argv)
-    filebase = os.path.dirname(opts.infile) + str(os.path.basename(opts.infile).rsplit('.', 1)[0])
+    if "://" in opts.infile:
+        filebase = urlparse(opts.infile).path.split('/')[-1]
+    else:
+        filebase = os.path.dirname(opts.infile) + str(os.path.basename(opts.infile))
+    filebase = filebase.rsplit('.', 1)[0]
     if opts.nojson:
         opts.jsonfile = None
     elif not opts.jsonfile:

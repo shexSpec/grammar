@@ -1,0 +1,44 @@
+#!/usr/bin/env node
+
+ShExCToShExJ = (function () {
+  let parser = null;
+  let ret = function (input) {
+    const antlr4 = require('antlr4');
+    const ShExDocLexer = require('./lib/ShExDocLexer').ShExDocLexer;
+    const ShExDocParser = require('./lib/ShExDocParser').ShExDocParser;
+
+    const istream = new antlr4.InputStream(input);
+    const lexer = new ShExDocLexer(istream);
+    const tokens  = new antlr4.CommonTokenStream(lexer);
+    parser = new ShExDocParser(tokens);
+    parser.buildParseTrees = true;
+    const tree = parser.shExDoc();
+    delete tree.$$.prefixes;
+    delete tree.$$.base;
+    delete tree.$$.productions;
+    return tree.$$;
+  }
+
+  ret.reset = function () {
+    parser._reset();
+  }
+
+  return ret;
+})()
+
+if (typeof require !== 'undefined' && typeof exports !== 'undefined') {
+  if (module.parent) /* node require */ {
+    module.exports = ShExCToShExJ;
+  } else /* istanbul ignore next -- node command line interface */ {
+    let buffer = '';
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('readable', () => {
+      let chunk;
+      while ((chunk = process.stdin.read())) { buffer += chunk; }
+    });
+    process.stdin.on('end', () => {
+      console.log(JSON.stringify(ShExCToShExJ(buffer), null, 2));
+      ShExCToShExJ.reset();
+    });
+  }
+}

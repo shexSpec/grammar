@@ -1,82 +1,36 @@
-# Copyright (c) 2017, Mayo Clinic
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-# Redistributions of source code must retain the above copyright notice, this
-#     list of conditions and the following disclaimer.
-#
-#     Redistributions in binary form must reproduce the above copyright notice,
-#     this list of conditions and the following disclaimer in the documentation
-#     and/or other materials provided with the distribution.
-#
-#     Neither the name of the Mayo Clinic nor the names of its contributors
-#     may be used to endorse or promote products derived from this software
-#     without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-# OF THE POSSIBILITY OF SUCH DAMAGE.
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
+from typing import Optional
 
 import requests
-from typing import Optional
-from dict_compare import compare_dicts, json_filtr
-from jsonasobj import loads as jao_loads
-from pyjsg.jsglib.jsg import loads as jsg_loads
-from pyjsg.jsglib.logger import Logger
-from pyshexc.parser_impl.generate_shexj import parse
 from ShExJSG import ShExJ
+from dict_compare import compare_dicts, json_filtr
+from jsonasobj import loads as jao_loads, as_json, as_dict
+from pyjsg.jsglib.loader import loads as jsg_loads
+from pyjsg.jsglib.logger import Logger
 
-from tests.build_test_harness import ValidationTestCase
+from pyshexc.parser_impl.generate_shexj import parse
+from tests import schemas_base
+from tests.utils.build_test_harness import ValidationTestCase
 
 #
-# Starting file name (with or without ".shex" suffix)
+# Starting file name (full URL) (with or without ".shex" suffix)
 START_AT = ""
 
 # False if you want to start somewhere in the middle
 SINGLE_FILE = bool(START_AT)
 
+
 # Notes:
-#   you can use shexj._as_json_dumps() to print all or part of a ShEx Schema
+#   you can use shexj.as_json() to print all or part of a ShEx Schema
 #   you can use "ctx.getText()" to get the span of any parser context
 
-V2_1_IMPORT = "Uses ShEx 2.1 Import feature"
-INCONSISTENT_STEM_WORK = "Untyped literal stems"
-LONG_UNICODE_LITERALS = "ANTLR does not support unicode literals > 4 hex digits"
+LONG_UNICODE_LITERALS = "ANTLR Parsing issue"
 
 skip = {
-    "1dotIMPORT1dot.shex": V2_1_IMPORT,
-    "1valExprRef-IV1.shex": V2_1_IMPORT,
-    "1valExprRefbnode-IV1.shex": V2_1_IMPORT,
-    "2EachInclude1-IS2.shex": V2_1_IMPORT,
-    "2RefS1-IS2.shex": V2_1_IMPORT,
-    "2RefS1-Icirc.shex": V2_1_IMPORT,
-    "2RefS2-IS1.shex": V2_1_IMPORT,
-    "2RefS2-Icirc.shex": V2_1_IMPORT,
-    "3circRefS1-IS2-IS3-IS3.shex": V2_1_IMPORT,
-    "3circRefS1-IS2-IS3.shex": V2_1_IMPORT,
-    "3circRefS1-IS23.shex": V2_1_IMPORT,
-    "3circRefS1-Icirc.shex": V2_1_IMPORT,
-    "3circRefS123-Icirc.shex": V2_1_IMPORT,
-    "3circRefS2-IS3.shex": V2_1_IMPORT,
-    "3circRefS2-Icirc.shex": V2_1_IMPORT,
-    "3circRefS3-IS12.shex": V2_1_IMPORT,
-    "3circRefS3-Icirc.shex": V2_1_IMPORT,
-    "1val1STRING_LITERAL1_with_UTF8_boundaries.shex": LONG_UNICODE_LITERALS,
-    "1refbnode_with_spanning_PN_CHARS_BASE1.shex": LONG_UNICODE_LITERALS,
-    "1literalPattern_with_REGEXP_escapes_bare.shex": LONG_UNICODE_LITERALS,
-    "1val1STRING_LITERAL1_with_ECHAR_escapes.shex": LONG_UNICODE_LITERALS,
-    "1literalPattern_with_REGEXP_escapes.shex": LONG_UNICODE_LITERALS,
-    "1literalPattern_with_UTF8_boundaries.shex": LONG_UNICODE_LITERALS,
+    # "1dotCodeWithEscapes1.shex": "rdflib quote issue",
+    # "1refbnode_with_spanning_PN_CHARS_BASE1.shex": LONG_UNICODE_LITERALS,
 }
 
 
@@ -84,13 +38,12 @@ class BasicParserTestCase(ValidationTestCase):
     pass
 
 
-BasicParserTestCase.repo_url = "https://api.github.com/repos/shexSpec/shexTest/contents/schemas"
-# BasicParserTestCase.repo_url = "(path to git)/shexSpec/shexTest/schemas"
+BasicParserTestCase.repo_url = schemas_base
 BasicParserTestCase.file_suffix = ".shex"
-BasicParserTestCase.start_at = START_AT if not START_AT or START_AT.endswith('.shex') else START_AT + '.shex'
+BasicParserTestCase.start_at = START_AT
 BasicParserTestCase.single_file = SINGLE_FILE
 
-BasicParserTestCase.skip = list(skip.keys())
+BasicParserTestCase.skip = skip
 
 
 class MemLogger:
@@ -117,22 +70,18 @@ def compare_json(shex_url: str, shex_json: str, log: Logger) -> bool:
             return False
         json_text = resp.text
     else:
-        with open(json_url) as f:
-            json_text = f.read()
+        try:
+            with open(json_url) as f:
+                json_text = f.read()
+        except FileNotFoundError:
+            print(f"****> {json_url} not found. Comparison not done ***")
+            return True
     d1 = jao_loads(json_text)
     d2 = jao_loads(shex_json)
-    if not compare_dicts(d1._as_dict, d2._as_dict, d1name="expected", d2name="actual  ", file=log, filtr=json_filtr):
-        print(d2._as_json_dumps())
+    if not compare_dicts(as_dict(d1), as_dict(d2), d1name="expected", d2name="actual  ", file=log, filtr=json_filtr):
+        print(as_json(d2))
         return False
     return True
-
-
-def has_invalid_chars(text: str) -> bool:
-    """ The ANTLR4 parser does not deal with utf characters > 4 digits.
-        See: http://stackoverflow.com/questions/35938284/how-do-i-specify-a-unicode-literal-that-requires-more-than-four-hex-digits-in-an#35939479
-        Also look at getCharValueFromCharInGrammarLiteral routine in tool/src/org/antlr4/v4/misc/CharSupport.java
-    """
-    return not all(ord(c) <= 0xFFFF for c in text)
 
 
 def validate_shexc(shexc_str: str, input_fname: str) -> bool:
@@ -142,25 +91,22 @@ def validate_shexc(shexc_str: str, input_fname: str) -> bool:
     :param input_fname: Name of source file for error reporting
     :return: True if pass
     """
-    if has_invalid_chars(shexc_str):
-        print("ANTLR does not support unicode literals > 4 hex digits.")
-        return False
-    log = MemLogger('\t')
-    logger = Logger(log)
     shexj = parse(shexc_str)
-    shexj['@context'] = "http://www.w3.org/ns/shex.jsonld"
     if shexj is None:
         return False
-    shex_obj = jsg_loads(shexj._as_json, ShExJ)
-    if not shex_obj._is_valid(logger):
+    shexj['@context'] = "http://www.w3.org/ns/shex.jsonld"
+    shex_obj = jsg_loads(as_json(shexj), ShExJ)
+    log = StringIO()
+    rval = True
+    with redirect_stdout(log):
+        if not shex_obj._is_valid():
+            rval = False
+        elif not compare_json(input_fname, as_json(shex_obj), log):
+            rval = False
+    if not rval:
         print("File: {} - ".format(input_fname))
-        print(log.log)
-        return False
-    elif not compare_json(input_fname, shex_obj._as_json, log):
-        print("File: {} - ".format(input_fname))
-        print(log.log)
-        return False
-    return True
+        print(log.getvalue())
+    return rval
 
 
 def validate_file(download_url: str) -> bool:
@@ -177,8 +123,8 @@ def validate_file(download_url: str) -> bool:
             print("Error {}: {}".format(resp.status_code, resp.reason))
             return False
     else:
-        with open(download_url) as f:
-            return validate_shexc(f.read(), download_url)
+        with open(download_url, 'rb') as f:
+            return validate_shexc(f.read().decode(), download_url)
 
 
 BasicParserTestCase.validation_function = validate_file
