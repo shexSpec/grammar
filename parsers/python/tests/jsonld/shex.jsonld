@@ -22,9 +22,9 @@
     "EachOf": "shex:EachOf",
     "IriStem": "shex:IriStem",
     "IriStemRange": "shex:IriStemRange",
+    "Language": "shex:Language",
     "LanguageStem": "shex:LanguageStem",
     "LanguageStemRange": "shex:LanguageStemRange",
-    "languageTag": "shex:languageTag",
     "LiteralStem": "shex:LiteralStem",
     "LiteralStemRange": "shex:LiteralStemRange",
     "NodeConstraint": "shex:NodeConstraint",
@@ -65,6 +65,10 @@
       "@id": "shex:extra",
       "@type": "@id"
     },
+    "extends": {
+      "@id": "shex:extends",
+      "@type": "@id"
+    },
     "flags": {
       "@id": "shex:flags",
       "@language": null
@@ -76,6 +80,10 @@
     "inverse": {
       "@id": "shex:inverse",
       "@type": "xsd:boolean"
+    },
+    "languageTag": {
+      "@id": "shex:languageTag",
+      "@language": null
     },
     "length": {
       "@id": "shex:length",
@@ -149,7 +157,8 @@
     },
     "shapes": {
       "@id": "shex:shapes",
-      "@type": "@id"
+      "@type": "@id",
+      "@container": "@list"
     },
     "start": {
       "@id": "shex:start",
@@ -268,8 +277,8 @@
     "dc:description": {
       "en": "This document describes the RDFS vocabulary description used in the Shape Expression Language (ShEx) [[shex-semantics]] along with the default JSON-LD Context and shape expression to validate RDF versions of shapes."
     },
-    "dc:date": "2017-06-25",
-    "owl:versionInfo": "https://github.com/shexSpec/shexspec.github.io/commit/9afd8152bc475006164c92662d9ea6b31450b66f",
+    "dc:date": "2017-07-07",
+    "owl:versionInfo": "https://github.com/shexSpec/shexspec.github.io/commit/e05f8e97471f5271f50612bed253102f770364b4",
     "rdfs:seeAlso": [
       "http://shex.io/shex-semantics"
     ],
@@ -316,6 +325,16 @@
           "en": "An IRI prefix (or wildcard) along with a set of excluded values, used for node matching."
         },
         "rdfs:subClassOf": "shex:StemRange"
+      },
+      {
+        "@id": "shex:Language",
+        "@type": "rdfs:Class",
+        "rdfs:label": {
+          "en": "Language"
+        },
+        "rdfs:comment": {
+          "en": "An Language tag used for matching Literal Languages."
+        }
       },
       {
         "@id": "shex:LanguageStem",
@@ -644,6 +663,18 @@
         "rdfs:range": "rdfs:Resource"
       },
       {
+        "@id": "shex:extends",
+        "@type": "rdf:Property",
+        "rdfs:label": {
+          "en": "extends"
+        },
+        "rdfs:comment": {
+          "en": "Base shape expressions for this shape."
+        },
+        "rdfs:domain": "shex:Shape",
+        "rdfs:range": "shex:ShapeExpression"
+      },
+      {
         "@id": "shex:flags",
         "@type": "rdf:Property",
         "rdfs:label": {
@@ -679,6 +710,18 @@
         },
         "rdfs:domain": "shex:TripleConstraint",
         "rdfs:range": "xsd:boolean"
+      },
+      {
+        "@id": "shex:languageTag",
+        "@type": "rdf:Property",
+        "rdfs:label": {
+          "en": "language tag"
+        },
+        "rdfs:comment": {
+          "en": "The value used to match the language tag of a language-tagged string."
+        },
+        "rdfs:domain": "shex:Language",
+        "rdfs:range": "xsd:string"
       },
       {
         "@id": "shex:length",
@@ -1063,6 +1106,7 @@
         "rdfs:range": {
           "owl:unionOf": [
             "rdfs:Resource",
+            "shex:Language",
             "shex:Stem",
             "shex:StemRange"
           ]
