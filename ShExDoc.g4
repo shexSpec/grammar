@@ -198,13 +198,13 @@ prefixedName    : PNAME_LN
 				| PNAME_NS
 				;
 blankNode       : BLANK_NODE_LABEL ;
-extension       : KW_EXTENDS shapeExprLabel
-                | '&' shapeExprLabel
+extension       : KW_EXTENDS shapeRef
+                | '&' shapeRef
                 ;
 
 /* Not implemented yet, but reserved for future enhancement */
-restrictions    : KW_RESTRICTS shapeExprLabel
-                | '-' shapeExprLabel
+restrictions    : KW_RESTRICTS shapeRef
+                | '-' shapeRef
                 ;
 
 // Keywords
