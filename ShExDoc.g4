@@ -245,7 +245,7 @@ COMMENT				  : ('#' ~[\r\n]*
 
 CODE                  : '{' (~[%\\] | '\\' [%\\] | UCHAR)* '%' '}' ;
 RDF_TYPE              : 'a' ;
-IRIREF                : '<' (~[\u0000-\u0020=<>"{}|^`\\] | UCHAR)* '>' ; /* #x00=NULL #01-#x1F=control codes #x20=space */
+IRIREF                : '<' (~[\u0000-\u0020<>"{}|^`\\] | UCHAR)* '>' ; /* #x00=NULL #01-#x1F=control codes #x20=space */
 PNAME_NS			  : PN_PREFIX? ':' ;
 PNAME_LN			  : PNAME_NS PN_LOCAL ;
 ATPNAME_NS			  : '@' PN_PREFIX? ':' ;
